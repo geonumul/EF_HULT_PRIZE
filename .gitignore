@@ -34,3 +34,8 @@ Thumbs.db
 *.hwpx
 docs/submission/
 Shopportunity_창업아이템계획서.md
+
+# 비밀 파일 보관 폴더와 서비스 계정 키(이름이 달라도 막는다)
+secrets/
+*-firebase-adminsdk-*.json
+*adminsdk*.json

@@ -26,6 +26,20 @@
 
 `NEXT_PUBLIC_SUPABASE_ANON_KEY`에는 대시보드의 Publishable key(`sb_publishable_...`)를 넣는다.
 
+## 렌더링 큐의 호출 권한
+
+렌더링 함수(`runRenderJob`)는 외부 호출을 막아 두었다. Cloud Tasks 큐가 서비스 계정의 신분증(OIDC 토큰)을 붙여서 부른다. Google Cloud 콘솔의 IAM에서 아래 서비스 계정에 세 가지 역할을 준다.
+
+계정: `firebase-adminsdk-fbsvc@shopportunity-8e794.iam.gserviceaccount.com`
+
+| 역할 | 이유 |
+|---|---|
+| Cloud Tasks Enqueuer | 큐에 작업을 넣는다 |
+| Service Account User | 큐가 이 계정의 이름으로 함수를 부른다 |
+| Cloud Run Invoker | 함수(Cloud Run 서비스 `runrenderjob`)를 호출한다 |
+
+함수 주소는 `https://runrenderjob-xmwuxseaca-du.a.run.app`이고 `RENDER_WORKER_URL`에 넣는다.
+
 ## 배포 순서
 
 1. **Supabase 프로젝트를 만든다.** `postgis`, `vector` 확장을 켠다. `supabase/migrations/`의 SQL을 순서대로 적용한다.
