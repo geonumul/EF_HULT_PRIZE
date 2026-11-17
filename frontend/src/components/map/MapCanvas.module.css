@@ -33,11 +33,6 @@
 .kakao {
   position: absolute;
   inset: 0;
-  /*
-   * 카카오 지도는 색과 표시 항목을 코드로 바꿀 수 없다.
-   * 색을 거의 그대로 두고 살짝만 정돈한다. 더 연하게 하려면 saturate 값을 낮춘다. 핀과 카드는 이 영역 밖이라 영향이 없다.
-   */
-  filter: saturate(0.95) contrast(1.02);
 }
 
 /* 말풍선. 핀 위쪽에 뜬다. Figma Tooltip 18:153 */
