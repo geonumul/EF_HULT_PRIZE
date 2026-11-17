@@ -33,6 +33,12 @@
 .kakao {
   position: absolute;
   inset: 0;
+  /*
+   * 카카오 지도는 색과 표시 항목을 코드로 바꿀 수 없다.
+   * 채도를 낮추고 밝게 눌러서 시안의 연한 지도 느낌에 가깝게 만든다.
+   * 핀과 카드는 이 영역 밖에 있어서 영향을 받지 않는다.
+   */
+  filter: grayscale(0.55) saturate(0.85) brightness(1.04) contrast(0.95);
 }
 
 /* 말풍선. 핀 위쪽에 뜬다. Figma Tooltip 18:153 */

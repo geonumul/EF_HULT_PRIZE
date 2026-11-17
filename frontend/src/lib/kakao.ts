@@ -2,6 +2,11 @@
 
 type KakaoLatLng = object;
 
+type KakaoCustomOverlay = {
+  setMap: (map: object | null) => void;
+  setZIndex: (zIndex: number) => void;
+};
+
 type KakaoBounds = {
   extend: (point: KakaoLatLng) => void;
 };
@@ -19,11 +24,20 @@ export type KakaoMaps = {
   load: (callback: () => void) => void;
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
   LatLngBounds: new () => KakaoBounds;
+  // 지도 위에 HTML 요소를 올린다. 카카오가 지도와 함께 직접 움직여서 핀이 지도를 따라 늦지 않는다.
+  CustomOverlay: new (options: {
+    position: KakaoLatLng;
+    content: HTMLElement;
+    xAnchor?: number;
+    yAnchor?: number;
+    zIndex?: number;
+    clickable?: boolean;
+  }) => KakaoCustomOverlay;
   Map: new (container: HTMLElement, options: { center: KakaoLatLng; level: number }) => KakaoMap;
   event: { addListener: (target: object, type: string, handler: () => void) => void };
 };
 
-export type { KakaoMap };
+export type { KakaoMap, KakaoCustomOverlay };
 
 declare global {
   interface Window {
