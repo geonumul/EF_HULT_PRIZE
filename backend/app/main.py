@@ -21,6 +21,13 @@ def root():
     return {"service": "Shopportunity API", "docs": "/docs", "health": "/health", "listings": "/listings"}
 
 
+# 배포 설정을 확인하려고 둔 목록. 값은 절대 돌려주지 않고 들어 있는지만 알려 준다.
+CONFIG_NAMES = [
+    "SUPABASE_DB_URL", "SUPABASE_JWT_SECRET", "KAKAO_REST_KEY", "DATA_GO_KR_KEY", "VWORLD_KEY",
+    "FIREBASE_SERVICE_ACCOUNT", "RENDER_WORKER_URL", "CORS_ORIGINS", "TOSS_SECRET_KEY",
+]
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "config": {name: bool(env(name)) for name in CONFIG_NAMES}}

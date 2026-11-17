@@ -1,4 +1,6 @@
 # 공실 조회, 미리보기, 업종 적합성, 렌더링 목록, 파트너 공실 등록. 공간 id는 공실 id와 같다.
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.auth import User, partner_user
@@ -8,6 +10,16 @@ from app.services import suitability
 from app.services.external import building_hub, kakao_local, store_info, vworld
 
 router = APIRouter()
+logger = logging.getLogger("shopportunity")
+
+
+def safe_call(label: str, fallback, function, *args):
+    """외부 API 호출이 실패하면 오류를 기록하고 대신 fallback을 돌려준다. 하나 때문에 화면 전체가 500으로 죽지 않게 한다."""
+    try:
+        return function(*args)
+    except Exception as error:  # noqa: BLE001
+        logger.warning("%s 조회 실패: %s", label, error)
+        return fallback
 
 
 def parse_bbox(text: str) -> tuple[float, float, float, float]:
@@ -67,7 +79,7 @@ def space_suitability(space_id: str):
     listing = get_listing_or_404(space_id)
     store = get_store()
     position = listing["position"]
-    zoning = vworld.zoning_at(position["lng"], position["lat"])
+    zoning = safe_call("용도지역", "", vworld.zoning_at, position["lng"], position["lat"])
 
     # 저장된 판정이 있으면 그것을 쓰고, 없으면 엔진으로 판정해 저장한다.
     results = store.get_suitability(space_id)
@@ -80,7 +92,7 @@ def space_suitability(space_id: str):
         "inputs": {"buildingUse": listing["buildingUse"], "zoning": zoning, "areaM2": listing["areaM2"]},
         "results": results,
         # 동종 업소 밀도는 판정에 쓰지 않고 참고 지표로만 보여준다.
-        "nearbyStores": store_info.nearby_counts(position["lng"], position["lat"]),
+        "nearbyStores": safe_call("주변 점포", {}, store_info.nearby_counts, position["lng"], position["lat"]),
     }
 
 

@@ -29,6 +29,11 @@ UNKNOWN_BUILDING_USE_REASON = "건축물대장 주용도가 규칙표에 없어 
 ALL_USE_TYPES = ["cafe", "popup", "pilates", "restaurant", "retail", "service", "office"]
 
 
+def _compact(text: str) -> str:
+    """건축물대장은 '제1종근린생활시설'처럼 띄어쓰기 없이 준다. 비교할 때는 공백을 모두 뺀다."""
+    return "".join((text or "").split())
+
+
 def _result(use_type: str, verdict: str, reasons: list[str]) -> dict:
     return {"useType": use_type, "verdict": verdict, "reasons": reasons, "extraCostWon": facility_cost(use_type)}
 
@@ -38,7 +43,7 @@ def evaluate_use(use_type: str, building_use: str, zoning: str, area_m2: float) 
     rule = RULES.get(use_type)
     if rule is None:
         return _result(use_type, "conditional", [UNKNOWN_USE_REASON])
-    if building_use not in rule["allowed_uses"]:
+    if _compact(building_use) not in [_compact(use) for use in rule["allowed_uses"]]:
         return _result(use_type, "conditional", [UNKNOWN_BUILDING_USE_REASON])
     if "max_area_m2" in rule and area_m2 >= rule["max_area_m2"]:
         return _result(use_type, "conditional", [rule["over_area_reason"]])
