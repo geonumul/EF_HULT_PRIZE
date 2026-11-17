@@ -21,8 +21,9 @@ def _get(operation: str, bcode: str, main_no: str, sub_no: str) -> list[dict]:
     }
     response = httpx.get(f"{BASE}/{operation}", params=params, timeout=10)
     response.raise_for_status()
-    # TODO: 공식 문서 확인. 응답 래퍼 구조(response.body.items.item)와 번지 자리수 규칙.
-    items = response.json().get("response", {}).get("body", {}).get("items", {}).get("item", [])
+    # 응답 구조: response.body.items.item (항목이 하나면 목록이 아니라 객체로 온다). 2026-11 실제 응답으로 확인했다.
+    items = response.json().get("response", {}).get("body", {}).get("items", {})
+    items = items.get("item", []) if isinstance(items, dict) else []
     return items if isinstance(items, list) else [items]
 
 
@@ -34,7 +35,7 @@ def title_info(bcode: str, main_no: str, sub_no: str) -> dict:
     if not items:
         return {}
     first = items[0]
-    # TODO: 공식 문서 확인. 필드 이름 mainPurpsCdNm, totArea, grndFlrCnt는 추정이다.
+    # 필드 이름은 실제 응답으로 확인했다: mainPurpsCdNm(주용도), totArea(연면적), grndFlrCnt(지상 층수).
     return {
         "mainPurpose": first.get("mainPurpsCdNm", ""),
         "totalAreaM2": first.get("totArea"),
@@ -43,11 +44,16 @@ def title_info(bcode: str, main_no: str, sub_no: str) -> dict:
 
 
 def floor_info(bcode: str, main_no: str, sub_no: str, floor: int) -> dict:
-    """층별개요. 해당 층의 용도와 면적."""
+    """층별개요. 해당 지상 층의 용도와 면적. 한 층에 용도가 여러 개이면 uses에 모두 담는다."""
     if not env("DATA_GO_KR_KEY"):
         return dict(DEMO_FLOOR, floor=floor)
+    uses = []
     for item in _get("getBrFlrOulnInfo", bcode, main_no, sub_no):
-        # TODO: 공식 문서 확인. 필드 이름 flrNo, mainPurpsCdNm, area는 추정이다.
-        if item.get("flrNo") == floor:
-            return {"floor": floor, "purpose": item.get("mainPurpsCdNm", ""), "areaM2": item.get("area")}
-    return {}
+        # 필드: flrNo(층 번호), flrGbCdNm(지상/지하), mainPurpsCdNm(주용도), etcPurps(기타 용도 설명), area(면적)
+        if item.get("flrGbCdNm") != "지상" or item.get("flrNo") != floor:
+            continue
+        uses.append({"purpose": item.get("mainPurpsCdNm", ""), "detail": item.get("etcPurps", ""), "areaM2": item.get("area")})
+    if not uses:
+        return {}
+    biggest = max(uses, key=lambda use: use["areaM2"] or 0)
+    return {"floor": floor, "purpose": biggest["purpose"], "areaM2": biggest["areaM2"], "uses": uses}
