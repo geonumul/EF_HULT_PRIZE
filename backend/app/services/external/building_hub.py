@@ -18,6 +18,8 @@ def _get(operation: str, bcode: str, main_no: str, sub_no: str) -> list[dict]:
         "bun": main_no.zfill(4),
         "ji": (sub_no or "0").zfill(4),
         "_type": "json",
+        "numOfRows": 200,  # 기본값 10개로는 층별 항목이 잘린다.
+        "pageNo": 1,
     }
     response = httpx.get(f"{BASE}/{operation}", params=params, timeout=10)
     response.raise_for_status()

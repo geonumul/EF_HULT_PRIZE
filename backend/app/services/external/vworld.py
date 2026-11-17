@@ -8,6 +8,7 @@ DEMO_ZONING = "준공업지역"  # Figma "09" 예시값
 
 
 def zoning_at(lng: float, lat: float) -> str:
+    """좌표의 용도지역 이름. 예: 준공업지역"""
     key = env("VWORLD_KEY")
     if not key:
         return DEMO_ZONING
@@ -18,12 +19,17 @@ def zoning_at(lng: float, lat: float) -> str:
         "key": key,
         "geomFilter": f"POINT({lng} {lat})",
         "format": "json",
+        "crs": "EPSG:4326",
+        "domain": "shopportunity.vercel.app",  # 키를 발급받을 때 적은 서비스 주소
     }
     response = httpx.get(URL, params=params, timeout=10)
     response.raise_for_status()
-    # TODO: 공식 문서 확인. 응답 구조와 용도지역 이름 필드(uname 추정)를 확인한 뒤 고친다.
+    # 응답 구조는 실제 호출로 확인했다: response.result.featureCollection.features[].properties.uname
     result = response.json().get("response", {}).get("result", {})
     features = result.get("featureCollection", {}).get("features", [])
-    if not features:
-        return ""
-    return features[0].get("properties", {}).get("uname", "")
+    # 같은 좌표에 이름이 빈 항목이 섞여 오므로 이름이 있는 첫 항목을 쓴다.
+    for feature in features:
+        name = (feature.get("properties") or {}).get("uname", "")
+        if name:
+            return name
+    return ""
