@@ -1,30 +1,25 @@
 .main {
-  padding: 40px 200px 80px;
+  padding: 40px 0 80px;
   background: var(--gray-50);
-  min-height: calc(100vh - 64px - 392px);
+  min-height: calc(100vh - 64px - 392px); /* 화면 높이에서 헤더와 푸터를 뺀 값 */
 }
 
-.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--gray-900); }
-.desc { margin: 4px 0 24px; font-size: 13px; color: var(--gray-500); }
-
-.listing { margin-bottom: 24px; }
-.listingName { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--gray-900); }
-.listingMeta { font-weight: 500; color: var(--gray-500); }
-
-.cards { display: flex; flex-wrap: wrap; gap: 12px; }
-
-.card {
-  width: 180px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px 20px;
-  background: var(--gray-0);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--elevation-1);
-  text-decoration: none;
+/* 시안은 1440px 화면에서 좌우 200px을 비운다. 내용 폭은 1040px이다. */
+.inner {
+  max-width: 1040px;
+  margin: 0 auto;
 }
-.card:hover { box-shadow: var(--elevation-2); }
 
-.use { font-size: 15px; font-weight: 700; color: var(--gray-900); }
-.cost { font-size: 12px; color: var(--gray-500); }
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--gray-900);
+}
+
+.desc {
+  margin: 6px 0 24px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
