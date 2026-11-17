@@ -8,7 +8,7 @@ import { useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Chip from "@/components/ui/Chip";
 import { USE_LABELS, formatArea, formatMan } from "@/lib/format";
-import { LISTINGS } from "@/mocks/listings";
+import { useListings } from "@/lib/api/hooks";
 import type { Listing, SpaceCondition, UseType, Verdict } from "@/types";
 import styles from "./QuoteList.module.css";
 
@@ -38,9 +38,10 @@ function usesOf(listing: Listing, filter: UseType | null): UseType[] {
 
 export default function QuoteList() {
   const [filter, setFilter] = useState<UseType | null>(null);
+  const { listings } = useListings();
 
   // 선택한 업종이 없는 공실은 목록에서 뺀다.
-  const visible = LISTINGS.filter((listing) => usesOf(listing, filter).length > 0);
+  const visible = listings.filter((listing) => usesOf(listing, filter).length > 0);
 
   return (
     <>

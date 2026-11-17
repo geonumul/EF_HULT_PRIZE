@@ -11,6 +11,7 @@
 | `NEXT_PUBLIC_KAKAO_JS_KEY` | frontend | 가능. 카카오 콘솔에 도메인 등록 |
 | `NEXT_PUBLIC_TOSS_CLIENT_KEY` | frontend | 가능 |
 | `NEXT_PUBLIC_FIREBASE_CONFIG` | frontend | 가능. Firestore 읽기 전용 규칙 필요 |
+| `NEXT_PUBLIC_API_URL` | frontend | 가능. 백엔드 주소(`https://backend-beta-peach-91.vercel.app`). 비우면 가짜 데이터로 동작 |
 | `SUPABASE_SERVICE_ROLE_KEY` | backend, functions | 불가 |
 | `SUPABASE_DB_URL` | backend, functions | 불가 |
 | `KAKAO_REST_KEY` | backend | 불가 |

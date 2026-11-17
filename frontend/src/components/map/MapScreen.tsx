@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Chip from "@/components/ui/Chip";
 import { CLUSTER_PINS } from "@/mocks/map";
-import { LISTINGS } from "@/mocks/listings";
+import { useListings } from "@/lib/api/hooks";
 import type { UseType } from "@/types";
 import type { MapFilters, SortKey } from "@/types/map";
 import CategoryTabs from "./CategoryTabs";
@@ -29,12 +29,13 @@ export default function MapScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const use = parseUse(searchParams.get("use"));
+  const { listings } = useListings();
 
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<MapFilters>({ under5000: false, firstFloorOnly: false, noPremium: false });
   const [costOnly, setCostOnly] = useState(true);
   const [sort, setSort] = useState<SortKey>("latest");
-  const [selectedId, setSelectedId] = useState<string | null>(LISTINGS[0].id);
+  const [selectedId, setSelectedId] = useState<string | null>(listings[0]?.id ?? null);
   const [zoom, setZoom] = useState(0);
   const [locateTick, setLocateTick] = useState(0);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
@@ -68,9 +69,9 @@ export default function MapScreen() {
   }
 
   const visibleListings = useMemo(() => {
-    const filtered = filterListings(LISTINGS, { use, costOnly, filters, query });
+    const filtered = filterListings(listings, { use, costOnly, filters, query });
     return sortListings(filtered, sort, use);
-  }, [use, costOnly, filters, query, sort]);
+  }, [listings, use, costOnly, filters, query, sort]);
 
   // 묶음 핀은 가짜 데이터라 검색어나 칩이 켜져 있으면 숨긴다.
   const filtersOn = filters.under5000 || filters.firstFloorOnly || filters.noPremium;

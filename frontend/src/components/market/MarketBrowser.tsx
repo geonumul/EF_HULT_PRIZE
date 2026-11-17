@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import Chip from "@/components/ui/Chip";
 import { useRenderBoard } from "@/lib/renderBoard";
-import { PRODUCTS } from "@/mocks/products";
+import { useProducts } from "@/lib/api/hooks";
 import type { Product } from "@/types";
 import { CATEGORY_KEYS, CATEGORY_LABELS } from "./categories";
 import ProductCard from "./ProductCard";
@@ -45,11 +45,12 @@ export default function MarketBrowser({ category }: Props) {
   const [priceIndex, setPriceIndex] = useState(0);
   const [keyword, setKeyword] = useState("");
   const board = useRenderBoard();
+  const { products } = useProducts();
 
   const range = PRICE_RANGES[priceIndex];
   const text = keyword.trim();
 
-  const filtered = PRODUCTS.filter((product) => {
+  const filtered = products.filter((product) => {
     if (category && product.category !== category) return false;
     if (condition === "used" && !product.usedPrice) return false;
     if (text && !product.name.includes(text)) return false;
