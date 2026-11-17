@@ -1,0 +1,35 @@
+# 의존성
+node_modules/
+.venv/
+__pycache__/
+
+# 빌드 결과
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+# 환경변수와 키. 예시 파일(.env.example)만 올린다.
+.env
+.env.*
+!.env.example
+*.pem
+firebase-adminsdk*.json
+service-account*.json
+
+# 로컬 도구 설정
+.vercel/
+.firebase/
+supabase/.temp/
+.vscode/
+.idea/
+
+# 운영체제 파일
+.DS_Store
+Thumbs.db
+
+# 공모전 제출 서류. 학번과 연락처가 들어 있어 저장소에 올리지 않는다.
+*.hwp
+*.hwpx
+docs/submission/
+Shopportunity_창업아이템계획서.md

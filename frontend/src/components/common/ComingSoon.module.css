@@ -1,0 +1,21 @@
+.main {
+  min-height: calc(100vh - 64px - 392px); /* 화면 높이에서 헤더와 푸터를 뺀 값 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gray-500);
+}

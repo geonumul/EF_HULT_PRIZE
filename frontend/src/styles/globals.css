@@ -1,0 +1,26 @@
+/* 모든 화면에 적용되는 기본 스타일. 색과 글자 크기는 tokens.css의 변수를 쓴다. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--gray-900);
+  background: var(--gray-0);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}

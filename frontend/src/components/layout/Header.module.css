@@ -1,0 +1,90 @@
+/* 상단 메뉴. Figma S01 프레임 18:45 (1440 x 64). */
+
+.header {
+  height: 64px;
+  background: var(--gray-0);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+/* 시안은 1440px 화면에서 좌우 200px을 비운다. 그래서 내용 폭이 1040px이다. */
+.inner {
+  max-width: 1040px;
+  height: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* 로고 | 가운데 메뉴 | 계정 링크 */
+  align-items: center;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--gray-900);
+}
+
+/* 가운데 메뉴 */
+.menus {
+  display: flex;
+  gap: 48px;
+  height: 100%;
+}
+
+.menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--gray-500);
+}
+
+.menuActive {
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+/* 현재 메뉴 밑줄. 이 그라데이션 값은 시안의 밑줄에서만 쓴다. */
+.menuActive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0fbf83, #5ee6a8);
+}
+
+/* 오른쪽 계정 링크 */
+.account {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 28px;
+}
+
+.partner {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--brand-600);
+}
+
+.login,
+.signup {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+.login {
+  color: var(--gray-700);
+}
+
+.signup {
+  padding: 8px 0;
+  border-radius: var(--radius-md);
+  color: var(--gray-900);
+}

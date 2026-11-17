@@ -1,0 +1,130 @@
+/* 하단 정보. Figma Footer 42:482 (1440 x 392). */
+
+.footer {
+  background: var(--gray-0);
+  border-top: 1px solid var(--gray-200);
+  padding: 56px 0 40px;
+}
+
+.inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* 로고, 링크 4열, 입점 문의 버튼이 한 줄에 놓인다. */
+.top {
+  display: flex;
+  align-items: flex-start;
+}
+
+.brand {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.logo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.policies {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.terms {
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.privacy {
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+/* 링크 열 */
+.column {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.columnTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.divider {
+  width: 130px;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--gray-200);
+}
+
+/* 시안의 링크 색 #6b7684는 Figma 변수에 없어서 tokens.css에 --gray-600으로 따로 두었다. */
+.link {
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--gray-600);
+}
+
+/* 오른쪽 끝으로 밀어내는 입점 문의 버튼 */
+.inquiry {
+  margin-left: auto;
+  padding: 11px 24px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.line {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--gray-100);
+}
+
+/* 맨 아래 안내 문구 */
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.team {
+  margin: 0;
+  color: var(--gray-500);
+}
+
+.copyright {
+  margin: 0;
+  color: var(--gray-400);
+}
