@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// 진행률 문서는 읽기만 허용한다. 쓰기는 Cloud Functions가 관리자 권한으로 한다.
+// TODO: 로그인한 사용자만 읽게 좁힌다. Firebase Auth를 쓰지 않으므로 jobId를 추측하기 어려운 값(UUID)으로 두는 것이 지금의 보호 수단이다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /renderJobs/{jobId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
