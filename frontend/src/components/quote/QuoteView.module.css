@@ -1,0 +1,45 @@
+.main {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 40px 120px 80px; /* 시안 S05: 좌우 120px */
+  background: var(--gray-50);
+  min-height: calc(100vh - 64px - 392px);
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.head { display: flex; flex-direction: column; gap: 4px; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 500; color: var(--gray-500); }
+.total { margin: 0; font-size: 40px; font-weight: 900; letter-spacing: -0.03em; color: var(--gray-900); }
+.meta { margin: 0; font-size: 11px; color: var(--gray-500); }
+.saving { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--brand-600); }
+
+.card {
+  background: var(--gray-0);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-1);
+  padding: 8px 20px;
+}
+
+.cardTitle { margin: 0; padding: 10px 0 6px; font-size: 13px; font-weight: 700; color: var(--gray-900); }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.row:last-child { border-bottom: 0; }
+
+.dot { width: 8px; height: 8px; border-radius: var(--radius-full); flex-shrink: 0; }
+.rowName { flex: 1; font-size: 13px; font-weight: 500; color: var(--gray-900); }
+.rowRate { font-size: 11px; color: var(--gray-500); }
+.rowSum { font-size: 13px; font-weight: 700; color: var(--gray-900); }

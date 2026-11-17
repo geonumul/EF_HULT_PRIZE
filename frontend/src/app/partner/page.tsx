@@ -1,6 +1,6 @@
-// S10 파트너 콘솔. 8단계에서 만든다.
-import ComingSoon from "@/components/common/ComingSoon";
+// S10 파트너 콘솔. Figma 40:482. 푸터는 시안에 없다.
+import PartnerConsole from "@/components/partner/PartnerConsole";
 
 export default function PartnerPage() {
-  return <ComingSoon title="파트너 콘솔" step={8} />;
+  return <PartnerConsole />;
 }

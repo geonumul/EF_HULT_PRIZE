@@ -1,0 +1,120 @@
+/* 오른쪽 추천 매물 패널. Figma ListPanel 18:199 (400 x 784). */
+
+.panel {
+  flex: none;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--gray-100);
+  background: var(--gray-0);
+}
+
+.head {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.title {
+  margin: 0 0 14px;
+  font-size: 19px; /* 시안 값. 토큰의 heading(17px)보다 크다. */
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+.controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sortChip {
+  padding: 8px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  color: var(--gray-900);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.sortChip:hover {
+  background: var(--gray-50);
+}
+
+.sortSelected,
+.sortSelected:hover {
+  border-color: var(--gray-900);
+  background: var(--gray-900);
+  color: var(--gray-0);
+}
+
+.filterWrap {
+  position: relative;
+}
+
+.filterChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand);
+  box-shadow: var(--brand-glow);
+  color: var(--gray-0);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 10;
+  min-width: 120px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: var(--radius-lg);
+  background: var(--gray-0);
+  box-shadow: var(--elevation-2);
+}
+
+.menuItem {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.menuItem:hover {
+  background: var(--gray-50);
+}
+
+.menuActive {
+  color: var(--brand-600);
+  font-weight: 700;
+}
+
+.list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 20px;
+  color: var(--gray-500);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}

@@ -1,6 +1,6 @@
-// S09 로그인. 8단계에서 만든다.
-import ComingSoon from "@/components/common/ComingSoon";
+// S09 로그인. Figma 39:637. 회원가입과 같은 카드 컴포넌트를 쓴다.
+import AuthForm from "@/components/auth/AuthForm";
 
 export default function LoginPage() {
-  return <ComingSoon title="로그인" step={8} />;
+  return <AuthForm mode="login" />;
 }

@@ -31,9 +31,24 @@ Tailwind 대신 컴포넌트마다 CSS 파일(`Header.tsx`와 `Header.module.css
 
 ## 만든 화면
 
-| 주소 | 상태 |
-|---|---|
-| 공통 Header, Footer | 완료 |
-| `/map`, `/quote`, `/market`, `/guide`, `/login`, `/signup`, `/partner` | 안내 페이지만 있음 |
+데이터는 `src/mocks/`의 가짜 데이터다. 환경변수(`.env.example` 참고)가 없어도 모든 화면이 동작한다.
+
+| 주소 | 화면 | 비고 |
+|---|---|---|
+| `/map`, `/map?use=cafe` | S01·S02 공실 지도 | 카카오 키가 없으면 정적 지도 |
+| `/space/[id]/studio`, `/space/[id]/studio/chat` | S03 공간 스튜디오, S04 텍스트 렌더링 | 이미지 먼저 / 상품 먼저 전환 |
+| `/quote`, `/quote/[id]`, `/quote/[id]/done` | 견적 목록, S05 견적 확정·결제, S06 결제 완료 | 토스 키가 없으면 데모 결제 |
+| `/market`, `/market/[category]` | S07 집기 마켓 | 렌더링 보드 담기 |
+| `/guide` | S08 창업 가이드 | |
+| `/login`, `/signup` | S09 로그인·회원가입 | Supabase 키가 없으면 데모 모드 |
+| `/partner`, `/partner/apply`, `/partner/demolition` | S10 파트너 콘솔, S11 입점 문의, 철거 요청 | |
+| `/space/[id]/demolition`, `/demolition/[requestId]` | 철거 견적 추정, 업체 견적 비교 | 시안 없는 추가 기능 |
+
+## 폴더 추가 설명
+
+- `src/types/`: 화면과 API가 함께 쓰는 데이터 모양
+- `src/mocks/`: 가짜 데이터. 백엔드 연결 때 이 폴더를 API 호출로 바꾼다
+- `src/lib/`: 금액 표시, 견적 계산, 세션, 렌더링 보드 같은 작은 함수 모음
+- `src/components/ui/`: 버튼, 칩, 배지
 
 단계별 계획은 [docs/ROADMAP.md](../docs/ROADMAP.md)에 있다.

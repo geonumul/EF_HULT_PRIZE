@@ -1,0 +1,93 @@
+/* S10 파트너 콘솔 틀. Figma 40:482 (1440 x 900). 윗줄 60px, 사이드 220px, 내용은 왼쪽에서 40px 띄운다. */
+
+.console {
+  min-height: calc(100vh - 64px);
+  background: var(--gray-50);
+}
+
+.topbar {
+  height: 60px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--gray-0);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-900);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-0);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.company {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.logout {
+  padding: 6px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.body {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 64px - 60px);
+}
+
+.side {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--gray-0);
+  border-right: 1px solid var(--gray-200);
+}
+
+.menu {
+  padding: 11px 14px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--gray-700);
+}
+
+.menu:hover {
+  background: var(--gray-50);
+}
+
+.menuActive,
+.menuActive:hover {
+  background: var(--brand-50);
+  font-weight: 700;
+  color: var(--brand-600);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  max-width: 1180px; /* 시안은 내용 폭 1140px에 좌우 여백 40px */
+  padding: 36px 40px 80px;
+}

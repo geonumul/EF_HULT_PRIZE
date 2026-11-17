@@ -1,0 +1,30 @@
+.main {
+  padding: 40px 200px 80px;
+  background: var(--gray-50);
+  min-height: calc(100vh - 64px - 392px);
+}
+
+.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--gray-900); }
+.desc { margin: 4px 0 24px; font-size: 13px; color: var(--gray-500); }
+
+.listing { margin-bottom: 24px; }
+.listingName { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--gray-900); }
+.listingMeta { font-weight: 500; color: var(--gray-500); }
+
+.cards { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.card {
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px;
+  background: var(--gray-0);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-1);
+  text-decoration: none;
+}
+.card:hover { box-shadow: var(--elevation-2); }
+
+.use { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+.cost { font-size: 12px; color: var(--gray-500); }

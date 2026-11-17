@@ -1,0 +1,96 @@
+/* Figma TotalBar 24:407. 위쪽으로 그림자가 있는 흰 바. */
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 20px;
+  background: var(--gray-0);
+  /* 시안 값. 토큰에 없는 위쪽 그림자다. */
+  box-shadow: 0 -8px 24px rgba(15, 23, 33, 0.08);
+}
+
+.totalRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  color: var(--gray-500);
+}
+
+.saving {
+  font-size: 11px;
+  color: var(--brand-600);
+}
+
+.total {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.segments {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.save {
+  padding: 13px 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.confirm {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 0;
+  border-radius: var(--radius-md);
+  background: var(--gradient-brand);
+  box-shadow: var(--brand-glow);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--gray-0);
+}
+
+.confirm:hover {
+  filter: brightness(1.05);
+}
+
+.confirmDisabled {
+  opacity: 0.4;
+  box-shadow: none;
+  pointer-events: none;
+}

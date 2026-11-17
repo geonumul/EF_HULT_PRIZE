@@ -1,0 +1,199 @@
+/* 시안 TagPopover(30:307)는 흰 카드, radius-lg, elevation-3이다. 판매처와 버튼이 늘어서 세로로 길어졌다. */
+.popover {
+  position: absolute;
+  z-index: 5;
+  width: 320px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--gray-0);
+  box-shadow: var(--elevation-3);
+}
+
+.close {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--gray-500);
+}
+
+.top {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-right: 20px;
+}
+
+.photo {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.info {
+  min-width: 0;
+}
+
+.number {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--brand-600);
+}
+
+.name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.size {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-100);
+}
+
+.price {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.times {
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.usedHint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--brand-600);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+}
+
+.stepper button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: var(--gray-0);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper span {
+  min-width: 28px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.linksTitle {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-500);
+}
+
+.noLink {
+  margin: 0;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.link {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.link:hover {
+  background: var(--gray-50);
+}
+
+.linkPrice {
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.primary,
+.secondary {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.primary {
+  border: 0;
+  background: var(--gradient-brand);
+  color: var(--gray-0);
+  box-shadow: var(--brand-glow);
+}
+
+.secondary {
+  border: 1px solid var(--gray-200);
+  background: var(--gray-0);
+  color: var(--gray-900);
+}
+
+.secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

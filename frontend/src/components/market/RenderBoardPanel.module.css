@@ -1,0 +1,160 @@
+.wrap {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--gray-900);
+  color: var(--gray-0);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--elevation-2);
+}
+.count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--brand-500);
+  font-size: 12px;
+  text-align: center;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 340px;
+  max-height: 70vh;
+  padding: 18px;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: var(--gray-0);
+  box-shadow: var(--elevation-3);
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gray-600);
+  font-size: 12px;
+  text-decoration: underline;
+}
+.clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.empty {
+  margin: 0;
+  padding: 20px 0;
+  color: var(--gray-600);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+.info {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  margin: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.price {
+  margin: 2px 0 0;
+  color: var(--gray-600);
+  font-size: 11px;
+}
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.qty button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  line-height: 1;
+}
+.remove {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--gray-500);
+  font-size: 18px;
+  line-height: 1;
+}
+.total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-100);
+  font-size: 13px;
+}
+.guide {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.go,
+.goDisabled {
+  padding: 12px 0;
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand);
+  color: var(--gray-0);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.goDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

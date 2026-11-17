@@ -1,0 +1,111 @@
+.page {
+  width: 1040px;
+  min-height: 70vh;
+  margin: 0 auto;
+  padding: 40px 0 80px;
+}
+
+.heading {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.count {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sort {
+  display: flex;
+  gap: 8px;
+}
+
+.empty {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.confirm,
+.review {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  background: var(--gray-0);
+}
+
+.confirm {
+  border-color: var(--brand-500);
+  background: var(--brand-50);
+}
+
+.confirmTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.confirmText {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Button은 button 요소라서 링크에는 같은 모양을 직접 적는다. */
+.linkButton {
+  display: inline-flex;
+  padding: 10px 16px;
+  border-radius: var(--radius-xl);
+  background: var(--gradient-brand);
+  box-shadow: var(--brand-glow);
+  color: var(--gray-0);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stars {
+  color: var(--brand-500);
+  font-size: 18px;
+}
+
+.review {
+  margin-top: 16px;
+}
+
+.review + .review {
+  margin-top: 16px;
+}

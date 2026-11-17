@@ -1,0 +1,26 @@
+.page {
+  background: var(--gray-50);
+}
+
+/* 시안은 900px 높이에서 SubHeader(60) 아래가 776px이다. 화면이 낮아도 700px은 확보한다. */
+.body {
+  display: flex;
+  height: calc(100vh - 124px);
+  min-height: 700px;
+}
+
+.canvasArea {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 24px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  flex-shrink: 0;
+  background: var(--gray-0);
+  border-left: 1px solid var(--gray-100);
+  overflow: hidden;
+}

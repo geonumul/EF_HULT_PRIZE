@@ -1,6 +1,14 @@
-// S08 창업 가이드. 8단계에서 만든다.
-import ComingSoon from "@/components/common/ComingSoon";
+// S08 창업 가이드. Figma 39:482.
+import GuideView from "@/components/guide/GuideView";
+import Footer from "@/components/layout/Footer";
+import ClosingCta from "@/components/market/ClosingCta";
 
 export default function GuidePage() {
-  return <ComingSoon title="창업 가이드" step={8} />;
+  return (
+    <>
+      <GuideView />
+      <ClosingCta />
+      <Footer />
+    </>
+  );
 }

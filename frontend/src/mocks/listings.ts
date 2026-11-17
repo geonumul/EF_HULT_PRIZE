@@ -1,0 +1,83 @@
+// 가짜 공실 데이터. 4단계에서 backend API로 바꾸기 전까지 모든 화면이 이 데이터를 쓴다.
+// 값은 Figma S01 목록(성수동 일대)과 같게 맞췄다.
+import type { Listing } from "@/types";
+
+export const LISTINGS: Listing[] = [
+  {
+    id: "seongsu-2ga-1f",
+    tag: "1층 상가",
+    address: "성수동2가",
+    nearby: "성수동2가",
+    areaM2: 39.6,
+    floor: 1,
+    ceilingHeightM: 3.2,
+    deposit: 3000,
+    rent: 180,
+    buildingUse: "제2종 근린생활시설",
+    condition: "vacant",
+    thumbnail: "/images/space-a.jpg",
+    renderCount: 3,
+    position: { lat: 37.5446, lng: 127.0557 },
+    costs: { cafe: 4200, popup: 1900, pilates: 5600 },
+    verdicts: { cafe: "possible", popup: "possible", pilates: "conditional" },
+  },
+  {
+    id: "ttukseom-1f",
+    tag: "1층 상가",
+    address: "성수동1가",
+    nearby: "뚝섬역 3분",
+    areaM2: 46.2,
+    floor: 1,
+    ceilingHeightM: 3.0,
+    deposit: 3500,
+    rent: 210,
+    buildingUse: "제2종 근린생활시설",
+    condition: "has_fixtures",
+    thumbnail: "/images/space-b.jpg",
+    renderCount: 3,
+    position: { lat: 37.5473, lng: 127.0447 },
+    costs: { pilates: 5600, cafe: 4900, popup: 2100 },
+    verdicts: { pilates: "possible", cafe: "possible", popup: "possible" },
+  },
+  {
+    id: "seoulsup-corner-1f",
+    tag: "1층 코너",
+    address: "성수동1가",
+    nearby: "서울숲",
+    areaM2: 33.0,
+    floor: 1,
+    ceilingHeightM: 3.4,
+    deposit: 2000,
+    rent: 160,
+    buildingUse: "제1종 근린생활시설",
+    condition: "vacant",
+    thumbnail: "/images/space-c.jpg",
+    renderCount: 3,
+    position: { lat: 37.5444, lng: 127.0374 },
+    costs: { popup: 1900, cafe: 3600, pilates: 4800 },
+    verdicts: { popup: "possible", cafe: "possible", pilates: "conditional" },
+  },
+  {
+    id: "seongsu-stn-2f",
+    tag: "2층 상가",
+    address: "성수동2가",
+    nearby: "성수역 5분",
+    areaM2: 105.8,
+    floor: 2,
+    ceilingHeightM: 3.1,
+    deposit: 5000,
+    rent: 320,
+    buildingUse: "제2종 근린생활시설",
+    condition: "occupied",
+    thumbnail: "/images/space-d.jpg",
+    renderCount: 0,
+    position: { lat: 37.5446, lng: 127.0559 },
+    costs: { cafe: 6100, pilates: 7200, popup: 2600 },
+    verdicts: { cafe: "possible", pilates: "possible", popup: "possible" },
+  },
+];
+
+/** id로 공실 하나를 찾는다. 없으면 undefined. */
+export function findListing(id: string): Listing | undefined {
+  return LISTINGS.find((listing) => listing.id === id);
+}

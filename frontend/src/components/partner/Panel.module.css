@@ -1,0 +1,352 @@
+/* 파트너 콘솔 안쪽 패널이 함께 쓰는 스타일. Figma S10(40:482)의 제목줄, 통계 카드, 표, 배지. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 제목줄 */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--gray-600);
+}
+
+.newButton {
+  padding: 11px 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, #0fbf83, #5ee6a8); /* 시안 버튼 그라데이션 */
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-0);
+}
+
+.secondaryButton {
+  padding: 9px 16px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.secondaryButton:hover {
+  background: var(--gray-50);
+}
+
+/* 통계 카드 */
+.kpis {
+  display: flex;
+  gap: 16px;
+}
+
+.kpi {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px; /* 시안 값 */
+}
+
+.kpiLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.kpiValue {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-900);
+}
+
+.kpiNote {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand-600);
+}
+
+/* 표. 칸 너비는 style의 gridTemplateColumns로 정한다. */
+.table {
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tableHead,
+.row {
+  display: grid;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.tableHead {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background: #f9fafb; /* 시안 표 머리글 색 */
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-600);
+}
+
+.row {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-top: 1px solid #f2f4f6; /* 시안 표 줄 색 */
+  font-size: 13px;
+  color: var(--gray-900);
+}
+
+.empty {
+  padding: 40px 20px;
+  border-top: 1px solid #f2f4f6;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.listingCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.thumb {
+  width: 56px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.rowTitle {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.rowSub {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--gray-500);
+}
+
+.tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* 업종 진단과 상태 배지 */
+.tag {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.tagGreen {
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+.tagOrange {
+  background: #fff4e5;
+  color: #c77800;
+}
+
+.tagRed {
+  background: #ffeeee;
+  color: #e03e3e;
+}
+
+.tagGray {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.statusOrange {
+  font-weight: 700;
+  color: #c77800;
+}
+
+.statusRed {
+  font-weight: 700;
+  color: #e03e3e;
+}
+
+.statusPlain {
+  font-weight: 500;
+}
+
+/* 상단 노출 알약. 누르면 켜고 끈다. */
+.pill {
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.pillOn {
+  border: 1px solid var(--gray-900);
+  background: var(--gray-900);
+  color: var(--gray-0);
+}
+
+.pillOff {
+  border: 1px solid var(--gray-300);
+  background: var(--gray-0);
+  color: var(--gray-700);
+}
+
+.exposure {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deleteButton {
+  padding: 4px 6px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  color: var(--gray-500);
+  text-decoration: underline;
+}
+
+.deleteButton:hover {
+  color: #e03e3e;
+}
+
+/* 등록 폼 */
+.formCard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+}
+
+.formTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.wide {
+  grid-column: span 3;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.input {
+  padding: 10px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  background: var(--gray-0);
+  font: 400 14px/1.45 var(--font-sans);
+  color: var(--gray-900);
+  outline: none;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--gray-400);
+}
+
+.input:focus {
+  border-color: var(--brand-500);
+}
+
+.inputError,
+.inputError:focus {
+  border-color: #e03e3e;
+}
+
+.error {
+  margin: 0;
+  font-size: 12px;
+  color: #e03e3e;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--brand-50);
+  font-size: 13px;
+  color: var(--brand-600);
+}
+
+/* 하단 요약 문구 */
+.sectionTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+}

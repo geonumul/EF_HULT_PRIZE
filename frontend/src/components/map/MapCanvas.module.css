@@ -1,0 +1,97 @@
+/* 지도 바탕과 핀. 시안은 지도가 1040 x 784다. */
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--gray-100);
+}
+
+/* 정적 지도 판. 줌하면 이 판이 통째로 커진다. */
+.stage {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transition: transform 0.2s ease;
+  --zoom: 1;
+}
+
+.stage[hidden] {
+  display: none;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.kakao {
+  position: absolute;
+  inset: 0;
+}
+
+/* 말풍선. 핀 위쪽에 뜬다. Figma Tooltip 18:153 */
+.tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-900);
+  box-shadow: var(--elevation-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 말풍선 아래 꼬리 */
+.tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: var(--gray-900);
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+.tooltipSub {
+  color: var(--gray-300);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.tooltipMain {
+  color: var(--gray-0);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+/* 현위치 점. 시안에 없는 부분이라 파란 점과 옅은 원으로 간단히 그린다. */
+.me {
+  position: absolute;
+  left: 36%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 3px solid var(--gray-0);
+  border-radius: var(--radius-full);
+  background: #3182f6; /* 현위치 점 파랑. 토큰에 없다. */
+  box-shadow: 0 0 0 10px rgba(49, 130, 246, 0.18);
+  transform: scale(calc(1 / var(--zoom, 1)));
+}

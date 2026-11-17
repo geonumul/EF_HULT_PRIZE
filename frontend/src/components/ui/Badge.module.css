@@ -1,0 +1,25 @@
+.badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.possible {
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+/* 주황 값은 시안 04 페이지의 조건부 배지에서 가져왔다. */
+.conditional {
+  background: #fbeedd;
+  color: #b5651d;
+}
+
+.impossible {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}

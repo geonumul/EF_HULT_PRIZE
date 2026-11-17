@@ -1,6 +1,12 @@
-// S01·S02 공실 지도. 3단계에서 만든다.
-import ComingSoon from "@/components/common/ComingSoon";
+// S01·S02 공실 지도. /map 은 업종 선택 전(S01), /map?use=<업종id> 는 업종 선택 후(S02)다.
+import { Suspense } from "react";
+import MapScreen from "@/components/map/MapScreen";
 
 export default function MapPage() {
-  return <ComingSoon title="공실 지도" step={3} showFooter={false} />;
+  // useSearchParams를 쓰는 컴포넌트는 Suspense로 감싸야 빌드된다.
+  return (
+    <Suspense fallback={null}>
+      <MapScreen />
+    </Suspense>
+  );
 }

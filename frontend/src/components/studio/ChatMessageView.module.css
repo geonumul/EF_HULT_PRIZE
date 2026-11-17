@@ -1,0 +1,136 @@
+/* 사용자 말풍선은 어두운 바탕에 오른쪽 위 모서리만 4px, AI 말풍선은 회색 바탕에 왼쪽 위 모서리만 4px이다. */
+.userRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user {
+  max-width: 290px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px 4px 12px 12px;
+  background: var(--gray-900);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.003em;
+  color: var(--gray-0);
+  word-break: keep-all;
+}
+
+.ai {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-100);
+  border-radius: 4px 12px 12px 12px;
+  background: var(--gray-50);
+}
+
+.aiText {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+.aiTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.primary,
+.secondary,
+.primaryLink,
+.secondaryLink {
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.primary,
+.primaryLink {
+  border: 0;
+  background: var(--gradient-brand);
+  box-shadow: var(--brand-glow);
+  color: var(--gray-0);
+}
+
+.secondary,
+.secondaryLink {
+  border: 1px solid var(--gray-200);
+  background: var(--gray-0);
+  color: var(--gray-900);
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resultImage {
+  width: 72px;
+  height: 48px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.resultTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.resultSummary {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--brand-600);
+}
+
+.progressTrack {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--gray-200);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gradient-brand);
+  transition: width 0.1s linear;
+}

@@ -1,0 +1,214 @@
+/* Figma QuotePanel 24:333. 400px 폭 흰 패널. */
+.head {
+  padding: 20px 20px 12px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+.segment {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+}
+
+.seg,
+.segActive {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.segActive {
+  background: var(--gray-0);
+  color: var(--gray-900);
+  box-shadow: var(--elevation-1);
+}
+
+.sub {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+/* 그룹이 길어지면 이 영역만 스크롤된다. */
+.groups {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 20px;
+}
+
+.group {
+  padding-top: 10px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.groupHead {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.003em;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gray-700);
+}
+
+.arrow,
+.arrowClosed {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--gray-500);
+  transition: transform 0.15s;
+}
+
+.arrowClosed {
+  transform: rotate(-90deg);
+}
+
+.groupSum {
+  color: var(--gray-900);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+button.row:hover {
+  background: var(--gray-50);
+}
+
+.rowActive {
+  padding: 8px;
+  border-radius: var(--radius-md);
+  background: var(--brand-50);
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--gray-100);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.badgeActive {
+  background: var(--gradient-brand);
+  color: var(--gray-0);
+}
+
+.thumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-sm);
+  background-color: var(--gray-100);
+}
+
+.rowText {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.rowName,
+.rowSpec {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowName {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.003em;
+  color: var(--gray-900);
+}
+
+.rowSpec {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+.rowPrice {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--gray-900);
+}
+
+.demolitionLink {
+  display: inline-block;
+  margin: 0 0 10px 28px;
+  padding: 6px 12px;
+  border: 1px solid var(--brand-500);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand-600);
+}
+
+.demolitionLink:hover {
+  background: var(--brand-50);
+}
+
+.empty {
+  margin: 0;
+  padding: 8px 0 12px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* 빈 공간 화면에서는 견적을 흐리게 하고 누를 수 없게 한다. */
+.dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+}

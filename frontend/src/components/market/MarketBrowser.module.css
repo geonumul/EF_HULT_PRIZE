@@ -1,0 +1,191 @@
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 36px 0 80px;
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+.subtitle {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.body {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* 왼쪽 필터 */
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 200px;
+  flex-shrink: 0;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.groupTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.option,
+.optionOn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gray-700);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}
+.optionOn {
+  color: var(--gray-900);
+}
+.box,
+.boxOn {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1.2px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--gray-0);
+}
+.boxOn {
+  border-color: var(--brand-500);
+  background: var(--brand-500);
+}
+
+/* 오른쪽 본문 */
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 808px;
+}
+.source {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f9fafb; /* 시안 값. 토큰의 gray-50(#f7f8fa)과 약간 다르다. */
+}
+.sourceImage {
+  width: 168px;
+  height: 104px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+}
+.sourceText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.sourceBadge {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  font-size: 11px;
+  font-weight: 700;
+}
+.sourceTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.sourceSub {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 13px;
+}
+.sourceButton {
+  padding: 10px 16px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 13px;
+  font-weight: 500;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.count {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.search {
+  width: 200px;
+  margin-right: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: 12px;
+}
+.search:focus {
+  outline: 0;
+  border-color: var(--gray-900);
+}
+.sortChip {
+  padding: 7px 14px;
+  font-size: 12px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 190px);
+  gap: 28px 16px;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 0;
+  color: var(--gray-600);
+  font-size: 14px;
+}
+.empty p {
+  margin: 0;
+}
+.reset {
+  padding: 8px 16px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 13px;
+}
+.fee {
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.5;
+}

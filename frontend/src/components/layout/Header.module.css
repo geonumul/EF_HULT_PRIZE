@@ -83,6 +83,26 @@
   color: var(--gray-700);
 }
 
+/* 로그인한 상태의 이메일과 로그아웃 버튼 */
+.email {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.logout {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--gray-900);
+}
+
 .signup {
   padding: 8px 0;
   border-radius: var(--radius-md);

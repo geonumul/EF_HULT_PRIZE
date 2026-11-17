@@ -1,0 +1,48 @@
+/* 업종 카테고리 탭. Figma S01 프레임 18:66 (1440 x 52). */
+
+.tabs {
+  height: 52px;
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--gray-0);
+}
+
+.inner {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.tab {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--gray-900);
+}
+
+.selected {
+  color: var(--gray-900);
+  font-weight: 700;
+}
+
+/* 선택된 탭 아래 초록 막대. 시안은 글자보다 양옆 8px씩 넓다. */
+.selected::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: 0;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-brand);
+}

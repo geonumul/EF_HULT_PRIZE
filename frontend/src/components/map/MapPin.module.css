@@ -1,0 +1,80 @@
+/* 지도 핀. Figma MapPin 17:81 (56 x 64). 위치는 핀 끝(아래 가운데)이 기준이다. */
+
+.pin {
+  position: absolute;
+  width: 56px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  /* 줌으로 지도 판이 커져도 핀 크기는 그대로 둔다. --zoom은 MapCanvas가 정한다. */
+  transform: translate(-50%, -100%) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: 50% 100%;
+  z-index: 1;
+}
+
+.selected {
+  z-index: 3;
+}
+
+/* 바깥 옅은 원 */
+.halo {
+  position: absolute;
+  inset: 0 0 8px 0;
+  border-radius: var(--radius-full);
+  background: var(--brand-500);
+  opacity: 0.16;
+}
+
+/* 아래로 뾰족한 꼬리 */
+.tail {
+  position: absolute;
+  left: 28px;
+  top: 38px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  background: linear-gradient(135deg, #00b368 0%, #12c9a4 71%); /* 시안 MapPin 꼬리 그라데이션 */
+  transform: rotate(45deg);
+}
+
+/* 안쪽 숫자 원 */
+.core {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid var(--gray-0);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #00b368 0%, #12c9a4 100%);
+  box-shadow: 0 4px 10px rgba(0, 115, 71, 0.35); /* 시안 핀 그림자 */
+  color: var(--gray-0);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* 선택하지 않은 공실 핀은 흰 원에 초록 글자로 묶음 핀과 구분한다. */
+.listing:not(.selected) .core {
+  border-color: var(--brand-500);
+  background: var(--gray-0);
+  color: var(--brand-600);
+}
+
+.listing:not(.selected) .tail {
+  background: var(--brand-500);
+}
+
+.selected .halo {
+  opacity: 0.3;
+}
+
+.pin:hover .core {
+  filter: brightness(1.05);
+}

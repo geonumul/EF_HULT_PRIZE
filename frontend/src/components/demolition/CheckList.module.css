@@ -1,0 +1,42 @@
+.box {
+  padding: 20px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  background: var(--gray-0);
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--gray-50);
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.itemBody {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-700);
+}

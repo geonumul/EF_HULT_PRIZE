@@ -1,0 +1,62 @@
+/* 평면도의 색은 시안 값이다. 토큰에 없다. */
+.plan {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-0);
+}
+
+.wall {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: 300px;
+  height: 130px;
+  border: 2px solid var(--gray-700);
+}
+
+.window {
+  position: absolute;
+  left: 7px;
+  top: 24px;
+  width: 4px;
+  height: 100px;
+  background: #7cc4f5;
+}
+
+.table {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  background: #d9b98c;
+}
+
+.counter {
+  position: absolute;
+  left: 275px;
+  top: 19px;
+  width: 24px;
+  height: 110px;
+  background: #b88a5a;
+}
+
+.aisle {
+  position: absolute;
+  top: 69px;
+  height: 10px;
+  background: rgba(0, 179, 104, 0.25);
+}
+
+.aisleLabel {
+  position: absolute;
+  top: 81px;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--brand-600);
+}

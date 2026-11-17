@@ -1,0 +1,72 @@
+.main {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 64px 0 96px;
+  background: var(--gray-50);
+  min-height: calc(100vh - 64px - 392px);
+}
+
+.card {
+  width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 48px;
+  background: var(--gray-0);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-2);
+}
+
+.check { width: 56px; height: 56px; }
+.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--gray-900); }
+.sub { margin: 0; font-size: 13px; font-weight: 500; color: var(--gray-500); }
+
+.receipt {
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  font-size: 12px;
+  color: var(--gray-700);
+}
+.receiptHead { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--gray-300); }
+.orderNo { font-weight: 700; color: var(--gray-900); }
+.receiptRow { display: flex; justify-content: space-between; }
+.receiptTotal {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px dashed var(--gray-300);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-600);
+}
+
+.steps { list-style: none; margin: 8px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 12px; align-items: flex-start; }
+.stepNo {
+  width: 22px; height: 22px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--brand-600);
+  background: var(--brand-50); border-radius: var(--radius-full);
+}
+.stepTitle { margin: 0; font-size: 13px; font-weight: 700; color: var(--gray-900); }
+.stepText { margin: 0; font-size: 12px; color: var(--gray-500); }
+
+.buttons { display: flex; gap: 8px; margin-top: 12px; }
+.quoteButton,
+.mapButton {
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+.quoteButton { color: var(--gray-900); background: var(--gray-100); }
+.mapButton { color: var(--gray-0); background: var(--gray-900); }

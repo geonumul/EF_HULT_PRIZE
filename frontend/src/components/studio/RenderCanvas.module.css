@@ -1,0 +1,210 @@
+/* Figma RenderCanvas 24:282. 992 x 744, 모서리 radius-xl. */
+.canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-1);
+  background: var(--gray-100);
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.3s;
+}
+
+/* 위쪽 두 배지 */
+.badge {
+  position: absolute;
+  top: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(15, 23, 33, 0.06);
+}
+
+.badgeLeft {
+  left: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--gray-900);
+}
+
+.badgeRight {
+  right: 16px;
+  gap: 8px;
+  padding-right: 12px;
+  /* 시안의 어두운 유리 배지. 토큰에 없는 값이다. */
+  background: rgba(25, 31, 40, 0.6);
+  color: var(--gray-0);
+}
+
+.badgeWarn {
+  background: rgba(120, 78, 10, 0.72);
+}
+
+/* 번호 태그. 28px 흰 원이고 바깥에 40px 반투명 고리가 있다. */
+.tag {
+  position: absolute;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: var(--gray-0);
+  filter: drop-shadow(0 8px 12px rgba(15, 23, 33, 0.1)) drop-shadow(0 2px 3px rgba(15, 23, 33, 0.06));
+}
+
+.tagRing {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  pointer-events: none;
+}
+
+.tagNumber {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.tagActive {
+  background: var(--brand-500);
+}
+
+.tagActive .tagNumber {
+  color: var(--gray-0);
+}
+
+/* 상품 먼저 결과의 치수 검증 카드 */
+.checks {
+  position: absolute;
+  left: 16px;
+  top: 56px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 340px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--elevation-1);
+}
+
+.checksTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.checkLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+.checkLine img {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.checkWarn {
+  color: var(--gray-900);
+}
+
+.backButton {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 7px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-0);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 렌더링 중 */
+.loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(247, 248, 250, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.loadingCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 260px;
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  background: var(--gray-0);
+  box-shadow: var(--elevation-2);
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--gray-100);
+  border-top-color: var(--brand-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--gray-100);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gradient-brand);
+  transition: width 0.1s linear;
+}

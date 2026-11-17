@@ -1,0 +1,232 @@
+/* S11 입점·제휴 문의. Figma 42:521 (1440 x 2216). 내용 폭 1040px. */
+
+.inner {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* 소개 영역 */
+.hero {
+  padding: 56px 0;
+  background: var(--gray-50);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--brand-600);
+}
+
+.heroTitle {
+  margin: 0 0 12px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.heroText {
+  width: 640px;
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+.heroCtas {
+  display: flex;
+  gap: 10px;
+}
+
+.ctaPrimary,
+.ctaPrimaryLarge {
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, #0fbf83, #5ee6a8); /* 시안 버튼 그라데이션 */
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-0);
+}
+
+.ctaSecondary {
+  padding: 12px 24px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-900);
+}
+
+/* 본문: 왼쪽 안내 560px, 오른쪽 폼 432px */
+.body {
+  padding: 40px 0 72px;
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+}
+
+.info {
+  width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--gray-900);
+}
+
+.typeCard {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px; /* 시안 값 */
+}
+
+.typeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.typeName {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.fee {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--brand-600);
+}
+
+.typeText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+.typeExample {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stepNumber {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--gray-900);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--gray-0);
+}
+
+.stepLast {
+  background: var(--brand-500);
+}
+
+.stepText {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.faqBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq {
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid #f2f4f6; /* 시안 구분선 색 */
+}
+
+.faqQuestion {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.faqAnswer {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+/* 맨 아래 검은 띠 */
+.closing {
+  padding: 80px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  background: #0b0f14; /* 시안 값 */
+}
+
+.closingTitle {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+  color: var(--gray-0);
+}
+
+.closingText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--gray-500);
+}
+
+.ctaPrimaryLarge {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+.ctaOutline {
+  padding: 14px 28px;
+  border: 1px solid var(--gray-700);
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-0);
+}

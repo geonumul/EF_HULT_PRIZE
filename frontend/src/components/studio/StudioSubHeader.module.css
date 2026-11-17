@@ -1,0 +1,113 @@
+/* Figma SubHeader 24:264. 1440 x 60, 아래 테두리 gray-100. */
+.subHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 32px;
+  background: var(--gray-0);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 319px; /* 시안에서 탭이 x=351에서 시작한다. 32 + 319 = 351 */
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.meta {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+}
+
+.tab {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.003em;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--gray-900);
+}
+
+.tabActive {
+  background: var(--gray-0);
+  color: var(--gray-900);
+  box-shadow: var(--elevation-1);
+}
+
+.addWrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--gray-0);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+}
+
+.menuItem {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.menuItem:hover {
+  background: var(--gray-50);
+}
+
+.notice {
+  margin: 4px 0 2px;
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+.right {
+  margin-left: auto;
+}

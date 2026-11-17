@@ -1,0 +1,41 @@
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 80px 0;
+  background: #0b0f14; /* 시안의 검은 띠 색. 토큰에 없다. */
+}
+.title {
+  margin: 0;
+  color: var(--gray-0);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+}
+.sub {
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+.map,
+.partner {
+  padding: 14px 28px;
+  border-radius: var(--radius-full);
+  color: var(--gray-0);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.map {
+  background: var(--gradient-brand);
+}
+.partner {
+  border: 1px solid var(--gray-700);
+}

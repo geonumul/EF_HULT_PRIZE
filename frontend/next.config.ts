@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
-// 지금은 바꾼 설정이 없다. 이미지 도메인 같은 설정이 필요해지면 여기에 추가한다.
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  // 여러 작업이 동시에 빌드해도 결과 폴더가 겹치지 않도록 환경변수로 폴더를 바꿀 수 있다.
+  // 평소에는 값이 없으므로 기본 .next를 쓴다.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+};
 
 export default nextConfig;

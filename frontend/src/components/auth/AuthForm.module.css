@@ -1,0 +1,215 @@
+/* S09 로그인·회원가입. Figma 39:637 (1440 x 900). 카드 폭 440px, 시안은 가운데 정렬이다. */
+
+.page {
+  min-height: calc(100vh - 64px);
+  padding: 76px 0 80px;
+  background: var(--gray-50);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.card {
+  width: 440px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--gray-0);
+  border-radius: 16px; /* 토큰의 radius-xl(10px)보다 큰 값이 시안에 있다. */
+  box-shadow: var(--elevation-2);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--gray-900);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--gray-600);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-700);
+}
+
+/* 이용 유형 세그먼트. 배경 #F2F4F6은 시안 값이다. */
+.segment {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f2f4f6;
+  border-radius: var(--radius-xl);
+}
+
+.segmentItem {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 7px; /* 시안 값 */
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.segmentActive {
+  background: var(--gray-0);
+  font-weight: 700;
+  color: var(--gray-900);
+  box-shadow: var(--elevation-1);
+}
+
+.kakao,
+.naver {
+  padding: 13px 0;
+  border: 0;
+  border-radius: var(--radius-xl);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* 카카오와 네이버 브랜드 색 */
+.kakao {
+  background: #fee500;
+  color: #191919;
+}
+
+.naver {
+  background: #03c75a;
+  color: var(--gray-0);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.line {
+  flex: 1;
+  height: 1px;
+  background: var(--gray-200);
+}
+
+.dividerText {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.input {
+  padding: 12px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  background: var(--gray-0);
+  font: 400 14px/1.45 var(--font-sans);
+  color: var(--gray-900);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--gray-400);
+}
+
+.input:focus {
+  border-color: var(--brand-500);
+}
+
+.inputError,
+.inputError:focus {
+  border-color: #e03e3e; /* 시안의 오류 색 (S10 "진단 보완 필요") */
+}
+
+.error {
+  margin: 0;
+  font-size: 12px;
+  color: #e03e3e;
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--brand-50);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--brand-600);
+}
+
+.agree {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.agree input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand-500);
+}
+
+.submit {
+  padding: 13px 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, #0fbf83, #5ee6a8); /* 시안의 로그인 버튼 그라데이션 */
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--gray-0);
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.switchLink {
+  font-weight: 700;
+  color: var(--brand-600);
+}
+
+.demo {
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}

@@ -1,6 +1,14 @@
-// S07 집기 마켓. 8단계에서 만든다.
-import ComingSoon from "@/components/common/ComingSoon";
+// S07 집기 마켓 전체 카테고리. Figma 38:482.
+import ClosingCta from "@/components/market/ClosingCta";
+import MarketBrowser from "@/components/market/MarketBrowser";
+import Footer from "@/components/layout/Footer";
 
 export default function MarketPage() {
-  return <ComingSoon title="집기 마켓" step={8} />;
+  return (
+    <>
+      <MarketBrowser />
+      <ClosingCta />
+      <Footer />
+    </>
+  );
 }
