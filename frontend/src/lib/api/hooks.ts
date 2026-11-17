@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { LISTINGS } from "@/mocks/listings";
 import { PRODUCTS } from "@/mocks/products";
 import type { Listing, Product } from "@/types";
+import type { VacancyCandidate } from "@/types/vacancy";
 import { apiGet } from "./client";
 
 type DataSource = "mock" | "api";
@@ -48,4 +49,22 @@ export function useProducts() {
   }, []);
 
   return { products, source };
+}
+
+/** 공실 후보. GET /vacancy-candidates. enabled가 true가 될 때 한 번 읽는다. 서버가 없으면 빈 목록이다. */
+export function useCandidates(enabled: boolean) {
+  const [candidates, setCandidates] = useState<VacancyCandidate[]>([]);
+
+  useEffect(() => {
+    if (!enabled || candidates.length > 0) return;
+    let cancelled = false;
+    apiGet<VacancyCandidate[]>("/vacancy-candidates?minConfidence=0.5&limit=600").then((data) => {
+      if (!cancelled && data) setCandidates(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, candidates.length]);
+
+  return { candidates };
 }

@@ -62,6 +62,9 @@ class MemoryStore:
         found = [listing for listing in self.listings if bbox is None or in_bbox(listing, bbox)]
         return copy.deepcopy(found)
 
+    def list_candidates(self, bbox=None, min_confidence: float = 0, limit: int = 500) -> list[dict]:
+        return []  # 후보는 탐색 도구가 DB에 저장한다. 메모리 모드에는 없다.
+
     def get_listing(self, listing_id: str) -> dict | None:
         for listing in self.listings:
             if listing["id"] == listing_id:
@@ -236,6 +239,17 @@ def listing_from_row(row: dict) -> dict:
     }
 
 
+def candidate_from_row(row: dict) -> dict:
+    return {
+        "id": row["id"], "address": row["address"], "buildingName": row["building_name"], "floor": row["floor"],
+        "floorUse": row["floor_use"], "floorDetail": row["floor_detail"],
+        "floorAreaM2": float(row["floor_area_m2"]) if row["floor_area_m2"] is not None else None,
+        "confidence": float(row["confidence"]), "reasons": list(row["reasons"]), "status": row["status"],
+        "storesOnFloor": row["stores_on_floor"], "unknownFloorStores": row["unknown_floor_stores"],
+        "position": {"lat": row["lat"], "lng": row["lng"]},
+    }
+
+
 def product_from_row(row: dict, links: list[dict]) -> dict:
     return {
         "id": row["id"], "name": row["name"], "category": row["category"],
@@ -286,6 +300,18 @@ class PostgresStore:
         else:
             rows = self._run(LISTING_SQL + " where l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)::geography", bbox)
         return [listing_from_row(row) for row in rows]
+
+    def list_candidates(self, bbox=None, min_confidence: float = 0, limit: int = 500) -> list[dict]:
+        sql = """select id, address, building_name, floor, floor_use, floor_detail, floor_area_m2, confidence, reasons, status,
+                        stores_on_floor, unknown_floor_stores, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng
+                 from vacancy_candidates where status <> 'rejected' and confidence >= %s"""
+        params: list = [min_confidence]
+        if bbox is not None:
+            sql += " and geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)::geography"
+            params += list(bbox)
+        sql += " order by confidence desc, id limit %s"
+        params.append(limit)
+        return [candidate_from_row(row) for row in self._run(sql, tuple(params))]
 
     def get_listing(self, listing_id: str) -> dict | None:
         row = self._run(LISTING_SQL + " where l.id = %s", (listing_id,), one=True)

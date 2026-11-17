@@ -39,3 +39,6 @@ Shopportunity_창업아이템계획서.md
 secrets/
 *-firebase-adminsdk-*.json
 *adminsdk*.json
+
+# 공실 등록 도구가 남기는 조회 기록
+backend/data/

@@ -1,20 +1,14 @@
-"""주소 하나로 공실을 등록하는 도구.
+"""지번 주소와 현장 실측값으로 공실을 등록한다.
 
-지번 주소와 현장에서 잰 값을 넣으면 아래를 자동으로 한다.
-  1. 카카오 로컬로 좌표와 법정동 코드를 얻는다.
-  2. 건축HUB에서 건물 용도, 연면적, 해당 층의 용도를 읽는다.
-  3. 브이월드에서 용도지역을 읽는다.
-  4. 상가정보에서 주변 카페와 필라테스 학원 수를 센다.
-  5. 업종 적합성을 판정하고 업종별 창업비를 추정한다.
-  6. 사진을 정리해 프론트 폴더에 복사하고 DB에 올린다.
+카카오 로컬, 건축HUB, 브이월드, 상가정보를 조회하고 업종 적합성을 판정한 뒤,
+사진을 프론트 폴더에 복사하고 DB에 올린다.
 
-사용 예 (backend 폴더에서):
-  .venv/Scripts/python -m scripts.register_listing --address "서울 성동구 성수동2가 300-1" --floor 1 \\
-      --area 39.6 --ceiling 3.2 --deposit 3000 --rent 180 --nearby "성수역 5분" --id seongsu-300-1-1f \\
-      --photos "C:/사진/성수300" --dry-run
+실행 (backend 폴더에서):
+  .venv/Scripts/python -m scripts.register_listing --address "서울 성동구 성수동2가 300-1" --floor 1 \
+      --area 39.6 --ceiling 3.2 --deposit 3000 --rent 180 --nearby "성수역 5분" --dry-run
 
---dry-run을 붙이면 조회와 판정만 보여 주고 DB와 파일은 건드리지 않는다. 결과가 맞으면 --dry-run을 빼고 다시 실행한다.
-금액은 보증금과 월세가 만원 단위, 창업비 추정은 예시 단가 기준이다.
+--dry-run은 조회와 판정만 출력하고 저장하지 않는다. 보증금과 월세는 만원 단위이고, 창업비는 예시 단가 기준 추정이다.
+--photos에는 실제 폴더 경로를 넣는다.
 """
 import argparse
 import json

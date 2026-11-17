@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import env
-from app.routers import demolition, listings, products, quotes, render_jobs
+from app.routers import demolition, listings, products, quotes, render_jobs, vacancy
 
 app = FastAPI(title="Shopportunity API")
 
@@ -11,7 +11,7 @@ app = FastAPI(title="Shopportunity API")
 origins = [o.strip() for o in (env("CORS_ORIGINS") or "http://localhost:3000").split(",") if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
 
-for router in (listings.router, products.router, render_jobs.router, quotes.router, demolition.router):
+for router in (listings.router, products.router, render_jobs.router, quotes.router, demolition.router, vacancy.router):
     app.include_router(router)
 
 

@@ -23,7 +23,7 @@
 | `IMAGE_GEN_API_KEY` | functions | 불가. 외부 이미지 생성 API |
 | `FIREBASE_SERVICE_ACCOUNT` | backend | 불가. Cloud Tasks 등록용 |
 
-`SUPABASE_DB_URL`은 Supabase 대시보드 Connect의 **Session pooler** 주소를 쓴다. 직접 연결 주소(`db.<프로젝트>.supabase.co`)는 IPv6 전용이라 IPv4 네트워크와 Vercel 함수에서 접속되지 않는다. 형식은 `postgresql://postgres.<프로젝트>:<비밀번호>@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres`다.
+`SUPABASE_DB_URL`은 Supabase 대시보드 Connect의 Session pooler 주소를 쓴다. 직접 연결 주소(`db.<프로젝트>.supabase.co`)는 IPv6 전용이라 IPv4 네트워크와 Vercel 함수에서 접속되지 않는다. 형식은 `postgresql://postgres.<프로젝트>:<비밀번호>@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres`다.
 
 `NEXT_PUBLIC_SUPABASE_ANON_KEY`에는 대시보드의 Publishable key(`sb_publishable_...`)를 넣는다.
 
@@ -43,13 +43,13 @@
 
 ## 배포 순서
 
-1. **Supabase 프로젝트를 만든다.** `postgis`, `vector` 확장을 켠다. `supabase/migrations/`의 SQL을 순서대로 적용한다.
-2. **Supabase Storage 버킷을 만든다.** `listing-photos`, `renders`, `quote-pdfs` 세 개다.
-3. **Firebase 프로젝트를 만든다.** Blaze 요금제로 올리고 Firestore, Cloud Functions, Cloud Tasks를 켠다.
-4. **`functions/`를 배포한다.** `firebase deploy --only functions`.
-5. **Vercel에 프로젝트 두 개를 연결한다.** 같은 저장소에서 Root Directory를 `frontend`, `backend`로 각각 지정한다.
-6. **환경변수를 넣는다.** 위 표의 값을 Vercel과 Firebase에 각각 넣는다.
-7. **카카오 개발자 콘솔에 Vercel 도메인을 등록한다.** 등록하지 않으면 지도가 뜨지 않는다.
+1. Supabase 프로젝트를 만든다. `postgis`, `vector` 확장을 켠다. `supabase/migrations/`의 SQL을 순서대로 적용한다.
+2. Supabase Storage 버킷을 만든다. `listing-photos`, `renders`, `quote-pdfs` 세 개다.
+3. Firebase 프로젝트를 만든다. Blaze 요금제로 올리고 Firestore, Cloud Functions, Cloud Tasks를 켠다.
+4. `functions/`를 배포한다. `firebase deploy --only functions`.
+5. Vercel에 프로젝트 두 개를 연결한다. 같은 저장소에서 Root Directory를 `frontend`, `backend`로 각각 지정한다.
+6. 환경변수를 넣는다. 위 표의 값을 Vercel과 Firebase에 각각 넣는다.
+7. 카카오 개발자 콘솔에 Vercel 도메인을 등록한다. 등록하지 않으면 지도가 뜨지 않는다.
 
 ## 확인할 것
 

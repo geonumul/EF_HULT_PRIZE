@@ -59,3 +59,10 @@ def floor_info(bcode: str, main_no: str, sub_no: str, floor: int) -> dict:
         return {}
     biggest = max(uses, key=lambda use: use["areaM2"] or 0)
     return {"floor": floor, "purpose": biggest["purpose"], "areaM2": biggest["areaM2"], "uses": uses}
+
+
+def all_floors(bcode: str, main_no: str, sub_no: str) -> list[dict]:
+    """한 번지의 층별개요 항목 전체. 공실 후보를 찾을 때 쓴다."""
+    if not env("DATA_GO_KR_KEY"):
+        return []
+    return _get("getBrFlrOulnInfo", bcode, main_no, sub_no)

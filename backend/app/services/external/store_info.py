@@ -48,3 +48,26 @@ def nearby_counts(lng: float, lat: float, radius_m: int = 300) -> dict:
         if read >= total:
             break
     return dict(counts, total=total or 0)
+
+
+def stores_in_radius(lng: float, lat: float, radius_m: int) -> list[dict]:
+    """반경 안 점포 원본 목록. 공실 후보를 찾을 때 번지와 층별로 묶어 쓴다."""
+    if not env("DATA_GO_KR_KEY"):
+        return []
+    stores: list[dict] = []
+    total = None
+    for page in range(1, MAX_PAGES + 1):
+        params = {
+            "serviceKey": env("DATA_GO_KR_KEY"), "radius": radius_m, "cx": lng, "cy": lat,
+            "numOfRows": PAGE_SIZE, "pageNo": page, "type": "json",
+        }
+        response = httpx.get(URL, params=params, timeout=30)
+        response.raise_for_status()
+        body = response.json().get("body") or {}
+        items = body.get("items") or []
+        if total is None:
+            total = body.get("totalCount", 0)
+        stores.extend(items)
+        if not items or len(stores) >= total:
+            break
+    return stores

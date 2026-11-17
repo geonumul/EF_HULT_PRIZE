@@ -13,6 +13,8 @@ import {
   type KakaoMaps,
 } from "@/lib/kakao";
 import { FALLBACK_POINTS } from "@/mocks/map";
+import type { VacancyCandidate } from "@/types/vacancy";
+import CandidateDot from "./CandidateDot";
 import type { Listing, UseType } from "@/types";
 import type { ClusterPin } from "@/types/map";
 import { costOf } from "./listingHelpers";
@@ -28,6 +30,9 @@ type Props = {
   locateTick: number; // 현위치 버튼을 누를 때마다 1 늘어난다
   onZoomChange: (zoom: number) => void;
   onSelect: (id: string | null) => void;
+  candidates: VacancyCandidate[]; // 후보 보기를 켰을 때만 값이 있다
+  selectedCandidateId: string | null;
+  onSelectCandidate: (id: string) => void;
 };
 
 const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
@@ -44,6 +49,9 @@ export default function MapCanvas({
   locateTick,
   onZoomChange,
   onSelect,
+  candidates,
+  selectedCandidateId,
+  onSelectCandidate,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
@@ -54,6 +62,10 @@ export default function MapCanvas({
   const pinHostsRef = useRef<Record<string, HTMLElement>>({});
   const [pinHosts, setPinHosts] = useState<Record<string, HTMLElement>>({});
   const [showMe, setShowMe] = useState(false);
+  // 공실 후보 점도 같은 방식으로 카카오 오버레이에 올린다.
+  const candidateOverlaysRef = useRef<Record<string, KakaoCustomOverlay>>({});
+  const candidateHostsRef = useRef<Record<string, HTMLElement>>({});
+  const [candidateHosts, setCandidateHosts] = useState<Record<string, HTMLElement>>({});
 
   // 카카오 이벤트는 처음 한 번만 등록하므로, 최신 값은 여기에 담아 읽는다.
   const latest = useRef({ listings, zoom, onZoomChange });
@@ -159,6 +171,44 @@ export default function MapCanvas({
     setPinHosts(nextHosts);
   }, [listings, kakaoReady]);
 
+  // 후보 목록이 바뀌면 후보 오버레이를 맞춘다. 후보 보기를 끄면 목록이 비어서 모두 지워진다.
+  useEffect(() => {
+    const map = mapRef.current;
+    const maps = mapsRef.current;
+    if (!kakaoReady || !map || !maps) return;
+
+    const nextOverlays: Record<string, KakaoCustomOverlay> = {};
+    const nextHosts: Record<string, HTMLElement> = {};
+    for (const candidate of candidates) {
+      const existing = candidateOverlaysRef.current[candidate.id];
+      if (existing && candidateHostsRef.current[candidate.id]) {
+        nextOverlays[candidate.id] = existing;
+        nextHosts[candidate.id] = candidateHostsRef.current[candidate.id];
+        continue;
+      }
+      const host = document.createElement("div");
+      host.style.width = "0";
+      host.style.height = "0";
+      const overlay = new maps.CustomOverlay({
+        position: new maps.LatLng(candidate.position.lat, candidate.position.lng),
+        content: host,
+        xAnchor: 0,
+        yAnchor: 0,
+        zIndex: 0,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      nextOverlays[candidate.id] = overlay;
+      nextHosts[candidate.id] = host;
+    }
+    for (const id of Object.keys(candidateOverlaysRef.current)) {
+      if (!nextOverlays[id]) candidateOverlaysRef.current[id].setMap(null);
+    }
+    candidateOverlaysRef.current = nextOverlays;
+    candidateHostsRef.current = nextHosts;
+    setCandidateHosts(nextHosts);
+  }, [candidates, kakaoReady]);
+
   // 선택한 공실의 핀이 다른 핀 위에 보이게 한다.
   useEffect(() => {
     for (const [id, overlay] of Object.entries(overlaysRef.current)) {
@@ -243,6 +293,23 @@ export default function MapCanvas({
       {KAKAO_KEY && (
         <div ref={containerRef} className={styles.kakao} style={{ visibility: kakaoReady ? "visible" : "hidden" }} />
       )}
+
+      {/* 카카오 지도 위 공실 후보 점 */}
+      {kakaoReady &&
+        candidates.map((candidate) => {
+          const host = candidateHosts[candidate.id];
+          if (!host) return null;
+          return createPortal(
+            <CandidateDot
+              confidence={candidate.confidence}
+              selected={candidate.id === selectedCandidateId}
+              ariaLabel={`공실 후보 ${candidate.address} ${candidate.floor}층`}
+              onClick={() => onSelectCandidate(candidate.id)}
+            />,
+            host,
+            candidate.id,
+          );
+        })}
 
       {/* 카카오 지도 위 공실 핀. 오버레이 요소 안에 그린다. */}
       {kakaoReady &&

@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Chip from "@/components/ui/Chip";
 import { CLUSTER_PINS } from "@/mocks/map";
-import { useListings } from "@/lib/api/hooks";
+import { useCandidates, useListings } from "@/lib/api/hooks";
 import type { UseType } from "@/types";
 import type { MapFilters, SortKey } from "@/types/map";
+import CandidateCard from "./CandidateCard";
 import CategoryTabs from "./CategoryTabs";
 import { LocateIcon, MinusIcon, PlusIcon, SearchIcon } from "./icons";
 import ListPanel from "./ListPanel";
@@ -29,7 +30,13 @@ export default function MapScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const use = parseUse(searchParams.get("use"));
+  const [showCandidates, setShowCandidates] = useState(false);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const { listings } = useListings();
+  const { candidates } = useCandidates(showCandidates);
+  // 후보 보기를 끄면 점을 모두 지운다.
+  const shownCandidates = showCandidates ? candidates : [];
+  const selectedCandidate = shownCandidates.find((candidate) => candidate.id === selectedCandidateId) ?? null;
 
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<MapFilters>({ under5000: false, firstFloorOnly: false, noPremium: false });
@@ -97,7 +104,16 @@ export default function MapScreen() {
             zoom={zoom}
             locateTick={locateTick}
             onZoomChange={setZoom}
-            onSelect={setSelectedId}
+            onSelect={(id) => {
+              setSelectedId(id);
+              if (id) setSelectedCandidateId(null);
+            }}
+            candidates={shownCandidates}
+            selectedCandidateId={selectedCandidateId}
+            onSelectCandidate={(id) => {
+              setSelectedCandidateId(id);
+              setSelectedId(null);
+            }}
           />
 
           <label className={`glass ${styles.search}`}>
@@ -121,7 +137,12 @@ export default function MapScreen() {
             <Chip className={styles.mapChip} selected={filters.noPremium} onClick={() => toggleFilter("noPremium")}>
               권리금 없음
             </Chip>
+            <Chip className={styles.mapChip} selected={showCandidates} onClick={() => setShowCandidates(!showCandidates)}>
+              공실 후보 보기
+            </Chip>
           </div>
+
+          {selectedCandidate && <CandidateCard candidate={selectedCandidate} onClose={() => setSelectedCandidateId(null)} />}
 
           {selected && (
             <PreviewCard

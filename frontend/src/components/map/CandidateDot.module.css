@@ -1,0 +1,25 @@
+/* 후보 점. 중심이 좌표 위에 오도록 절반만큼 당긴다. */
+.dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid var(--gray-0);
+  border-radius: var(--radius-full);
+  transform: translate(-50%, -50%);
+  box-shadow: var(--elevation-1);
+}
+
+.strong {
+  background: var(--brand-500);
+}
+
+.weak {
+  background: var(--gray-400);
+}
+
+.selected {
+  width: 20px;
+  height: 20px;
+  box-shadow: var(--elevation-2);
+}
