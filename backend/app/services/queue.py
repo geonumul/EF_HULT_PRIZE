@@ -62,6 +62,9 @@ def enqueue_render_job(job: dict) -> bool:
             "url": worker_url,
             "headers": {"Content-Type": "application/json"},
             "body": body,
+            # 렌더링 함수는 외부 호출을 막아 두었다. 큐가 이 서비스 계정의 신분증(OIDC 토큰)을 붙여서 부른다.
+            # 이 계정에 함수(Cloud Run)를 호출할 권한이 있어야 한다. docs/DEPLOY.md 참고.
+            "oidcToken": {"serviceAccountEmail": account["client_email"], "audience": worker_url},
         }
     }
     response = httpx.post(
