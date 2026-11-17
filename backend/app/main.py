@@ -15,6 +15,12 @@ for router in (listings.router, products.router, render_jobs.router, quotes.rout
     app.include_router(router)
 
 
+@app.get("/")
+def root():
+    """루트 주소로 열었을 때 빈 화면 대신 안내를 보여 준다."""
+    return {"service": "Shopportunity API", "docs": "/docs", "health": "/health", "listings": "/listings"}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
