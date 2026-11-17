@@ -57,3 +57,22 @@
 - 이미지 생성 API로 무엇을 쓸지. 한 번에 한 곳씩 시험해 보고 고른다.
 - 임대 안내문이나 중개사 연락처를 화면에 보여도 되는지 중개사에게 허락을 받는다.
 - 발표에서 "렌더링은 사전 생성 결과, 판정과 견적은 규칙 기반"이라고 밝힌다.
+
+## 공실 후보 탐색 실행
+
+성수동 중심 반경 10km를 반경 700m 조각으로 나눠 가까운 곳부터 훑는다. 건축HUB 하루 한도(10,000건)에 닿으면 멈추고, 같은 명령을 다시 실행하면 이어서 한다. 조사한 번지는 `backend/data/scanned_parcels.json`에 남는다.
+
+```
+cd backend
+.venv\Scripts\python -m scripts.find_vacancies --lat 37.5445 --lng 127.0560 --span-km 20
+```
+
+매일 자동으로 돌리려면 `backend/scripts/daily_scan.ps1`을 작업 스케줄러에 등록한다. 이미 탐색이 돌고 있으면 건너뛴다.
+
+```
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\c\Desktop\EF_HULT_PRIZE\backend\scripts\daily_scan.ps1"
+$trigger = New-ScheduledTaskTrigger -Daily -At 6:00AM
+Register-ScheduledTask -TaskName "Shopportunity-VacancyScan" -Action $action -Trigger $trigger
+```
+
+서울 전체는 호출 방식으로 보름 넘게 걸린다. 전체를 한 번에 채우려면 상가정보와 건축물대장의 파일 데이터를 받아 같은 규칙으로 계산한다.
