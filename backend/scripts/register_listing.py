@@ -176,6 +176,11 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="조회와 판정만 보여 주고 저장하지 않는다")
     args = parser.parse_args()
 
+    # 조회를 시작하기 전에 사진 폴더부터 확인한다. 틀린 경로로 한참 조회한 뒤 멈추지 않게 한다.
+    if args.photos and not Path(args.photos).is_dir():
+        raise SystemExit(f"사진 폴더를 찾을 수 없습니다: {args.photos}
+실제 폴더 경로를 넣거나, 사진 없이 등록하려면 --photos를 빼세요.")
+
     found = lookup(args.address, args.floor)
     place, title, floor_data = found["place"], found["title"], found["floor"]
     building_use = floor_building_use(title, floor_data)
