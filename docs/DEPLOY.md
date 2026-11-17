@@ -22,6 +22,10 @@
 | `IMAGE_GEN_API_KEY` | functions | 불가. 외부 이미지 생성 API |
 | `FIREBASE_SERVICE_ACCOUNT` | backend | 불가. Cloud Tasks 등록용 |
 
+`SUPABASE_DB_URL`은 Supabase 대시보드 Connect의 **Session pooler** 주소를 쓴다. 직접 연결 주소(`db.<프로젝트>.supabase.co`)는 IPv6 전용이라 IPv4 네트워크와 Vercel 함수에서 접속되지 않는다. 형식은 `postgresql://postgres.<프로젝트>:<비밀번호>@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres`다.
+
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`에는 대시보드의 Publishable key(`sb_publishable_...`)를 넣는다.
+
 ## 배포 순서
 
 1. **Supabase 프로젝트를 만든다.** `postgis`, `vector` 확장을 켠다. `supabase/migrations/`의 SQL을 순서대로 적용한다.

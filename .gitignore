@@ -5,6 +5,7 @@ __pycache__/
 
 # 빌드 결과
 .next/
+.next-*/
 dist/
 build/
 *.tsbuildinfo
