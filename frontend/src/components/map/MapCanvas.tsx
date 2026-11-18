@@ -14,6 +14,7 @@ import {
 } from "@/lib/kakao";
 import { FALLBACK_POINTS } from "@/mocks/map";
 import type { VacancyCandidate } from "@/types/vacancy";
+import CandidateCluster from "./CandidateCluster";
 import CandidateDot from "./CandidateDot";
 import type { Listing, UseType } from "@/types";
 import type { ClusterPin } from "@/types/map";
@@ -39,9 +40,12 @@ const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
 const DEFAULT_CENTER = { lat: 37.5446, lng: 127.0557 }; // 성수동
 const STATIC_ZOOM_STEP = 0.25; // 정적 지도는 줌 한 단계마다 25%씩 확대한다
 const MAX_ZOOM = 3;
-const MAX_CANDIDATE_DOTS = 20000; // 한 화면에 그리는 후보 점의 상한. 사실상 화면에 들어오는 후보를 모두 그린다.
+const CLUSTER_CELL_PX = 40; // 이 크기의 칸 안에 두 곳 이상 있으면 하나로 묶는다.
 
 type Viewport = { south: number; west: number; north: number; east: number };
+
+/** 지도에 올리는 점 하나. 후보 한 곳이거나, 겹친 여러 곳을 묶은 배지다. */
+type MapDot = { id: string; lat: number; lng: number; count: number; candidate: VacancyCandidate | null };
 
 /** 카카오 지도에서 지금 화면에 보이는 범위를 읽는다. */
 function readViewport(map: KakaoMap): Viewport {
@@ -186,20 +190,45 @@ export default function MapCanvas({
     setPinHosts(nextHosts);
   }, [listings, kakaoReady]);
 
-  // 화면 범위 안의 후보만 그린다. 점이 수천 개여도 느려지지 않게 한다. 범위 바깥에 조금 여유를 둔다.
-  const visibleCandidates = useMemo(() => {
-    if (!viewport) return candidates.slice(0, MAX_CANDIDATE_DOTS);
+  // 화면 범위 안의 후보를 칸으로 나눠, 한 칸에 둘 이상이면 하나의 묶음으로 만든다.
+  const visibleDots = useMemo(() => {
+    if (!viewport) return [];
     const marginLat = (viewport.north - viewport.south) * 0.1;
     const marginLng = (viewport.east - viewport.west) * 0.1;
-    const inside = candidates.filter(
-      (candidate) =>
-        candidate.position.lat >= viewport.south - marginLat &&
-        candidate.position.lat <= viewport.north + marginLat &&
-        candidate.position.lng >= viewport.west - marginLng &&
-        candidate.position.lng <= viewport.east + marginLng,
-    );
-    return inside.slice(0, MAX_CANDIDATE_DOTS);
+    const container = containerRef.current;
+    const columns = Math.max(1, (container?.clientWidth ?? 1000) / CLUSTER_CELL_PX);
+    const rows = Math.max(1, (container?.clientHeight ?? 700) / CLUSTER_CELL_PX);
+    const cellLng = (viewport.east - viewport.west) / columns;
+    const cellLat = (viewport.north - viewport.south) / rows;
+
+    const cells: Record<string, VacancyCandidate[]> = {};
+    for (const candidate of candidates) {
+      const { lat, lng } = candidate.position;
+      if (lat < viewport.south - marginLat || lat > viewport.north + marginLat) continue;
+      if (lng < viewport.west - marginLng || lng > viewport.east + marginLng) continue;
+      const key = `${Math.floor(lat / cellLat)}:${Math.floor(lng / cellLng)}`;
+      (cells[key] ??= []).push(candidate);
+    }
+
+    return Object.entries(cells).map(([key, members]): MapDot => {
+      if (members.length === 1) {
+        const only = members[0];
+        return { id: only.id, lat: only.position.lat, lng: only.position.lng, count: 1, candidate: only };
+      }
+      const lat = members.reduce((sum, member) => sum + member.position.lat, 0) / members.length;
+      const lng = members.reduce((sum, member) => sum + member.position.lng, 0) / members.length;
+      return { id: `cluster:${key}`, lat, lng, count: members.length, candidate: null };
+    });
   }, [candidates, viewport]);
+
+  /** 묶음을 누르면 그 자리를 중심으로 한 단계 확대한다. */
+  function zoomIntoCluster(dot: MapDot) {
+    const map = mapRef.current;
+    const maps = mapsRef.current;
+    if (!map || !maps) return;
+    map.setCenter(new maps.LatLng(dot.lat, dot.lng));
+    map.setLevel(Math.max(1, map.getLevel() - 1));
+  }
 
   // 후보 목록이 바뀌면 후보 오버레이를 맞춘다. 후보 보기를 끄면 목록이 비어서 모두 지워진다.
   useEffect(() => {
@@ -209,18 +238,18 @@ export default function MapCanvas({
 
     const nextOverlays: Record<string, KakaoCustomOverlay> = {};
     const nextHosts: Record<string, HTMLElement> = {};
-    for (const candidate of visibleCandidates) {
-      const existing = candidateOverlaysRef.current[candidate.id];
-      if (existing && candidateHostsRef.current[candidate.id]) {
-        nextOverlays[candidate.id] = existing;
-        nextHosts[candidate.id] = candidateHostsRef.current[candidate.id];
+    for (const dot of visibleDots) {
+      const existing = candidateOverlaysRef.current[dot.id];
+      if (existing && candidateHostsRef.current[dot.id]) {
+        nextOverlays[dot.id] = existing;
+        nextHosts[dot.id] = candidateHostsRef.current[dot.id];
         continue;
       }
       const host = document.createElement("div");
       host.style.width = "0";
       host.style.height = "0";
       const overlay = new maps.CustomOverlay({
-        position: new maps.LatLng(candidate.position.lat, candidate.position.lng),
+        position: new maps.LatLng(dot.lat, dot.lng),
         content: host,
         xAnchor: 0,
         yAnchor: 0,
@@ -228,8 +257,8 @@ export default function MapCanvas({
         clickable: true,
       });
       overlay.setMap(map);
-      nextOverlays[candidate.id] = overlay;
-      nextHosts[candidate.id] = host;
+      nextOverlays[dot.id] = overlay;
+      nextHosts[dot.id] = host;
     }
     for (const id of Object.keys(candidateOverlaysRef.current)) {
       if (!nextOverlays[id]) candidateOverlaysRef.current[id].setMap(null);
@@ -237,7 +266,7 @@ export default function MapCanvas({
     candidateOverlaysRef.current = nextOverlays;
     candidateHostsRef.current = nextHosts;
     setCandidateHosts(nextHosts);
-  }, [visibleCandidates, kakaoReady]);
+  }, [visibleDots, kakaoReady]);
 
   // 선택한 공실의 핀이 다른 핀 위에 보이게 한다.
   useEffect(() => {
@@ -326,18 +355,23 @@ export default function MapCanvas({
 
       {/* 카카오 지도 위 공실 후보 점 */}
       {kakaoReady &&
-        visibleCandidates.map((candidate) => {
-          const host = candidateHosts[candidate.id];
+        visibleDots.map((dot) => {
+          const host = candidateHosts[dot.id];
           if (!host) return null;
+          const candidate = dot.candidate;
           return createPortal(
-            <CandidateDot
-              confidence={candidate.confidence}
-              selected={candidate.id === selectedCandidateId}
-              ariaLabel={`공실 후보 ${candidate.address} ${candidate.floor}층`}
-              onClick={() => onSelectCandidate(candidate.id)}
-            />,
+            candidate ? (
+              <CandidateDot
+                confidence={candidate.confidence}
+                selected={candidate.id === selectedCandidateId}
+                ariaLabel={`공실 후보 ${candidate.address} ${candidate.floor}층`}
+                onClick={() => onSelectCandidate(candidate.id)}
+              />
+            ) : (
+              <CandidateCluster count={dot.count} onClick={() => zoomIntoCluster(dot)} />
+            ),
             host,
-            candidate.id,
+            dot.id,
           );
         })}
 

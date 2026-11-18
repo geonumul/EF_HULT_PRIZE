@@ -1,0 +1,18 @@
+/* 묶음 배지. 중심이 묶음의 평균 좌표 위에 오도록 절반만큼 당긴다. */
+.cluster {
+  position: absolute;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 8px;
+  border: 2px solid var(--gray-0);
+  border-radius: var(--radius-full);
+  background: var(--brand-500);
+  color: var(--gray-0);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  box-shadow: var(--elevation-1);
+  cursor: pointer;
+}
