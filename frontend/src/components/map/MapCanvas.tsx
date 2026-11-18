@@ -39,7 +39,7 @@ const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
 const DEFAULT_CENTER = { lat: 37.5446, lng: 127.0557 }; // 성수동
 const STATIC_ZOOM_STEP = 0.25; // 정적 지도는 줌 한 단계마다 25%씩 확대한다
 const MAX_ZOOM = 3;
-const MAX_CANDIDATE_DOTS = 1500; // 한 화면에 그리는 후보 점의 상한. 더 많으면 가능성이 높은 순서로 자른다.
+const MAX_CANDIDATE_DOTS = 20000; // 한 화면에 그리는 후보 점의 상한. 사실상 화면에 들어오는 후보를 모두 그린다.
 
 type Viewport = { south: number; west: number; north: number; east: number };
 
@@ -198,7 +198,7 @@ export default function MapCanvas({
         candidate.position.lng >= viewport.west - marginLng &&
         candidate.position.lng <= viewport.east + marginLng,
     );
-    return inside.slice(0, MAX_CANDIDATE_DOTS); // 서버가 가능성이 높은 순서로 주므로 앞에서 자르면 높은 것이 남는다.
+    return inside.slice(0, MAX_CANDIDATE_DOTS);
   }, [candidates, viewport]);
 
   // 후보 목록이 바뀌면 후보 오버레이를 맞춘다. 후보 보기를 끄면 목록이 비어서 모두 지워진다.
