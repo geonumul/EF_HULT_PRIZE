@@ -58,7 +58,7 @@ export function useCandidates(enabled: boolean) {
   useEffect(() => {
     if (!enabled || candidates.length > 0) return;
     let cancelled = false;
-    apiGet<VacancyCandidate[]>("/vacancy-candidates?minConfidence=0.5&limit=600").then((data) => {
+    apiGet<VacancyCandidate[]>("/vacancy-candidates?minConfidence=0&limit=20000").then((data) => {
       if (!cancelled && data) setCandidates(data);
     });
     return () => {

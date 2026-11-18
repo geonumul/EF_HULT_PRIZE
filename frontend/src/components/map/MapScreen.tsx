@@ -138,7 +138,7 @@ export default function MapScreen() {
               권리금 없음
             </Chip>
             <Chip className={styles.mapChip} selected={showCandidates} onClick={() => setShowCandidates(!showCandidates)}>
-              공실 후보 보기
+              공실 후보 보기{showCandidates && candidates.length > 0 ? ` ${candidates.length.toLocaleString("ko-KR")}` : ""}
             </Chip>
           </div>
 

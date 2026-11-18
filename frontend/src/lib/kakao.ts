@@ -7,8 +7,12 @@ type KakaoCustomOverlay = {
   setZIndex: (zIndex: number) => void;
 };
 
+type KakaoCoords = { getLat: () => number; getLng: () => number };
+
 type KakaoBounds = {
   extend: (point: KakaoLatLng) => void;
+  getSouthWest: () => KakaoCoords;
+  getNorthEast: () => KakaoCoords;
 };
 
 type KakaoMap = {
@@ -16,6 +20,7 @@ type KakaoMap = {
   getLevel: () => number;
   setCenter: (center: KakaoLatLng) => void;
   relayout: () => void; // 지도 영역 크기가 바뀐 뒤 다시 계산한다.
+  getBounds: () => KakaoBounds; // 지금 화면에 보이는 범위
   setBounds: (bounds: KakaoBounds, paddingTop?: number, paddingRight?: number, paddingBottom?: number, paddingLeft?: number) => void;
   getProjection: () => { containerPointFromCoords: (coords: KakaoLatLng) => { x: number; y: number } };
 };

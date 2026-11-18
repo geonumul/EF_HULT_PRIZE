@@ -1,6 +1,6 @@
 "use client";
 // 지도 바탕과 핀. 카카오 지도를 쓸 수 있으면 카카오 지도 위에, 없으면 시안의 지도 이미지 위에 같은 핀을 올린다.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { formatArea, formatMan, USE_LABELS } from "@/lib/format";
@@ -39,6 +39,17 @@ const KAKAO_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
 const DEFAULT_CENTER = { lat: 37.5446, lng: 127.0557 }; // 성수동
 const STATIC_ZOOM_STEP = 0.25; // 정적 지도는 줌 한 단계마다 25%씩 확대한다
 const MAX_ZOOM = 3;
+const MAX_CANDIDATE_DOTS = 1500; // 한 화면에 그리는 후보 점의 상한. 더 많으면 가능성이 높은 순서로 자른다.
+
+type Viewport = { south: number; west: number; north: number; east: number };
+
+/** 카카오 지도에서 지금 화면에 보이는 범위를 읽는다. */
+function readViewport(map: KakaoMap): Viewport {
+  const bounds = map.getBounds();
+  const southWest = bounds.getSouthWest();
+  const northEast = bounds.getNorthEast();
+  return { south: southWest.getLat(), west: southWest.getLng(), north: northEast.getLat(), east: northEast.getLng() };
+}
 
 export default function MapCanvas({
   listings,
@@ -62,6 +73,7 @@ export default function MapCanvas({
   const pinHostsRef = useRef<Record<string, HTMLElement>>({});
   const [pinHosts, setPinHosts] = useState<Record<string, HTMLElement>>({});
   const [showMe, setShowMe] = useState(false);
+  const [viewport, setViewport] = useState<Viewport | null>(null);
   // 공실 후보 점도 같은 방식으로 카카오 오버레이에 올린다.
   const candidateOverlaysRef = useRef<Record<string, KakaoCustomOverlay>>({});
   const candidateHostsRef = useRef<Record<string, HTMLElement>>({});
@@ -88,6 +100,8 @@ export default function MapCanvas({
         });
         mapRef.current = map;
         mapsRef.current = maps;
+        // 지도를 움직이거나 확대한 뒤 멈추면 화면 범위를 다시 읽는다.
+        maps.event.addListener(map, "idle", () => setViewport(readViewport(map)));
 
         // 영역이 화면에 자리 잡은 뒤 크기를 다시 계산하고, 공실이 모두 보이게 맞춘다.
         // 이 단계를 빼면 지도 중심과 핀 위치가 어긋난다.
@@ -99,6 +113,7 @@ export default function MapCanvas({
         map.setBounds(bounds, 160, 80, 120, 80);
 
         setKakaoReady(true);
+        setViewport(readViewport(map));
       })
       .catch(() => {
         // 불러오기에 실패하면 정적 지도가 그대로 보인다.
@@ -171,6 +186,21 @@ export default function MapCanvas({
     setPinHosts(nextHosts);
   }, [listings, kakaoReady]);
 
+  // 화면 범위 안의 후보만 그린다. 점이 수천 개여도 느려지지 않게 한다. 범위 바깥에 조금 여유를 둔다.
+  const visibleCandidates = useMemo(() => {
+    if (!viewport) return candidates.slice(0, MAX_CANDIDATE_DOTS);
+    const marginLat = (viewport.north - viewport.south) * 0.1;
+    const marginLng = (viewport.east - viewport.west) * 0.1;
+    const inside = candidates.filter(
+      (candidate) =>
+        candidate.position.lat >= viewport.south - marginLat &&
+        candidate.position.lat <= viewport.north + marginLat &&
+        candidate.position.lng >= viewport.west - marginLng &&
+        candidate.position.lng <= viewport.east + marginLng,
+    );
+    return inside.slice(0, MAX_CANDIDATE_DOTS); // 서버가 가능성이 높은 순서로 주므로 앞에서 자르면 높은 것이 남는다.
+  }, [candidates, viewport]);
+
   // 후보 목록이 바뀌면 후보 오버레이를 맞춘다. 후보 보기를 끄면 목록이 비어서 모두 지워진다.
   useEffect(() => {
     const map = mapRef.current;
@@ -179,7 +209,7 @@ export default function MapCanvas({
 
     const nextOverlays: Record<string, KakaoCustomOverlay> = {};
     const nextHosts: Record<string, HTMLElement> = {};
-    for (const candidate of candidates) {
+    for (const candidate of visibleCandidates) {
       const existing = candidateOverlaysRef.current[candidate.id];
       if (existing && candidateHostsRef.current[candidate.id]) {
         nextOverlays[candidate.id] = existing;
@@ -207,7 +237,7 @@ export default function MapCanvas({
     candidateOverlaysRef.current = nextOverlays;
     candidateHostsRef.current = nextHosts;
     setCandidateHosts(nextHosts);
-  }, [candidates, kakaoReady]);
+  }, [visibleCandidates, kakaoReady]);
 
   // 선택한 공실의 핀이 다른 핀 위에 보이게 한다.
   useEffect(() => {
@@ -296,7 +326,7 @@ export default function MapCanvas({
 
       {/* 카카오 지도 위 공실 후보 점 */}
       {kakaoReady &&
-        candidates.map((candidate) => {
+        visibleCandidates.map((candidate) => {
           const host = candidateHosts[candidate.id];
           if (!host) return null;
           return createPortal(
