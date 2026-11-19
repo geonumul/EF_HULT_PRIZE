@@ -14,7 +14,7 @@ export default function CandidateCard({ candidate, floors, onSelectFloor, onClos
   return (
     <aside className={`glass ${styles.card}`} aria-label="공실 후보 정보">
       <div className={styles.head}>
-        <span className={styles.badge}>공실 후보 · 확인 전</span>
+        <span className={styles.badge}>공실</span>
         <button type="button" className={styles.close} aria-label="닫기" onClick={onClose}>
           ×
         </button>
@@ -46,7 +46,7 @@ export default function CandidateCard({ candidate, floors, onSelectFloor, onClos
           <li key={reason}>{reason}</li>
         ))}
       </ul>
-      <p className={styles.notice}>임대 중인지는 알 수 없습니다. 현장이나 중개사 확인이 필요합니다.</p>
+      <p className={styles.notice}>공공데이터 기준 정보예요. 임대 조건은 중개사에게 확인하세요.</p>
     </aside>
   );
 }

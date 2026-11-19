@@ -19,8 +19,8 @@
 }
 
 .weak {
-  border-color: var(--gray-400);
-  color: var(--gray-600);
+  border-color: var(--brand-500);
+  color: var(--brand-600);
 }
 
 /* 선택하면 속을 채운다. */
