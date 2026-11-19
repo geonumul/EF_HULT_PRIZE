@@ -69,3 +69,33 @@ export function useCandidates(enabled: boolean) {
 
   return { candidates };
 }
+
+/** 인터넷 쇼핑몰에서 찾은 상품 하나 */
+export type ShoppingItem = { name: string; price: number; mall: string; url: string; imageUrl: string };
+
+// 같은 상품 이름은 한 번만 물어본다. null은 찾지 못했거나 서버에 검색 키가 없다는 뜻이다.
+const shoppingCache = new Map<string, ShoppingItem | null>();
+
+/** 상품 이름으로 인터넷 최저가 상품을 찾는다. GET /shopping/search. 못 찾으면 null이라 화면이 검색 링크를 쓴다. */
+export function useShoppingItem(name: string, enabled: boolean): ShoppingItem | null {
+  const [item, setItem] = useState<ShoppingItem | null>(shoppingCache.get(name) ?? null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (shoppingCache.has(name)) {
+      setItem(shoppingCache.get(name) ?? null);
+      return;
+    }
+    let cancelled = false;
+    apiGet<{ items: ShoppingItem[] }>(`/shopping/search?q=${encodeURIComponent(name)}&limit=1`).then((data) => {
+      const found = data?.items?.[0] ?? null;
+      shoppingCache.set(name, found);
+      if (!cancelled) setItem(found);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [name, enabled]);
+
+  return item;
+}

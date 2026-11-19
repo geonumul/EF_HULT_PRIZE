@@ -2,6 +2,7 @@
 
 // 마켓 상품 카드. Figma ProductCard 38:590에 치수, 신품·중고 가격, 판매처 링크, 담기 버튼을 더했다.
 import { formatWon } from "@/lib/format";
+import { useShoppingItem } from "@/lib/api/hooks";
 import { isPartnerProduct } from "@/lib/shopping";
 import type { Product } from "@/types";
 import { CATEGORY_LABELS } from "./categories";
@@ -18,6 +19,7 @@ export default function ProductCard({ product, showUsed, count, onAdd }: Props) 
   const seller = product.links[0]; // 링크는 최저가 순으로 들어 있다.
   const hasLink = Boolean(seller);
   const partner = isPartnerProduct(product);
+  const web = useShoppingItem(product.name, !partner); // 입점 업체가 없는 상품은 인터넷 최저가를 찾아 본다.
   const size = `${product.widthMm}×${product.depthMm}×${product.heightMm}mm`;
   const mainPrice = showUsed && product.usedPrice ? product.usedPrice : product.price;
 
@@ -50,7 +52,11 @@ export default function ProductCard({ product, showUsed, count, onAdd }: Props) 
         {product.usedPrice ? ` · 중고 ${formatWon(product.usedPrice)}` : " · 중고 없음"}
       </p>
 
-      {seller ? (
+      {web ? (
+        <a className={styles.seller} href={web.url} target="_blank" rel="noopener noreferrer">
+          인터넷 최저가 {web.mall} {formatWon(web.price)} <span>판매처 ↗</span>
+        </a>
+      ) : seller ? (
         <a className={styles.seller} href={seller.url} target="_blank" rel="noopener noreferrer">
           최저가 {seller.label} {formatWon(seller.price)} <span>판매처 ↗</span>
         </a>
