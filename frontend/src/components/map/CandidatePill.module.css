@@ -1,0 +1,31 @@
+/* 확대했을 때의 공실 후보 표지. 중심이 좌표 위에 오도록 절반만큼 당긴다. */
+.pill {
+  position: absolute;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 2px solid;
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  box-shadow: var(--elevation-2);
+}
+
+.strong {
+  border-color: var(--brand-500);
+  color: var(--brand-600);
+}
+
+.weak {
+  border-color: var(--gray-400);
+  color: var(--gray-600);
+}
+
+/* 선택하면 속을 채운다. */
+.selected {
+  background: var(--brand-500);
+  border-color: var(--brand-500);
+  color: var(--gray-0);
+}

@@ -82,3 +82,28 @@
     margin: -8px -10px -8px 0;
   }
 }
+
+/* 같은 건물의 층 선택 */
+.floors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+
+.floor {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  background: var(--gray-0);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.floorOn {
+  border-color: var(--brand-500);
+  background: var(--brand-500);
+  color: var(--gray-0);
+}

@@ -8,6 +8,7 @@ import { CLUSTER_PINS } from "@/mocks/map";
 import { useCandidates, useListings } from "@/lib/api/hooks";
 import type { UseType } from "@/types";
 import type { MapFilters, SortKey } from "@/types/map";
+import { buildingKey } from "@/lib/vacancy";
 import CandidateCard from "./CandidateCard";
 import CategoryTabs from "./CategoryTabs";
 import { LocateIcon, MinusIcon, PlusIcon, SearchIcon } from "./icons";
@@ -37,6 +38,10 @@ export default function MapScreen() {
   // 후보 보기를 끄면 점을 모두 지운다.
   const shownCandidates = showCandidates ? candidates : [];
   const selectedCandidate = shownCandidates.find((candidate) => candidate.id === selectedCandidateId) ?? null;
+  // 선택한 후보와 같은 건물의 다른 층들
+  const sameBuilding = selectedCandidate
+    ? shownCandidates.filter((candidate) => buildingKey(candidate) === buildingKey(selectedCandidate)).sort((a, b) => a.floor - b.floor)
+    : [];
 
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<MapFilters>({ under5000: false, firstFloorOnly: false, noPremium: false });
@@ -142,7 +147,14 @@ export default function MapScreen() {
             </Chip>
           </div>
 
-          {selectedCandidate && <CandidateCard candidate={selectedCandidate} onClose={() => setSelectedCandidateId(null)} />}
+          {selectedCandidate && (
+            <CandidateCard
+              candidate={selectedCandidate}
+              floors={sameBuilding}
+              onSelectFloor={setSelectedCandidateId}
+              onClose={() => setSelectedCandidateId(null)}
+            />
+          )}
 
           {selected && (
             <PreviewCard
