@@ -1,0 +1,107 @@
+/* 배치도 SVG. 색은 도면용 값이라 토큰에 없다. */
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+}
+
+.floor {
+  fill: var(--gray-50);
+}
+
+.wall {
+  stroke: var(--gray-700);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.door {
+  stroke: var(--gray-500);
+  stroke-width: 1;
+}
+
+.entryZone {
+  fill: rgba(0, 179, 104, 0.06);
+  stroke: var(--brand-500);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.8;
+}
+
+.box {
+  stroke: rgba(25, 31, 40, 0.35);
+  stroke-width: 1;
+}
+
+.lamp {
+  fill: rgba(255, 214, 90, 0.25);
+  stroke: #c79a1f;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 2;
+}
+
+.bad {
+  stroke: #e5484d;
+  stroke-width: 2;
+}
+
+.label,
+.muted,
+.dimText,
+.clearText {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.label {
+  fill: var(--gray-700);
+}
+
+.muted {
+  fill: var(--gray-500);
+}
+
+.dim {
+  stroke: var(--gray-500);
+  stroke-width: 1;
+}
+
+.dimText {
+  fill: var(--gray-700);
+}
+
+.clearOk,
+.clearBad {
+  stroke-width: 1.4;
+}
+
+.clearOk {
+  stroke: var(--brand-600);
+  color: var(--brand-600);
+}
+
+.clearBad {
+  stroke: #e5484d;
+  color: #e5484d;
+}
+
+/* 글자 뒤에 흰 테두리를 둬서 물건 위에서도 읽히게 한다. */
+.clearText {
+  fill: currentColor;
+  stroke: #fff;
+  stroke-width: 3;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.scaleLine {
+  stroke: var(--gray-700);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.legend text {
+  font-size: 11px;
+  fill: var(--gray-700);
+}

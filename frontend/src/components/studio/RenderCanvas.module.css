@@ -18,11 +18,41 @@
   transition: filter 0.3s;
 }
 
-/* 위쪽 두 배지 */
-.badge {
+/* 위쪽 배지 영역. 왼쪽에는 근거 배지가 쌓이고 오른쪽에는 치수 배지와 버튼이 쌓인다. */
+.top {
   position: absolute;
   top: 16px;
-  z-index: 2;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+.leftStack,
+.rightStack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.leftStack {
+  align-items: flex-start;
+}
+
+.rightStack {
+  align-items: flex-end;
+}
+
+.badge {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -37,18 +67,38 @@
 }
 
 .badgeLeft {
-  left: 16px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--gray-900);
 }
 
 .badgeRight {
-  right: 16px;
   gap: 8px;
   padding-right: 12px;
   /* 시안의 어두운 유리 배지. 토큰에 없는 값이다. */
   background: rgba(25, 31, 40, 0.6);
   color: var(--gray-0);
+}
+
+/* 근거 표시와 검수 결과 */
+.extra {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--gray-700);
+  font-weight: 600;
+  white-space: normal;
+}
+
+.extraOk {
+  background: var(--brand-50);
+  color: var(--brand-600);
+  font-weight: 700;
+  white-space: normal;
+}
+
+.extraBad {
+  background: #fff1f1;
+  color: #c4343a;
+  font-weight: 700;
+  white-space: normal;
 }
 
 .badgeWarn {
@@ -215,21 +265,32 @@
     aspect-ratio: 4 / 3;
   }
 
-  .badge {
+  .top {
     top: 8px;
-    max-width: calc(100% - 16px);
+    left: 8px;
+    right: 8px;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* 배지를 가로로 이어 붙여 이미지를 덜 가린다. */
+  .leftStack,
+  .rightStack {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .rightStack {
+    flex-direction: column;
+  }
+
+  .badge {
+    max-width: 100%;
     padding: 4px 8px;
     font-size: 11px;
     white-space: normal;
-  }
-
-  .badgeLeft {
-    left: 8px;
-  }
-
-  .badgeRight {
-    top: 40px;
-    right: 8px;
   }
 
   /* 핀 둘레를 넓혀 손가락으로 누르기 쉽게 한다. */

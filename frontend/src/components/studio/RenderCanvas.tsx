@@ -14,6 +14,8 @@ type Props = {
   onTagClick: (n: number) => void;
   onBackgroundClick?: () => void;
   leftBadge: string;
+  /** 왼쪽 위 배지 아래에 쌓는 근거 표시와 검수 결과 */
+  extraBadges?: { text: string; tone?: "ok" | "bad" }[];
   rightBadge: string;
   rightBadgeWarn?: boolean;
   /** 렌더링이 만들어지는 중이면 진행 상태를 보여 준다. progress가 없으면 막대 없이 돈다. */
@@ -21,6 +23,8 @@ type Props = {
   /** 상품 먼저 결과의 치수 검증 문구 */
   checks?: string[];
   onBackToBoard?: () => void;
+  /** 오른쪽 위 배지 아래 버튼들 */
+  actions?: ReactNode;
   children?: ReactNode; // 팝오버와 스타일 바
 };
 
@@ -34,13 +38,28 @@ export default function RenderCanvas(props: Props) {
     <div className={styles.canvas} onClick={props.onBackgroundClick}>
       <img className={styles.image} src={imageUrl} alt="AI 렌더링 이미지" style={{ filter: imageFilter }} />
 
-      <div className={`${styles.badge} ${styles.badgeLeft}`}>
-        <img src="/images/studio/icon-sparkle.svg" alt="" width={12} height={12} />
-        {props.leftBadge}
-      </div>
-      <div className={rightBadgeClass}>
-        <img src={props.rightBadgeWarn ? "/images/studio/icon-warn.svg" : "/images/studio/icon-ok.svg"} alt="" width={14} height={14} />
-        {props.rightBadge}
+      <div className={styles.top}>
+        <div className={styles.leftStack}>
+          <div className={`${styles.badge} ${styles.badgeLeft}`}>
+            <img src="/images/studio/icon-sparkle.svg" alt="" width={12} height={12} />
+            {props.leftBadge}
+          </div>
+          {props.extraBadges?.map((badge) => (
+            <div
+              key={badge.text}
+              className={`${styles.badge} ${styles.badgeLeft} ${badge.tone === "bad" ? styles.extraBad : badge.tone === "ok" ? styles.extraOk : styles.extra}`}
+            >
+              {badge.text}
+            </div>
+          ))}
+        </div>
+        <div className={styles.rightStack}>
+          <div className={rightBadgeClass}>
+            <img src={props.rightBadgeWarn ? "/images/studio/icon-warn.svg" : "/images/studio/icon-ok.svg"} alt="" width={14} height={14} />
+            {props.rightBadge}
+          </div>
+          {props.actions}
+        </div>
       </div>
 
       {checks && (

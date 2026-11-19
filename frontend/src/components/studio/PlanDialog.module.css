@@ -1,0 +1,51 @@
+.content {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.plan {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.checks {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.message {
+  margin: 0;
+  padding: 48px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--gray-700);
+}
+
+.message p {
+  margin: 0 0 12px;
+}
+
+.retry {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-0);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .plan,
+  .checks {
+    flex: none;
+    width: 100%;
+  }
+}

@@ -1,5 +1,10 @@
+"use client";
+
 // 공실 후보를 눌렀을 때 지도 왼쪽 아래에 뜨는 카드. 업종별 창업비와 스튜디오로 가는 버튼을 함께 보여 준다.
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { planLayout, roomFromArea } from "@/lib/api/functions";
+import type { PlanNote } from "@/lib/api/functions";
 import { formatMan, USE_LABELS } from "@/lib/format";
 import { useSpace } from "@/lib/spaces";
 import type { UseType, Verdict } from "@/types";
@@ -15,8 +20,28 @@ type Props = {
   onClose: () => void;
 };
 
+/** 이 공간에서 확인할 법령 항목. error 항목과 앞의 2개만 고른다. 불러오지 못하면 빈 목록. */
+function useCheckNotes(areaM2: number | null, ceilingM: number | undefined): PlanNote[] {
+  const [notes, setNotes] = useState<PlanNote[]>([]);
+  useEffect(() => {
+    setNotes([]);
+    if (!areaM2) return;
+    let cancelled = false;
+    planLayout({ room: roomFromArea(areaM2, ceilingM ?? 2.7), useType: "cafe" }).then((result) => {
+      if (cancelled || !result.ok) return;
+      const all = result.data.notes ?? [];
+      setNotes(all.filter((note, index) => note.level === "error" || index < 2));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [areaM2, ceilingM]);
+  return notes;
+}
+
 export default function CandidateCard({ candidate, floors, onSelectFloor, onClose }: Props) {
   const { listing } = useSpace(candidate.id); // 업종별 창업비와 판정. 스튜디오와 견적도 같은 공간 정보를 쓴다.
+  const notes = useCheckNotes(candidate.floorAreaM2, listing?.ceilingHeightM);
   const area = candidate.floorAreaM2 !== null ? `${candidate.floorAreaM2}m²` : "면적 미확인";
   return (
     <aside className={`glass ${styles.card}`} aria-label="공실 후보 정보">
@@ -78,6 +103,18 @@ export default function CandidateCard({ candidate, floors, onSelectFloor, onClos
           <li key={reason}>{reason}</li>
         ))}
       </ul>
+      {notes.length > 0 && (
+        <>
+          <p className={styles.checkTitle}>이 공간에서 확인할 것</p>
+          <ul className={styles.checkList}>
+            {notes.map((note) => (
+              <li key={note.text} className={note.level === "error" ? styles.checkError : undefined}>
+                {note.text}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <p className={styles.notice}>공공데이터 기준 정보예요. 임대 조건은 중개사에게 확인하세요.</p>
     </aside>
   );

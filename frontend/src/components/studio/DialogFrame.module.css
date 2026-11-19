@@ -1,0 +1,79 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 33, 0.45);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100dvh - 32px);
+  border-radius: var(--radius-xl);
+  background: var(--gray-0);
+  box-shadow: var(--elevation-3);
+}
+
+.wide {
+  max-width: 920px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--gray-500);
+}
+
+.body {
+  min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* 모바일은 화면 전체를 쓴다. */
+@media (max-width: 768px) {
+  .backdrop {
+    padding: 0;
+  }
+
+  .dialog {
+    max-width: none;
+    height: auto;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .wide {
+    height: 100dvh;
+  }
+
+  .close {
+    width: 44px;
+    height: 44px;
+  }
+}

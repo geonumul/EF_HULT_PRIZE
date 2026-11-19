@@ -15,6 +15,8 @@ import { findProduct } from "@/mocks/products";
 import { findRender } from "@/mocks/renders";
 import { RENDER_STYLES } from "@/mocks/studio";
 import { generatedRenderUrl } from "@/lib/generatedRenders";
+import { generateRender, roomFromArea } from "@/lib/api/functions";
+import type { LayoutItem, RenderOutput } from "@/lib/api/functions";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
 import ModeSwitch from "./ModeSwitch";
@@ -23,6 +25,10 @@ import StyleBar from "./StyleBar";
 import TagPopover from "./TagPopover";
 import QuotePanel from "./QuotePanel";
 import BoardPanel from "./BoardPanel";
+import CanvasActions from "./CanvasActions";
+import PlanDialog from "./PlanDialog";
+import CodeDialog from "./CodeDialog";
+import RenderProgress from "./RenderProgress";
 
 type Props = {
   listing: Listing;
@@ -34,6 +40,31 @@ type TagEdit = { qty?: number; excluded?: boolean };
 
 const LOADING_MS = 700;
 const BOARD_RENDER_MS = 1500;
+const CODE_KEY = "shopportunity-render-code";
+
+const RENDER_ERRORS: Record<number, string> = {
+  0: "서버에 연결하지 못했어요. 네트워크를 확인하고 다시 시도해 주세요.",
+  400: "렌더링 요청을 처리하지 못했어요. 다른 설정으로 다시 시도해 주세요.",
+  429: "오늘 쓸 수 있는 렌더링 횟수를 모두 썼어요. 내일 다시 시도해 주세요.",
+  500: "이미지를 만들지 못했어요. 잠시 뒤에 다시 시도해 주세요.",
+};
+
+function readSavedCode(): string {
+  try {
+    return localStorage.getItem(CODE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function saveCode(code: string) {
+  try {
+    if (code) localStorage.setItem(CODE_KEY, code);
+    else localStorage.removeItem(CODE_KEY);
+  } catch {
+    // 저장소를 못 쓰면 매번 입력받는다.
+  }
+}
 
 export default function StudioView({ listing, initialUse }: Props) {
   const board = useRenderBoard();
@@ -49,11 +80,22 @@ export default function StudioView({ listing, initialUse }: Props) {
   const [productResult, setProductResult] = useState<RenderResult | null>(null);
   const [boardProgress, setBoardProgress] = useState<number | null>(null);
 
+  // AI로 새로 만든 렌더링. 스타일이나 업종을 바꾸면 버린다.
+  const [generated, setGenerated] = useState<RenderOutput | null>(null);
+  const [rendering, setRendering] = useState(false);
+  const [renderNotice, setRenderNotice] = useState("");
+  const [dialog, setDialog] = useState<"plan" | "code" | null>(null);
+  const [codeMessage, setCodeMessage] = useState("");
+  const renderToken = useRef(0); // 값이 바뀌면 진행 중인 요청 결과는 버린다.
+  const mounted = useRef(true);
+
   // 화면을 떠날 때 돌고 있는 타이머와 가짜 진행을 멈춘다.
   const loadingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelProgress = useRef<(() => void) | null>(null);
   useEffect(() => {
+    mounted.current = true;
     return () => {
+      mounted.current = false;
       if (loadingTimer.current) clearTimeout(loadingTimer.current);
       if (cancelProgress.current) cancelProgress.current();
     };
@@ -63,6 +105,12 @@ export default function StudioView({ listing, initialUse }: Props) {
     setLoadingLabel(label);
     if (loadingTimer.current) clearTimeout(loadingTimer.current);
     loadingTimer.current = setTimeout(() => setLoadingLabel(""), LOADING_MS);
+  }
+
+  function discardGenerated() {
+    renderToken.current += 1;
+    setGenerated(null);
+    setRenderNotice("");
   }
 
   function resetSelection() {
@@ -81,6 +129,7 @@ export default function StudioView({ listing, initialUse }: Props) {
     setShowEmpty(false);
     if (view !== useType) {
       setUseType(view);
+      discardGenerated();
       setProductResult(null); // 보드 결과는 업종마다 다시 만든다.
       resetSelection();
       showLoading("렌더링을 불러오는 중");
@@ -91,12 +140,14 @@ export default function StudioView({ listing, initialUse }: Props) {
     setShowEmpty(false);
     if (key !== styleKey) {
       setStyleKey(key);
+      discardGenerated();
       showLoading("스타일을 적용하는 중");
     }
   }
 
   function changeMode(next: StudioMode) {
     setMode(next);
+    discardGenerated();
     setShowEmpty(false);
     resetSelection();
   }
@@ -139,7 +190,20 @@ export default function StudioView({ listing, initialUse }: Props) {
   const quote = quoteRender ? buildQuote(quoteRender, usedIds) : null;
   const baseTotal = quoteRender ? buildQuote(quoteRender, []).total : 0;
 
-  const activeTag = displayTags.find((tag) => tag.n === activeTagN);
+  // AI로 만든 이미지가 보이는 중이면 그 태그를 쓴다. 번호는 견적 목록의 번호에 맞춘다.
+  const generatedActive = generated !== null && mode === "image" && !showEmpty;
+  const generatedTags = generated
+    ? generated.tags
+        .filter((tag) => findProduct(tag.productId))
+        .map((tag) => ({
+          ...tag,
+          n: displayTags.find((own) => own.productId === tag.productId)?.n ?? tag.n,
+          qty: edits[tag.productId]?.qty ?? tag.qty,
+        }))
+    : [];
+  const canvasTags = generatedActive ? generatedTags : displayTags;
+
+  const activeTag = canvasTags.find((tag) => tag.n === activeTagN);
   const activeProduct = activeTag ? findProduct(activeTag.productId) : undefined;
 
   const usableUsedIds = quoteRender
@@ -158,7 +222,7 @@ export default function StudioView({ listing, initialUse }: Props) {
     : "/quote";
 
   // 캔버스 위 글자
-  const productCount = displayTags.reduce((sum, tag) => sum + tag.qty, 0);
+  const productCount = canvasTags.reduce((sum, tag) => sum + tag.qty, 0);
   const warnCount = render ? render.checks.filter((text) => text.startsWith("확인 필요")).length : 0;
   const isCandidate = listing.terms === "inquiry"; // 공실 후보 공간. 실측과 사진이 없다.
   const measuredBadge = `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · ${isCandidate ? "건축물대장 기준" : "실측 기준"}`;
@@ -167,8 +231,12 @@ export default function StudioView({ listing, initialUse }: Props) {
   let leftBadge = `AI 렌더링 · 판매 상품 ${productCount}개`;
   let rightBadge = render ? `${render.checks.slice(0, 2).join(" · ")} · 치수 검증 완료` : measuredBadge;
   const generatedUrl = mode === "image" ? generatedRenderUrl(listing.thumbnail, useType, styleKey) : null; // 이 공간 사진으로 만든 렌더링
-  const showTags = !showEmpty && !isBoardStage && !generatedUrl; // 만든 이미지에는 번호 태그 위치가 맞지 않아 숨긴다.
+  const showTags = !showEmpty && !isBoardStage && (!generatedUrl || generatedActive); // 미리 만든 이미지에는 번호 태그 위치가 맞지 않아 숨긴다.
   if (generatedUrl) imageUrl = generatedUrl;
+  if (generatedActive && generated) {
+    imageUrl = generated.imageDataUrl;
+    rightBadge = measuredBadge; // 미리 만든 렌더링의 치수 검증 문구는 새 이미지에 맞지 않는다.
+  }
   if (mode === "products") {
     leftBadge = `AI 렌더링 · 상품 먼저 · 상품 ${productCount}개`;
     rightBadge = warnCount > 0 ? `치수 확인 필요 ${warnCount}건` : "치수 검증 완료";
@@ -176,12 +244,86 @@ export default function StudioView({ listing, initialUse }: Props) {
   if (showEmpty || isBoardStage) {
     imageUrl = isCandidate ? listing.thumbnail : "/images/empty-space.jpg";
     rightBadge = measuredBadge;
-    if (isCandidate && showEmpty) leftBadge = "예시 이미지";
+    if (isCandidate && showEmpty) leftBadge = "예시 사진 기반";
     if (isBoardStage) leftBadge = "AI 렌더링 · 상품 먼저";
   }
 
   const currentFilter = RENDER_STYLES.find((style) => style.key === styleKey)?.filter;
-  const imageFilter = showEmpty || isBoardStage || generatedUrl ? "none" : currentFilter;
+  const imageFilter = showEmpty || isBoardStage || generatedUrl || generatedActive ? "none" : currentFilter;
+
+  // 근거 표시. 후보 공간이거나 AI로 만든 이미지면 예시 사진 기반이라고 밝힌다.
+  const extraBadges: { text: string; tone?: "ok" | "bad" }[] = [];
+  if (mode === "image" && !isBoardStage && (generatedActive || (isCandidate && !showEmpty))) {
+    extraBadges.push({ text: "예시 사진 기반" });
+  }
+  if (generatedActive && generated) {
+    extraBadges.push({ text: "AI 생성 예시이며 실제 공간과 다를 수 있음" });
+    const failed = generated.critique.failed.map((item) => item.note);
+    extraBadges.push(
+      generated.critique.passed
+        ? { text: "기준 검수 통과", tone: "ok" }
+        : { text: `기준 검수 미통과${failed.length > 0 ? ` (${failed.slice(0, 3).join(", ")})` : ""}`, tone: "bad" },
+    );
+  }
+  if (renderNotice) extraBadges.push({ text: renderNotice, tone: "bad" });
+
+  // 배치도와 렌더링 요청에 쓰는 입력. 견적에 들어 있는 상품을 그대로 넘긴다.
+  const layoutItems: LayoutItem[] = [];
+  for (const tag of quoteRender?.tags ?? []) {
+    const product = findProduct(tag.productId);
+    if (!product || layoutItems.some((item) => item.productId === product.id)) continue;
+    layoutItems.push({
+      productId: product.id,
+      name: product.name,
+      category: product.category,
+      widthMm: product.widthMm,
+      depthMm: product.depthMm,
+      heightMm: product.heightMm,
+      qty: tag.qty,
+      imagePath: product.imageUrl.startsWith("/images/") ? product.imageUrl : undefined,
+    });
+  }
+  const layoutInput = {
+    room: roomFromArea(listing.areaM2, listing.ceilingHeightM),
+    useType,
+    ...(layoutItems.length > 0 ? { items: layoutItems } : {}),
+  };
+  const spaceNumber = listing.thumbnail.match(/\/images\/spaces\/space-(\d\d)\.jpg$/)?.[1];
+
+  // ---- AI로 새로 렌더링 ----
+
+  async function runRender(code: string) {
+    if (!spaceNumber || rendering) return;
+    const token = ++renderToken.current;
+    setRendering(true);
+    setRenderNotice("");
+    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey });
+    if (!mounted.current) return;
+    setRendering(false);
+    if (token !== renderToken.current) return; // 그 사이 스타일이나 업종이 바뀌었다.
+    if (result.ok) {
+      saveCode(code);
+      setGenerated(result.data);
+      setShowEmpty(false);
+      resetSelection();
+    } else if (result.status === 401) {
+      saveCode("");
+      setCodeMessage("접근 코드가 맞지 않아요. 다시 입력해 주세요.");
+      setDialog("code");
+    } else {
+      setRenderNotice(RENDER_ERRORS[result.status] ?? RENDER_ERRORS[500]);
+    }
+  }
+
+  function startRender() {
+    const code = readSavedCode();
+    if (code) {
+      runRender(code);
+    } else {
+      setCodeMessage("");
+      setDialog("code");
+    }
+  }
 
   let loading: { label: string; progress?: number } | undefined;
   if (boardProgress !== null) loading = { label: "선택한 상품으로 렌더링 중", progress: boardProgress };
@@ -189,15 +331,40 @@ export default function StudioView({ listing, initialUse }: Props) {
 
   // ---- 화면 ----
 
+  const dialogs = (
+    <>
+      {dialog === "plan" && <PlanDialog input={layoutInput} preset={generatedActive ? generated?.plan : null} onClose={() => setDialog(null)} />}
+      {dialog === "code" && (
+        <CodeDialog
+          message={codeMessage}
+          onClose={() => setDialog(null)}
+          onSubmit={(code) => {
+            setDialog(null);
+            runRender(code);
+          }}
+        />
+      )}
+    </>
+  );
+
+
   const canvas = (
     <RenderCanvas
       imageUrl={imageUrl}
       imageFilter={imageFilter}
-      tags={showTags ? displayTags : []}
+      tags={showTags ? canvasTags : []}
       activeTagN={activeTagN}
       onTagClick={(n) => setActiveTagN(n === activeTagN ? null : n)}
       onBackgroundClick={() => setActiveTagN(null)}
       leftBadge={leftBadge}
+      extraBadges={extraBadges}
+      actions={
+        <CanvasActions
+          onOpenPlan={() => setDialog("plan")}
+          onRender={mode === "image" && !isBoardStage && spaceNumber ? startRender : undefined}
+          rendering={rendering}
+        />
+      }
       rightBadge={rightBadge}
       rightBadgeWarn={mode === "products" && !showEmpty && !isBoardStage && warnCount > 0}
       loading={loading}
@@ -217,6 +384,8 @@ export default function StudioView({ listing, initialUse }: Props) {
           onToggleIncluded={() => changeEdit(activeProduct.id, { excluded: !edits[activeProduct.id]?.excluded })}
         />
       )}
+      {rendering && <RenderProgress />}
+      {dialogs}
       {!isBoardStage && (
         <StyleBar
           imageUrl={`/images/render-${useType}.jpg`}
