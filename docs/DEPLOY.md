@@ -20,7 +20,7 @@
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | functions | 불가 |
 | `COUPANG_ACCESS_KEY`, `COUPANG_SECRET_KEY` | functions | 불가 |
 | `TOSS_SECRET_KEY` | backend | 불가 |
-| `IMAGE_GEN_API_KEY` | functions | 불가. 외부 이미지 생성 API |
+| `GEMINI_API_KEY` | functions | 불가. Gemini 이미지 생성. 키가 없으면 가짜 이미지를 쓴다. `GEMINI_IMAGE_MODEL`로 모델을 바꾼다 |
 | `FIREBASE_SERVICE_ACCOUNT` | backend | 불가. Cloud Tasks 등록용 |
 
 `SUPABASE_DB_URL`은 Supabase 대시보드 Connect의 Session pooler 주소를 쓴다. 직접 연결 주소(`db.<프로젝트>.supabase.co`)는 IPv6 전용이라 IPv4 네트워크와 Vercel 함수에서 접속되지 않는다. 형식은 `postgresql://postgres.<프로젝트>:<비밀번호>@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres`다.

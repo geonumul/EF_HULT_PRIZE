@@ -1,4 +1,5 @@
 // 어댑터 묶음. 환경변수가 없으면 가짜 구현을 고른다.
+import { GeminiImageGenerator } from "./geminiImageGenerator";
 import { FakeImageEmbedder, ImageEmbedder } from "./imageEmbedder";
 import { FakeImageGenerator, ImageGenerator } from "./imageGenerator";
 import { FakeLinkChecker, LinkChecker } from "./linkChecker";
@@ -26,11 +27,12 @@ export function createAdapters(): Adapters {
   const insideFirebase = Boolean(process.env.FUNCTION_TARGET || process.env.FIRESTORE_EMULATOR_HOST);
   const progress = insideFirebase ? new FirestoreProgressPublisher() : new FakeProgressPublisher();
 
-  // TODO: IMAGE_GEN_API_KEY, NAVER_*, COUPANG_* 환경변수가 있을 때 고르는 실제 구현을 추가한다.
-  // 지금은 값이 있어도 가짜를 쓴다. 외부 서비스를 아직 정하지 않았다.
+  // GEMINI_API_KEY가 있으면 실제 이미지 생성을, 없으면 가짜를 쓴다. 나머지 어댑터는 아직 가짜다.
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const imageGenerator = geminiKey ? new GeminiImageGenerator(geminiKey, process.env.GEMINI_IMAGE_MODEL || undefined) : new FakeImageGenerator();
   return {
     db,
-    imageGenerator: new FakeImageGenerator(),
+    imageGenerator,
     detector: new FakeObjectDetector(),
     embedder: new FakeImageEmbedder(),
     shopSearches: [new FakeShopSearch("naver"), new FakeShopSearch("coupang")],

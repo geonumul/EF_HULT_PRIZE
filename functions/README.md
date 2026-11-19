@@ -69,7 +69,7 @@ Firestore `renderJobs/{jobId}`에는 `status`와 `progress`만 복사한다. 브
 |---|---|
 | `SUPABASE_URL` | Supabase 프로젝트 주소 |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase 서비스 롤 키 |
-| `IMAGE_GEN_API_KEY` | 외부 이미지 생성 API |
+| `GEMINI_API_KEY` | Gemini 이미지 생성. 가격은 이미지 한 장에 약 $0.034(1K)이고 무료 사용량은 없다 |
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 네이버 쇼핑 검색 |
 | `COUPANG_ACCESS_KEY`, `COUPANG_SECRET_KEY` | 쿠팡 파트너스 |
 
@@ -99,3 +99,15 @@ firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 `.firebaserc`의 프로젝트 ID `shopportunity-demo`는 자리표시자다. 실제 프로젝트 ID로 바꾼다. Blaze 요금제가 필요하다.
+
+## 시연용 렌더링 미리 만들기
+
+공간 사진과 실측 치수를 주면 배치를 계산하고 이미지를 여러 장 뽑아 저장한다. 가장 잘 나온 것을 골라 시연에 쓴다.
+
+```
+npm run build
+node lib/scripts/pregenerate.js --photo 사진.jpg --use cafe --width 6000 --depth 6600 --ceiling 3200 --count 3 --out 결과폴더
+node lib/scripts/pregenerate.js --use cafe --width 6000 --depth 6600 --ceiling 3200 --dry-run
+```
+
+`--dry-run`은 키 없이 배치와 프롬프트만 출력한다. 이미지 모델은 치수를 정확히 지키지 못하므로, 치수가 맞는지는 배치 검증이 보증하고 그림은 분위기와 배치를 보여 주는 용도다.

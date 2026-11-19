@@ -53,6 +53,7 @@ async function runSteps(request: RenderJobRequest, adapters: Adapters, report: R
   // 4. 이미지 생성
   const image = await imageGenerator.generate({
     prompt: request.prompt,
+    useType: request.useType,
     room,
     placed: layout.placed,
     referenceImageUrls: selected.map((product) => product.imageUrl),

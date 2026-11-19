@@ -1,14 +1,18 @@
-// 외부 이미지 생성 API 어댑터. 어떤 서비스를 쓸지 정하지 않아서 가짜 구현만 있다.
+// 외부 이미지 생성 API 어댑터. 키가 없을 때 쓰는 가짜 구현이 여기 있다.
 import type { Room } from "../types";
 import type { PlacedItem } from "../pipeline/layout";
 
 export interface ImageGenerationRequest {
   prompt: string;
+  /** 업종 id. cafe, popup, pilates 등 */
+  useType: string;
   room: Room;
   /** 치수 검증을 통과한 배치. 공간을 고정하고 이 배치대로 그리게 하는 조건이다. */
   placed: PlacedItem[];
   /** products 모드에서 레퍼런스로 넣을 상품 이미지 주소 */
   referenceImageUrls: string[];
+  /** 실제 공간 사진. 있으면 벽, 창, 문 위치를 그대로 두고 꾸미게 한다. */
+  spacePhoto?: { bytes: Uint8Array; contentType: string };
 }
 
 export interface GeneratedImage {
@@ -30,4 +34,4 @@ export class FakeImageGenerator implements ImageGenerator {
   }
 }
 
-// TODO: 이미지 생성 API를 정하면 IMAGE_GEN_API_KEY를 읽는 구현을 여기에 추가한다. 공식 문서 확인 필요.
+// 실제 구현은 geminiImageGenerator.ts에 있다. GEMINI_API_KEY가 있으면 adapters/index.ts가 그것을 고른다.
