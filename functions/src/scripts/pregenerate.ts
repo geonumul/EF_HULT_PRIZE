@@ -5,6 +5,7 @@
 //   node lib/scripts/pregenerate.js --photo C:/사진/space.jpg --use cafe --width 6000 --depth 6600 --ceiling 3200 --count 3 --out C:/결과
 //   --structure 구조그림.png  : tools/clay_render.py로 만든 점토 렌더링. 원근과 물건 위치를 정확히 따르게 한다.
 //   --refs "체어=a.jpg,조명=b.jpg" : 상품 사진. 그 상품의 생김새로 그리게 한다.
+//   --structure-kind edges : --structure가 tools/edge_map.py로 만든 건축 요소 선화일 때. 창, 기둥, 보, 천장 구조를 같은 자리에 둔다.
 //   --restyle  : --photo가 이미 꾸며진 기준 이미지일 때, 구도는 그대로 두고 --prompt의 스타일로만 바꾼다.
 //   --dry-run 을 붙이면 키 없이 배치와 프롬프트만 출력한다.
 // 키는 functions/.env의 GEMINI_API_KEY 에서 읽는다.
@@ -91,6 +92,7 @@ async function main() {
     structureImage,
     referenceImages,
     mode: args.restyle === "true" ? "restyle" : undefined,
+    structureKind: args["structure-kind"] === "edges" ? "edges" : undefined,
   };
   if (dryRun) {
     console.log("\n--- 프롬프트 ---\n" + buildPrompt(request));

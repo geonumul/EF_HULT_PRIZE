@@ -48,6 +48,14 @@ export function describeItems(request: Pick<ImageGenerationRequest, "room" | "pl
   return lines.join("\n");
 }
 
+/** 구조 가이드 이미지를 어떻게 쓸지 알려 주는 문장 */
+function structureText(kind: ImageGenerationRequest["structureKind"]): string {
+  if (kind === "edges") {
+    return "One attached image is a line drawing of the existing room architecture. Every wall, window, door, column, beam, duct and ceiling structure in your photo must be at exactly the same position and size as the lines in that drawing, seen from the same camera. Keep exactly the same camera position, framing and field of view as the original photo and do not zoom out or show more of the room than the photo shows. Do not move, add or remove any architectural element. Only add furniture, equipment, decor and lighting fixtures inside the room.";
+  }
+  return "One attached image is a rough 3D clay render of this room. It shows the exact camera, perspective, scale and position of every object. Turn it into a photorealistic photo and keep every object at the same place, size and perspective as in the clay render. Do not move or add objects. The dark rectangle on the back wall is a 0.9 m wide, 2.1 m tall door that marks the human scale: keep every piece of furniture proportioned to it (table top about 0.72 m, bar counter about 1.0 m, chair seat about 0.45 m).";
+}
+
 /** 기준 이미지의 구도와 가구는 그대로 두고 스타일만 바꾸는 요청 */
 export function buildRestylePrompt(request: ImageGenerationRequest): string {
   const use = USE_NAMES[request.useType] ?? "a small business";
@@ -69,9 +77,7 @@ export function buildPrompt(request: ImageGenerationRequest): string {
     request.spacePhoto
       ? "Keep the walls, windows, door, floor, ceiling and the camera angle exactly as in the photo."
       : "Show the space from the entrance looking inward.",
-    request.structureImage
-      ? "One attached image is a rough 3D clay render of this room. It shows the exact camera, perspective, scale and position of every object. Turn it into a photorealistic photo and keep every object at the same place, size and perspective as in the clay render. Do not move or add objects. The dark rectangle on the back wall is a 0.9 m wide, 2.1 m tall door that marks the human scale: keep every piece of furniture proportioned to it (table top about 0.72 m, bar counter about 1.0 m, chair seat about 0.45 m)."
-      : "",
+    request.structureImage ? structureText(request.structureKind) : "",
     request.referenceImages?.length
       ? `Attached product photos (${request.referenceImages.map((image) => image.label).join(", ")}) show the exact appearance of the furniture. Draw the matching objects in the room to look like these products.`
       : "",
