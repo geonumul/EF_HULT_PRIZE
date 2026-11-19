@@ -23,3 +23,9 @@
   background: var(--gray-100);
   color: var(--gray-500);
 }
+
+@media (max-width: 768px) {
+  .badge {
+    font-size: 12px;
+  }
+}

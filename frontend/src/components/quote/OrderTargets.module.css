@@ -18,3 +18,22 @@
 .detail { margin: 0; font-size: 11px; color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge { padding: 3px 8px; font-size: 11px; color: var(--gray-500); background: var(--gray-100); border-radius: var(--radius-xs); white-space: nowrap; }
 .ready { color: var(--brand-600); background: var(--brand-50); }
+
+@media (max-width: 768px) {
+  .card {
+    padding: 8px 16px;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .detail,
+  .badge {
+    font-size: 12px;
+  }
+}

@@ -3,7 +3,7 @@
 .screen {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px);
+  height: calc(100dvh - var(--header-height));
   min-height: 720px;
 }
 
@@ -183,4 +183,82 @@
   font-size: 9px;
   line-height: 1.5;
   pointer-events: none;
+}
+
+/* 모바일: 위에 지도, 아래에 매물 목록이 이어진다. 화면 전체가 세로로 스크롤된다. */
+@media (max-width: 768px) {
+  .screen {
+    height: auto;
+    min-height: 0;
+  }
+
+  .body {
+    flex-direction: column;
+  }
+
+  .map {
+    flex: none;
+    height: 52dvh;
+    min-height: 440px;
+  }
+
+  .search {
+    left: 16px;
+    right: 72px;
+    top: 16px;
+    width: auto;
+  }
+
+  .searchInput {
+    font-size: 16px; /* 16px 미만이면 iOS가 입력 때 화면을 확대한다. */
+  }
+
+  .chips {
+    left: 0;
+    right: 68px;
+    top: 72px;
+    padding: 0 0 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chips .mapChip {
+    flex: none;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .controls {
+    right: 16px;
+    top: 16px;
+    gap: 12px;
+  }
+
+  .controlButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .costToggle {
+    left: 16px;
+    top: 124px;
+    bottom: auto;
+    min-height: 40px;
+  }
+
+  .credit {
+    right: auto;
+    left: 16px;
+    bottom: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .costToggle {
+    padding: 8px 12px 8px 10px;
+  }
 }

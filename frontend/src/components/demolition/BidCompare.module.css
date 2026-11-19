@@ -109,3 +109,45 @@
 .review + .review {
   margin-top: 16px;
 }
+
+@media (max-width: 768px) {
+  .page {
+    width: 100%;
+    padding: 24px 16px 64px;
+  }
+
+  .lead,
+  .count,
+  .empty,
+  .confirmText {
+    font-size: 14px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sort {
+    flex-wrap: wrap;
+  }
+
+  .sort button {
+    min-height: 40px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .confirmActions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .linkButton {
+    min-height: 44px;
+    align-items: center;
+    font-size: 14px;
+  }
+}

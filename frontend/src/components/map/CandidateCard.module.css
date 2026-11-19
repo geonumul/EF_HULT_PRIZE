@@ -66,3 +66,19 @@
   font-size: 11px;
   color: var(--gray-500);
 }
+
+/* 모바일: 지도 아래쪽에 좌우 16px 여백으로 붙인다. */
+@media (max-width: 768px) {
+  .card {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+  }
+
+  .close {
+    min-width: 40px;
+    min-height: 40px;
+    margin: -8px -10px -8px 0;
+  }
+}

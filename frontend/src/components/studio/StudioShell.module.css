@@ -5,7 +5,7 @@
 /* 시안은 900px 높이에서 SubHeader(60) 아래가 776px이다. 화면이 낮아도 700px은 확보한다. */
 .body {
   display: flex;
-  height: calc(100vh - 124px);
+  height: calc(100dvh - var(--header-height) - 60px);
   min-height: 700px;
 }
 
@@ -23,4 +23,24 @@
   background: var(--gray-0);
   border-left: 1px solid var(--gray-100);
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .body {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .canvasArea {
+    flex: none;
+    padding: 12px 16px;
+  }
+
+  .panel {
+    width: 100%;
+    border-left: 0;
+    border-top: 1px solid var(--gray-100);
+    overflow: visible;
+  }
 }

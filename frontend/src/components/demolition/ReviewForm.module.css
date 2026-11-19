@@ -46,3 +46,19 @@
   font: 500 13px/1.5 var(--font-sans);
   resize: vertical;
 }
+
+@media (max-width: 768px) {
+  .star,
+  .starOn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .textarea {
+    font-size: 14px;
+  }
+
+  .form button:not(.star):not(.starOn) {
+    min-height: 44px;
+  }
+}

@@ -75,3 +75,24 @@
 .textLabel {
   color: var(--brand-600);
 }
+
+@media (max-width: 768px) {
+  .bar {
+    bottom: 8px;
+    gap: 4px;
+    max-width: calc(100% - 16px);
+    padding: 4px;
+  }
+
+  .thumb,
+  .textBox {
+    width: 54px;
+    height: 40px;
+  }
+
+  .label,
+  .labelActive,
+  .textLabel {
+    font-size: 11px;
+  }
+}

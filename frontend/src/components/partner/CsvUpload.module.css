@@ -82,3 +82,21 @@
   font-weight: 700;
   color: #e03e3e;
 }
+
+@media (max-width: 768px) {
+  .top {
+    flex-direction: column;
+  }
+
+  .drop {
+    font-size: 14px;
+  }
+
+  .drop span {
+    font-size: 13px;
+  }
+
+  .preview {
+    font-size: 13px;
+  }
+}

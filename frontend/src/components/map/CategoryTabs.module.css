@@ -46,3 +46,24 @@
   border-radius: var(--radius-full);
   background: var(--gradient-brand);
 }
+
+/* 모바일: 탭이 넘치면 가로로 민다. */
+@media (max-width: 768px) {
+  .tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .inner {
+    justify-content: flex-start;
+    gap: 24px;
+    width: max-content;
+    min-width: 100%;
+    padding: 0 20px;
+  }
+
+  .tab {
+    flex: none;
+    min-width: 40px;
+  }
+}

@@ -212,3 +212,66 @@ button.row:hover {
   opacity: 0.35;
   pointer-events: none;
 }
+
+@media (max-width: 768px) {
+  .head {
+    padding: 16px 16px 8px;
+  }
+
+  .title {
+    font-size: 17px;
+  }
+
+  .seg,
+  .segActive {
+    min-height: 40px;
+    padding: 4px 12px;
+    font-size: 14px;
+  }
+
+  .sub {
+    font-size: 13px;
+  }
+
+  .groups {
+    flex: none;
+    overflow: visible;
+    padding: 0 16px 24px;
+  }
+
+  .groupHead {
+    min-height: 40px;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  .row {
+    min-height: 56px;
+  }
+
+  .rowName,
+  .rowPrice {
+    font-size: 14px;
+  }
+
+  .rowSpec {
+    font-size: 12px;
+  }
+
+  .badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    font-size: 11px;
+  }
+
+  .demolitionLink {
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .empty {
+    font-size: 14px;
+  }
+}

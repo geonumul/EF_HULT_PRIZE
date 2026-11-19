@@ -118,3 +118,32 @@
   line-height: 1.5;
   text-align: center;
 }
+
+/* 모바일: 지도 아래 전체 폭으로 이어 붙이고, 목록은 화면과 함께 스크롤된다. */
+@media (max-width: 768px) {
+  .panel {
+    flex: none;
+    width: 100%;
+    border-left: 0;
+    border-top: 1px solid var(--gray-100);
+  }
+
+  .head {
+    padding: 16px;
+  }
+
+  .controls {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sortChip,
+  .filterChip {
+    flex: none;
+    min-height: 40px;
+  }
+
+  .list {
+    overflow-y: visible;
+  }
+}

@@ -195,3 +195,58 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .head {
+    padding: 16px;
+  }
+
+  .sub {
+    font-size: 13px;
+  }
+
+  .list {
+    flex: none;
+    overflow: visible;
+    padding: 6px 16px;
+  }
+
+  .rowName {
+    font-size: 14px;
+  }
+
+  .rowSpec {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .stepper button {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .stepper span {
+    font-size: 14px;
+  }
+
+  .remove {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .marketLink,
+  .emptyText {
+    font-size: 14px;
+  }
+
+  .render {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .sumLabel {
+    font-size: 13px;
+  }
+}

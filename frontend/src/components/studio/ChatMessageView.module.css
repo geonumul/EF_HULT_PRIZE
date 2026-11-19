@@ -134,3 +134,29 @@
   background: var(--gradient-brand);
   transition: width 0.1s linear;
 }
+
+@media (max-width: 768px) {
+  .user,
+  .ai,
+  .aiText,
+  .aiTitle,
+  .check,
+  .resultTitle {
+    font-size: 14px;
+  }
+
+  .resultSummary {
+    font-size: 12px;
+  }
+
+  .primary,
+  .secondary,
+  .primaryLink,
+  .secondaryLink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    font-size: 14px;
+  }
+}

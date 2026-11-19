@@ -189,3 +189,101 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+/* 휴대폰: 필터는 위에 가로로 줄바꿈, 상품은 2열 */
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 64px;
+  }
+
+  .body {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .side {
+    width: 100%;
+    gap: 16px;
+  }
+
+  .group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+
+  .groupTitle {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .option,
+  .optionOn {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .source {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .sourceImage {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 168 / 104;
+  }
+
+  .sourceText {
+    flex-basis: 100%;
+  }
+
+  .sourceButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .count {
+    flex-basis: 100%;
+  }
+
+  .search {
+    flex: 1 1 100%;
+    width: 100%;
+    margin: 0 0 4px;
+    padding: 11px 14px;
+    font-size: 14px;
+  }
+
+  .sortChip {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 12px;
+  }
+
+  .reset {
+    min-height: 40px;
+  }
+
+  .fee {
+    font-size: 13px;
+  }
+}

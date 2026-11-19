@@ -1,7 +1,7 @@
 /* S09 로그인·회원가입. Figma 39:637 (1440 x 900). 카드 폭 440px, 시안은 가운데 정렬이다. */
 
 .page {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - var(--header-height));
   padding: 76px 0 80px;
   background: var(--gray-50);
   display: flex;
@@ -212,4 +212,49 @@
   font-size: 11px;
   line-height: 1.5;
   color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 28px 20px;
+  }
+
+  .segmentItem {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .kakao,
+  .naver,
+  .submit {
+    min-height: 48px;
+  }
+
+  .input {
+    padding: 13px 14px;
+  }
+
+  .label,
+  .error,
+  .dividerText {
+    font-size: 13px;
+  }
+
+  .agree {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .switch {
+    font-size: 14px;
+  }
+
+  .demo {
+    font-size: 12px;
+  }
 }

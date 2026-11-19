@@ -23,3 +23,18 @@
   font: 500 13px/1.5 var(--font-sans);
   color: var(--gray-900);
 }
+
+@media (max-width: 768px) {
+  .field {
+    font-size: 13px;
+  }
+
+  .input {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .form button {
+    min-height: 44px;
+  }
+}

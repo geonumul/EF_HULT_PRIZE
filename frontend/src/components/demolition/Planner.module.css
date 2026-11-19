@@ -130,3 +130,35 @@
   font-size: 12px;
   color: var(--gray-700);
 }
+
+@media (max-width: 768px) {
+  .page {
+    width: 100%;
+    padding: 24px 16px 64px;
+  }
+
+  .lead,
+  .info,
+  .notice {
+    font-size: 14px;
+  }
+
+  .hint,
+  .warning,
+  .estimateNote,
+  .estimateLabel {
+    font-size: 13px;
+  }
+
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chips button {
+    min-height: 40px;
+  }
+
+  .requestButton {
+    min-height: 48px;
+  }
+}

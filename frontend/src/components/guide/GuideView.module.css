@@ -205,3 +205,54 @@
   color: var(--gray-500);
   font-size: 12px;
 }
+
+/* 휴대폰: 카드와 순서는 세로로 쌓고 표는 상자 안에서만 가로로 민다 */
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 64px;
+    gap: 32px;
+  }
+
+  .cards,
+  .steps {
+    flex-direction: column;
+  }
+
+  .cardBody {
+    padding: 16px;
+  }
+
+  .cardPeriod,
+  .note,
+  .stepText {
+    font-size: 13px;
+  }
+
+  .row {
+    font-size: 14px;
+  }
+
+  .cardButton {
+    padding: 13px 16px;
+    font-size: 14px;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .tabs button {
+    min-height: 40px;
+  }
+
+  .table {
+    overflow-x: auto;
+    font-size: 14px;
+  }
+
+  .tableHead,
+  .tableRow {
+    width: max-content;
+    min-width: 100%;
+  }
+}

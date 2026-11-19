@@ -1,5 +1,16 @@
 /* 모든 화면에 적용되는 기본 스타일. 색과 글자 크기는 tokens.css의 변수를 쓴다. */
 
+/* 헤더 높이. 휴대폰에서는 두 줄이라 더 높다. 화면 높이 계산에 이 값을 쓴다. */
+:root {
+  --header-height: 64px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 100px;
+  }
+}
+
 *,
 *::before,
 *::after {

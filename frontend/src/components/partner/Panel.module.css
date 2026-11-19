@@ -350,3 +350,81 @@
   font-weight: 700;
   color: var(--gray-900);
 }
+
+/* 휴대폰: 표는 상자 안에서만 가로로 밀고 폼은 1열 */
+@media (max-width: 768px) {
+  .head {
+    flex-wrap: wrap;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .desc,
+  .kpiLabel,
+  .row,
+  .empty,
+  .notice {
+    font-size: 14px;
+  }
+
+  .newButton,
+  .secondaryButton {
+    min-height: 44px;
+  }
+
+  .kpis {
+    flex-wrap: wrap;
+  }
+
+  .kpi {
+    flex: 1 1 calc(50% - 8px);
+    padding: 14px 16px;
+  }
+
+  .kpiNote,
+  .rowSub,
+  .error,
+  .hint {
+    font-size: 13px;
+  }
+
+  .table {
+    overflow-x: auto;
+  }
+
+  .tableHead,
+  .row {
+    min-width: 880px;
+  }
+
+  .pill,
+  .deleteButton {
+    min-height: 40px;
+  }
+
+  .formCard {
+    padding: 16px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+
+  .input {
+    padding: 12px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .actions button {
+    min-height: 44px;
+  }
+}

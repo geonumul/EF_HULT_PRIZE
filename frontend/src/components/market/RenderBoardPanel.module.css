@@ -158,3 +158,52 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .wrap {
+    right: 16px;
+    bottom: 16px;
+    max-width: calc(100vw - 32px);
+  }
+
+  .toggle {
+    min-height: 44px;
+  }
+
+  .panel {
+    width: min(340px, calc(100vw - 32px));
+    max-height: 60vh;
+  }
+
+  .clear {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .name {
+    font-size: 13px;
+  }
+
+  .price {
+    font-size: 12px;
+  }
+
+  .qty button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .remove {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .guide {
+    font-size: 13px;
+  }
+
+  .go,
+  .goDisabled {
+    padding: 14px 0;
+  }
+}

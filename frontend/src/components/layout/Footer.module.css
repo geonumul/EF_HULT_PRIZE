@@ -128,3 +128,61 @@
   margin: 0;
   color: var(--gray-400);
 }
+
+/* 휴대폰: 로고는 윗줄, 링크는 2열, 입점 문의 버튼은 맨 아래 */
+@media (max-width: 768px) {
+  .footer {
+    padding: 40px 16px 32px;
+  }
+
+  .inner {
+    gap: 28px;
+  }
+
+  .top {
+    flex-wrap: wrap;
+    gap: 28px 16px;
+  }
+
+  .brand {
+    width: 100%;
+  }
+
+  .policies {
+    font-size: 14px;
+    gap: 20px;
+  }
+
+  .column {
+    width: calc(50% - 8px);
+    gap: 0;
+  }
+
+  .columnTitle {
+    margin-bottom: 8px;
+  }
+
+  .divider {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .link {
+    display: block;
+    padding: 9px 0;
+    font-size: 14px;
+  }
+
+  .inquiry {
+    width: 100%;
+    margin-left: 0;
+    padding: 12px 24px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .notice {
+    align-items: flex-start;
+    font-size: 12px;
+  }
+}

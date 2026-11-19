@@ -60,3 +60,14 @@
 .dark:hover:not(:disabled) {
   background: var(--gray-700);
 }
+
+@media (max-width: 768px) {
+  .md {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .lg {
+    min-height: 48px;
+  }
+}

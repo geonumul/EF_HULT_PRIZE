@@ -82,3 +82,48 @@
 }
 
 .demo { margin: 0; text-align: center; font-size: 11px; color: var(--gray-500); }
+
+@media (max-width: 768px) {
+  .card {
+    position: static;
+    width: 100%;
+    padding: 16px;
+  }
+
+  .title,
+  .todayLabel {
+    font-size: 15px;
+  }
+
+  .line,
+  .agree,
+  .error {
+    font-size: 14px;
+  }
+
+  .note,
+  .demo {
+    font-size: 12px;
+  }
+
+  .input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .method {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .agree {
+    min-height: 40px;
+  }
+
+  .payButton,
+  .pdfButton {
+    min-height: 48px;
+    padding: 0;
+    font-size: 15px;
+  }
+}

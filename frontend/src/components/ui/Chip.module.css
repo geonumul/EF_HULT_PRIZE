@@ -24,3 +24,10 @@
 .selected:hover {
   background: var(--gray-900);
 }
+
+@media (max-width: 768px) {
+  .chip {
+    min-height: 40px;
+    font-size: 14px;
+  }
+}

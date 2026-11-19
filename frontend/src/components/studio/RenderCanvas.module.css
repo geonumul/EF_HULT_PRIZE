@@ -208,3 +208,55 @@
   background: var(--gradient-brand);
   transition: width 0.1s linear;
 }
+
+@media (max-width: 768px) {
+  .canvas {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  .badge {
+    top: 8px;
+    max-width: calc(100% - 16px);
+    padding: 4px 8px;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .badgeLeft {
+    left: 8px;
+  }
+
+  .badgeRight {
+    top: 40px;
+    right: 8px;
+  }
+
+  /* 핀 둘레를 넓혀 손가락으로 누르기 쉽게 한다. */
+  .tag::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+
+  .checks {
+    left: 8px;
+    top: 72px;
+    width: calc(100% - 16px);
+    max-height: 55%;
+    overflow-y: auto;
+  }
+
+  .checkLine {
+    font-size: 13px;
+  }
+
+  .backButton {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .loadingLabel {
+    font-size: 14px;
+  }
+}

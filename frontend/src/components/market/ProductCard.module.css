@@ -120,3 +120,38 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .card,
+  .photo {
+    width: 100%;
+  }
+
+  .photo {
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .plus {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+  }
+
+  .category,
+  .size,
+  .sub,
+  .seller,
+  .noLink {
+    font-size: 12px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .addButton {
+    min-height: 40px;
+    font-size: 13px;
+  }
+}

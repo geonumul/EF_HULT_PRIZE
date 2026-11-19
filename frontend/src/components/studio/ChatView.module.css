@@ -101,3 +101,45 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .head {
+    padding: 16px;
+  }
+
+  .sub {
+    font-size: 13px;
+  }
+
+  .messages {
+    flex: none;
+    max-height: 50dvh;
+    min-height: 200px;
+    padding: 16px;
+  }
+
+  .footer {
+    padding: 12px 16px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chips {
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .input {
+    font-size: 16px;
+  }
+
+  .send {
+    width: 40px;
+    height: 40px;
+  }
+}

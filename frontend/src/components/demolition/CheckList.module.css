@@ -40,3 +40,13 @@
   line-height: 1.5;
   color: var(--gray-700);
 }
+
+@media (max-width: 768px) {
+  .itemTitle {
+    font-size: 14px;
+  }
+
+  .itemBody {
+    font-size: 13px;
+  }
+}

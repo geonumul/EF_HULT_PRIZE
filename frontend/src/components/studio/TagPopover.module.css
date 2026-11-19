@@ -197,3 +197,25 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  /* 화면 아래에 붙는 카드. 합계 바 위에 놓는다. */
+  .popover {
+    position: fixed;
+    left: 12px !important;
+    right: 12px !important;
+    top: auto !important;
+    bottom: 140px;
+    z-index: 40;
+    width: auto;
+    max-height: 60dvh;
+    overflow-y: auto;
+  }
+
+  .close {
+    width: 40px;
+    height: 40px;
+    right: 4px;
+    top: 2px;
+  }
+}

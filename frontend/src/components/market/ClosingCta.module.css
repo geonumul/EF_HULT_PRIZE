@@ -39,3 +39,25 @@
 .partner {
   border: 1px solid var(--gray-700);
 }
+
+@media (max-width: 768px) {
+  .cta {
+    padding: 56px 16px;
+    text-align: center;
+  }
+
+  .title {
+    word-break: keep-all;
+    font-size: 24px;
+  }
+
+  .buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .map,
+  .partner {
+    min-height: 44px;
+  }
+}

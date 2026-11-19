@@ -4,7 +4,7 @@
   align-items: flex-start;
   padding: 40px 120px 80px; /* 시안 S05: 좌우 120px */
   background: var(--gray-50);
-  min-height: calc(100vh - 64px - 392px);
+  min-height: calc(100dvh - var(--header-height) - 392px);
 }
 
 .left {
@@ -43,3 +43,58 @@
 .rowName { flex: 1; font-size: 13px; font-weight: 500; color: var(--gray-900); }
 .rowRate { font-size: 11px; color: var(--gray-500); }
 .rowSum { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+
+@media (max-width: 768px) {
+  .main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 24px 16px 40px;
+    min-height: 0;
+  }
+
+  .left {
+    flex: none;
+    width: 100%;
+  }
+
+  .total {
+    font-size: 32px;
+  }
+
+  .eyebrow,
+  .saving {
+    font-size: 14px;
+  }
+
+  .meta {
+    font-size: 13px;
+  }
+
+  .card {
+    padding: 8px 16px;
+  }
+
+  .cardTitle {
+    font-size: 15px;
+  }
+
+  .row {
+    min-height: 44px;
+  }
+
+  .rowName,
+  .rowSum {
+    font-size: 14px;
+  }
+
+  .rowRate {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .total {
+    font-size: 28px;
+  }
+}

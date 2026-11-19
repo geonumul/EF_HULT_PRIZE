@@ -104,3 +104,51 @@
   padding-top: 12px;
   border-top: 1px solid var(--gray-100);
 }
+
+@media (max-width: 768px) {
+  .page {
+    width: 100%;
+    padding: 24px 16px 64px;
+  }
+
+  .lead,
+  .empty,
+  .meta {
+    font-size: 14px;
+  }
+
+  .vendors {
+    flex-wrap: wrap;
+  }
+
+  .vendors button {
+    min-height: 40px;
+  }
+
+  .item {
+    padding: 16px;
+  }
+
+  .row {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .summary {
+    flex-basis: 100%;
+  }
+
+  .place {
+    font-size: 15px;
+  }
+
+  .statusDone,
+  .statusWaiting {
+    font-size: 12px;
+  }
+
+  .toggle {
+    min-height: 40px;
+    margin-left: auto;
+  }
+}

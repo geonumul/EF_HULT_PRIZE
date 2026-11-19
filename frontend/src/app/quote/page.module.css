@@ -1,7 +1,7 @@
 .main {
   padding: 40px 0 80px;
   background: var(--gray-50);
-  min-height: calc(100vh - 64px - 392px); /* 화면 높이에서 헤더와 푸터를 뺀 값 */
+  min-height: calc(100dvh - var(--header-height) - 392px); /* 화면 높이에서 헤더와 푸터를 뺀 값 */
 }
 
 /* 시안은 1440px 화면에서 좌우 200px을 비운다. 내용 폭은 1040px이다. */
@@ -22,4 +22,23 @@
   margin: 6px 0 24px;
   font-size: 13px;
   color: var(--gray-500);
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 24px 0 40px;
+    min-height: 0;
+  }
+
+  .inner {
+    padding: 0 16px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .desc {
+    font-size: 14px;
+  }
 }

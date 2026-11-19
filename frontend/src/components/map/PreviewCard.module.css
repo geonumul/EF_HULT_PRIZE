@@ -252,3 +252,48 @@
 .links a:hover {
   color: var(--gray-700);
 }
+
+/* 모바일: 지도 아래쪽에 좌우 16px 여백으로 붙인다. */
+@media (max-width: 768px) {
+  .card {
+    left: 16px;
+    right: 16px;
+    top: auto;
+    bottom: 16px;
+    width: auto;
+    gap: 8px;
+    padding: 8px 8px 10px;
+  }
+
+  .links {
+    display: none;
+  }
+
+  /* 지도를 가리지 않도록 사진은 숨기고 배지와 알약만 남긴 띠로 줄인다. */
+  .photoBox {
+    height: 40px;
+  }
+
+  .photo {
+    display: none;
+  }
+
+  .tiles {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tile,
+  .moreTile {
+    flex: none;
+  }
+
+  .bookmark {
+    width: 48px;
+    height: 48px;
+  }
+
+  .primary {
+    min-height: 48px;
+  }
+}

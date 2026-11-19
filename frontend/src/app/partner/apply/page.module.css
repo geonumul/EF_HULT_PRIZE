@@ -230,3 +230,72 @@
   line-height: 1.45;
   color: var(--gray-0);
 }
+
+/* 휴대폰: 안내와 폼을 세로로 쌓는다 */
+@media (max-width: 768px) {
+  .inner {
+    padding: 0 16px;
+  }
+
+  .hero {
+    padding: 36px 0;
+  }
+
+  .heroTitle {
+    font-size: 24px;
+  }
+
+  .heroText {
+    width: 100%;
+    font-size: 15px;
+  }
+
+  .heroCtas {
+    flex-wrap: wrap;
+  }
+
+  .ctaPrimary,
+  .ctaSecondary {
+    min-height: 44px;
+  }
+
+  .body {
+    flex-direction: column;
+    gap: 32px;
+    align-items: stretch;
+    padding: 28px 16px 48px;
+  }
+
+  .info {
+    width: 100%;
+    gap: 32px;
+  }
+
+  .typeCard {
+    padding: 16px;
+  }
+
+  .typeText,
+  .faqAnswer {
+    font-size: 14px;
+  }
+
+  .typeExample {
+    font-size: 13px;
+  }
+
+  .closing {
+    padding: 56px 16px;
+    text-align: center;
+  }
+
+  .closingTitle {
+    word-break: keep-all;
+    font-size: 24px;
+  }
+
+  .ctaPrimaryLarge,
+  .ctaOutline {
+    min-height: 44px;
+  }
+}

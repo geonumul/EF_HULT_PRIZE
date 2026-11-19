@@ -65,3 +65,22 @@
   font-weight: 700;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .rating {
+    font-size: 13px;
+  }
+
+  .info dt {
+    font-size: 12px;
+  }
+
+  .info dd,
+  .chosen {
+    font-size: 14px;
+  }
+
+  .card button {
+    min-height: 44px;
+  }
+}

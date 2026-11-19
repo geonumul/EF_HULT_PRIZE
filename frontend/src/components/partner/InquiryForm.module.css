@@ -190,3 +190,47 @@
   line-height: 1.6;
   color: var(--gray-700);
 }
+
+@media (max-width: 768px) {
+  .card {
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .choice {
+    min-height: 44px;
+    font-size: 14px;
+    white-space: normal;
+  }
+
+  .chip {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .input {
+    padding: 12px 14px;
+  }
+
+  .label,
+  .error,
+  .hint,
+  .footnote {
+    font-size: 13px;
+  }
+
+  .agree {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .submit,
+  .secondary {
+    min-height: 48px;
+  }
+}

@@ -1,7 +1,7 @@
 /* S10 파트너 콘솔 틀. Figma 40:482 (1440 x 900). 윗줄 60px, 사이드 220px, 내용은 왼쪽에서 40px 띄운다. */
 
 .console {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - var(--header-height));
   background: var(--gray-50);
 }
 
@@ -48,7 +48,7 @@
 .body {
   display: flex;
   align-items: stretch;
-  min-height: calc(100vh - 64px - 60px);
+  min-height: calc(100dvh - var(--header-height) - 60px);
 }
 
 .side {
@@ -90,4 +90,49 @@
   min-width: 0;
   max-width: 1180px; /* 시안은 내용 폭 1140px에 좌우 여백 40px */
   padding: 36px 40px 80px;
+}
+
+/* 휴대폰: 사이드 메뉴는 위쪽 가로 탭 */
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .company {
+    font-size: 14px;
+  }
+
+  .logout {
+    min-height: 40px;
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .body {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .side {
+    width: 100%;
+    flex-direction: row;
+    gap: 4px;
+    padding: 8px 16px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .menu {
+    flex-shrink: 0;
+    min-height: 40px;
+    padding: 9px 14px;
+    white-space: nowrap;
+  }
+
+  .content {
+    flex: none;
+    width: 100%;
+    padding: 24px 16px 56px;
+  }
 }
