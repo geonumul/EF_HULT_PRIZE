@@ -2,6 +2,7 @@
 
 // 마켓 상품 카드. Figma ProductCard 38:590에 치수, 신품·중고 가격, 판매처 링크, 담기 버튼을 더했다.
 import { formatWon } from "@/lib/format";
+import { isPartnerProduct } from "@/lib/shopping";
 import type { Product } from "@/types";
 import { CATEGORY_LABELS } from "./categories";
 import styles from "./ProductCard.module.css";
@@ -16,6 +17,7 @@ type Props = {
 export default function ProductCard({ product, showUsed, count, onAdd }: Props) {
   const seller = product.links[0]; // 링크는 최저가 순으로 들어 있다.
   const hasLink = Boolean(seller);
+  const partner = isPartnerProduct(product);
   const size = `${product.widthMm}×${product.depthMm}×${product.heightMm}mm`;
   const mainPrice = showUsed && product.usedPrice ? product.usedPrice : product.price;
 
@@ -36,7 +38,10 @@ export default function ProductCard({ product, showUsed, count, onAdd }: Props) 
         </button>
       </div>
 
-      <p className={styles.category}>{CATEGORY_LABELS[product.category] ?? product.category}</p>
+      <p className={styles.category}>
+        {CATEGORY_LABELS[product.category] ?? product.category}
+        {partner && <span className={styles.partnerBadge}>입점 업체 · 상단 노출</span>}
+      </p>
       <p className={styles.name}>{product.name}</p>
       <p className={styles.size}>W·D·H {size}</p>
       <p className={styles.price}>{formatWon(mainPrice)}</p>
@@ -52,6 +57,7 @@ export default function ProductCard({ product, showUsed, count, onAdd }: Props) 
       ) : (
         <p className={styles.noLink}>판매처 링크 없음</p>
       )}
+      {!partner && <p className={styles.internet}>인터넷 상품 · 쇼핑몰 검색으로 연결</p>}
 
       <button type="button" className={styles.addButton} onClick={onAdd} disabled={!hasLink}>
         {count > 0 ? `렌더링 보드에 담기 (${count}개 담김)` : "렌더링 보드에 담기"}

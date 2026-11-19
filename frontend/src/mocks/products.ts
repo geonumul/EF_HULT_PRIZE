@@ -1,8 +1,9 @@
 // 가짜 상품 데이터. 집기 마켓, 렌더링 태그, 견적서가 함께 쓴다.
 // 사진은 시안의 임시 이미지 3장(의자, 조명, 카운터)을 상품 종류에 맞춰 돌려 쓴다. 실제 상품 사진은 상품 수집 단계에서 채운다.
+import { withShoppingLinks } from "@/lib/shopping";
 import type { Product } from "@/types";
 
-export const PRODUCTS: Product[] = [
+const RAW_PRODUCTS: Product[] = [
   {
     id: "chair-oak",
     name: "오크 원목 체어",
@@ -149,6 +150,9 @@ export const PRODUCTS: Product[] = [
 ];
 
 /** id로 상품 하나를 찾는다. 없으면 undefined. */
+/** 판매처 링크를 실제 검색 주소로 맞춘 상품 목록 */
+export const PRODUCTS: Product[] = RAW_PRODUCTS.map(withShoppingLinks);
+
 export function findProduct(id: string): Product | undefined {
   return PRODUCTS.find((product) => product.id === id);
 }

@@ -4,6 +4,7 @@
 // 그래서 서버가 느려도 화면이 비지 않고, 서버가 꺼져 있어도 화면이 동작한다.
 import { useEffect, useState } from "react";
 import { LISTINGS } from "@/mocks/listings";
+import { withShoppingLinks } from "@/lib/shopping";
 import { PRODUCTS } from "@/mocks/products";
 import type { Listing, Product } from "@/types";
 import type { VacancyCandidate } from "@/types/vacancy";
@@ -40,7 +41,7 @@ export function useProducts() {
     let cancelled = false;
     apiGet<Product[]>("/products").then((data) => {
       if (cancelled || !data || data.length === 0) return;
-      setProducts(data);
+      setProducts(data.map(withShoppingLinks));
       setSource("api");
     });
     return () => {

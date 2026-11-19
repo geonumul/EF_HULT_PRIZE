@@ -1,6 +1,7 @@
 "use client";
 
 // 집기 마켓 본문. Figma S07 38:482. 카테고리는 주소로, 나머지 필터와 정렬은 화면 안에서 바꾼다.
+import { isPartnerProduct } from "@/lib/shopping";
 import Link from "next/link";
 import { useState } from "react";
 import Chip from "@/components/ui/Chip";
@@ -59,6 +60,8 @@ export default function MarketBrowser({ category }: Props) {
   });
 
   const shown = [...filtered];
+  // 추천순에서는 입점 업체 상품이 먼저 나온다(상단 노출). 같은 쪽끼리는 원래 순서를 지킨다.
+  if (sort === "recommend") shown.sort((a, b) => Number(isPartnerProduct(b)) - Number(isPartnerProduct(a)));
   if (sort === "priceAsc") shown.sort((a, b) => priceOf(a, condition) - priceOf(b, condition));
   if (sort === "priceDesc") shown.sort((a, b) => priceOf(b, condition) - priceOf(a, condition));
 
