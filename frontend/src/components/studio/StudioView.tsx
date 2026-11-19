@@ -253,9 +253,11 @@ export default function StudioView({ listing, initialUse }: Props) {
 
   // 근거 표시. 후보 공간이거나 AI로 만든 이미지면 예시 사진 기반이라고 밝힌다.
   const extraBadges: { text: string; tone?: "ok" | "bad" }[] = [];
-  if (mode === "image" && !isBoardStage && (generatedActive || (isCandidate && !showEmpty))) {
+  if (mode === "image" && !isBoardStage && (generatedActive || (isCandidate && !showEmpty) || (generatedUrl && !showEmpty))) {
     extraBadges.push({ text: "예시 사진 기반" });
   }
+  // 미리 만들어 둔 렌더링도 AI가 만든 예시다.
+  if (generatedUrl && !generatedActive && !showEmpty && !isBoardStage) extraBadges.push({ text: "AI 생성 예시이며 실제 공간과 다를 수 있음" });
   if (generatedActive && generated) {
     extraBadges.push({ text: "AI 생성 예시이며 실제 공간과 다를 수 있음" });
     const failed = generated.critique.failed.map((item) => item.note);
