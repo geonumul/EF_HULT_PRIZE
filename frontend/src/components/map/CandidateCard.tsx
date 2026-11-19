@@ -20,6 +20,15 @@ export default function CandidateCard({ candidate, floors, onSelectFloor, onClos
   const area = candidate.floorAreaM2 !== null ? `${candidate.floorAreaM2}m²` : "면적 미확인";
   return (
     <aside className={`glass ${styles.card}`} aria-label="공실 후보 정보">
+      {listing && (
+        <div className={styles.photoBox}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className={styles.photo} src={listing.thumbnail} alt="" />
+          <Link href="/credits" className={styles.photoPill}>
+            예시 이미지 · 출처
+          </Link>
+        </div>
+      )}
       <div className={styles.head}>
         <span className={styles.badge}>공실</span>
         <button type="button" className={styles.close} aria-label="닫기" onClick={onClose}>

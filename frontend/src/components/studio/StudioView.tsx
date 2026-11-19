@@ -159,7 +159,8 @@ export default function StudioView({ listing, initialUse }: Props) {
   // 캔버스 위 글자
   const productCount = displayTags.reduce((sum, tag) => sum + tag.qty, 0);
   const warnCount = render ? render.checks.filter((text) => text.startsWith("확인 필요")).length : 0;
-  const measuredBadge = `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · 실측 기준`;
+  const isCandidate = listing.terms === "inquiry"; // 공실 후보 공간. 실측과 사진이 없다.
+  const measuredBadge = `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · ${isCandidate ? "건축물대장 기준" : "실측 기준"}`;
 
   let imageUrl = `/images/render-${useType}.jpg`;
   let leftBadge = `AI 렌더링 · 판매 상품 ${productCount}개`;
@@ -170,8 +171,9 @@ export default function StudioView({ listing, initialUse }: Props) {
     rightBadge = warnCount > 0 ? `치수 확인 필요 ${warnCount}건` : "치수 검증 완료";
   }
   if (showEmpty || isBoardStage) {
-    imageUrl = "/images/empty-space.jpg";
+    imageUrl = isCandidate ? listing.thumbnail : "/images/empty-space.jpg";
     rightBadge = measuredBadge;
+    if (isCandidate && showEmpty) leftBadge = "예시 이미지";
     if (isBoardStage) leftBadge = "AI 렌더링 · 상품 먼저";
   }
 

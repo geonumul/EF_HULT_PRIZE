@@ -7,7 +7,16 @@ from app.services.costs import USES, estimate_costs
 
 DEFAULT_AREA_M2 = 40.0  # 층 면적을 모를 때의 가정값
 DEFAULT_CEILING_M = 3.0
-EMPTY_THUMBNAIL = "/images/space-d.jpg"  # 빈 공간 사진 대신 쓰는 기본 이미지
+SPACE_IMAGE_COUNT = 12  # frontend/public/images/spaces/space-01.jpg ~ space-12.jpg
+CELL_LAT, CELL_LNG = 0.000125, 0.00015  # 약 14m 칸. 한 칸 안의 건물은 같은 사진을 쓴다.
+
+
+def image_for(position: dict) -> str:
+    """위치에 따라 예시 사진을 고른다. 이웃한 칸은 번호가 달라서 가까운 공간끼리 사진이 겹치지 않는다."""
+    row = int(position["lat"] // CELL_LAT)
+    col = int(position["lng"] // CELL_LNG)
+    number = (row + 3 * col) % SPACE_IMAGE_COUNT + 1
+    return f"/images/spaces/space-{number:02d}.jpg"
 
 
 def building_use_of(candidate: dict) -> str:
@@ -38,7 +47,7 @@ def space_from_candidate(candidate: dict) -> dict:
         "terms": "inquiry",  # 임대 조건을 모른다. 화면에는 "임대 조건 문의"로 보여 준다.
         "buildingUse": building_use_of(candidate),
         "condition": "vacant",
-        "thumbnail": EMPTY_THUMBNAIL,
+        "thumbnail": image_for(candidate["position"]),
         "renderCount": 0,
         "position": candidate["position"],
         "costs": estimate_costs(area),

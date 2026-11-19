@@ -1,5 +1,5 @@
 # 공실 후보를 공간 정보로 바꾸는 계산
-from app.services.candidate_space import DEFAULT_AREA_M2, building_use_of, space_from_candidate
+from app.services.candidate_space import CELL_LAT, CELL_LNG, DEFAULT_AREA_M2, building_use_of, image_for, space_from_candidate
 
 CANDIDATE = {
     "id": "1120010100-1",
@@ -36,3 +36,16 @@ def test_unknown_area_uses_default():
 
 def test_route_returns_404_without_candidate(client):
     assert client.get("/vacancy-candidates/none/space").status_code == 404
+
+
+def test_neighbor_cells_get_different_images():
+    base = {"lat": 37.5400, "lng": 127.0500}
+    here = image_for(base)
+    assert image_for({"lat": base["lat"] + CELL_LAT, "lng": base["lng"]}) != here
+    assert image_for({"lat": base["lat"], "lng": base["lng"] + CELL_LNG}) != here
+    assert image_for({"lat": base["lat"] + CELL_LAT, "lng": base["lng"] + CELL_LNG}) != here
+    assert image_for(base) == here  # 같은 자리는 같은 사진
+
+
+def test_space_uses_example_photo():
+    assert space_from_candidate(CANDIDATE)["thumbnail"].startswith("/images/spaces/space-")
