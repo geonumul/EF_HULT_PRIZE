@@ -5,7 +5,7 @@ const PLAN_URL = process.env.NEXT_PUBLIC_PLAN_URL ?? "https://asia-northeast3-sh
 const GENERATE_URL = process.env.NEXT_PUBLIC_GENERATE_URL ?? "https://asia-northeast3-shopportunity-8e794.cloudfunctions.net/generateRender";
 
 const PLAN_TIMEOUT_MS = 20_000;
-const GENERATE_TIMEOUT_MS = 150_000;
+const GENERATE_TIMEOUT_MS = 290_000; // 함수의 최대 시간(300초)보다 조금 짧게. 검수에 실패해 한 번 더 만들면 150초를 넘길 수 있다.
 
 export type Room = { widthMm: number; depthMm: number; ceilingMm: number };
 
