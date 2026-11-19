@@ -2,6 +2,7 @@
 //   npm run build && node lib/scripts/exportKnowledge.js
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { COVERAGE, coverageSummary, type CoverageStatus } from "../pipeline/coverage";
 import { DESIGN_RULES, type DesignRule, type RuleStatus } from "../pipeline/knowledge";
 
 const STATUS_LABELS: Record<RuleStatus, string> = {
@@ -23,6 +24,8 @@ function valueText(rule: DesignRule): string {
 function cell(text: string): string {
   return text.replace(/\|/g, "/");
 }
+
+const COVERAGE_LABELS: Record<CoverageStatus, string> = { enforced: "적용함", partial: "일부 적용", reference: "기준만 있음", missing: "없음" };
 
 const groups = [...new Set(DESIGN_RULES.map((rule) => rule.group))];
 const lines: string[] = [
@@ -49,6 +52,21 @@ for (const group of groups) {
   for (const rule of DESIGN_RULES.filter((candidate) => candidate.group === group)) {
     lines.push(`| ${cell(rule.label)} | ${valueText(rule)} | ${STATUS_LABELS[rule.status]} | ${cell(rule.source)} | ${rule.enforced ? "코드에 사용" : "참고"} | ${cell(rule.note)} |`);
   }
+  lines.push("");
+}
+
+const summary = coverageSummary();
+lines.push(
+  "## 건축 계획 항목 범위와 현재 상태",
+  "",
+  "건축, 인테리어 계획에서 확인하는 항목 전체를 나열하고 서비스가 어디까지 다루는지 표시한다. 새로 알게 된 항목은 `functions/src/pipeline/coverage.ts`에 추가한다.",
+  "",
+  `전체 ${summary.total}개 항목 중 적용함 ${summary.enforced}, 일부 적용 ${summary.partial}, 기준만 있음 ${summary.reference}, 없음 ${summary.missing}.`,
+  "",
+);
+for (const domain of [...new Set(COVERAGE.map((entry) => entry.domain))]) {
+  lines.push(`### ${domain}`, "", "| 항목 | 상태 | 비고 |", "|---|---|---|");
+  for (const entry of COVERAGE.filter((candidate) => candidate.domain === domain)) lines.push(`| ${cell(entry.item)} | ${COVERAGE_LABELS[entry.status]} | ${cell(entry.note)} |`);
   lines.push("");
 }
 

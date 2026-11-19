@@ -26,10 +26,13 @@ const LENS_MM = ruleOf("camera.lens").min as number;
 const COLOR_TEMP_K = ruleOf("light.color").max as number;
 
 /** 업종마다 달라지는 계획 특징. 기준표의 조사 결과에서 가져온다. */
+const COUNTER_FRONT_M = (ruleOf("counter.front").value as number) / 1000;
+const COUNTER_BACK_M = (ruleOf("counter.back").value as number) / 1000;
+
 const USE_TRAITS: Record<string, string> = {
-  cafe: "Keep a clear main aisle from the entrance to the counter. Warm pendant lights hang about 0.8 m above the table tops.",
-  pilates: "Reformers are lined up with clear space on every side. One wall is a full-height mirror. Light wooden floor, ceiling at least 2.7 m, bright even lighting.",
-  popup: "Aisles are about 1.2 m wide. Display shelves stand along the walls, any central display is low so sight lines stay open. Track spot lights accent the displays.",
+  cafe: `The service counter stands clear of the wall with a ${COUNTER_BACK_M} m walkway behind it for staff, so do not push the counter against the wall. Keep at least ${COUNTER_FRONT_M} m of clear floor between the front of the counter and the nearest table. Keep a clear main aisle from the entrance to the counter. Warm pendant lights hang about 0.8 m above the table tops.`,
+  pilates: "Reformers are lined up with about 0.9 m of clear space between them and on every side. One wall is a full-height mirror. Light wooden floor, ceiling at least 2.7 m, bright even lighting.",
+  popup: `Spread the displays over the whole depth of the room and do not leave the foreground empty: wall shelves along the back wall, free-standing display tables in the middle, and the checkout counter near the entrance with at least ${COUNTER_FRONT_M} m of clear floor in front of it. Aisles are about 1.2 m wide. Display tables stay low so sight lines stay open. Track spot lights accent the displays.`,
 };
 
 /** 배치된 집기를 "이름 x 개수, 위치" 문장으로 줄인다. 위치는 방 안의 대략적인 방향이다. */
