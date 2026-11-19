@@ -97,5 +97,6 @@ function makeUnit(product: Product, chairs: number, chair: Product | undefined, 
     heightMm: product.heightMm,
     chairHeightMm: chair?.heightMm,
     clearanceMm: clearanceMm || undefined,
+    category: product.category,
   };
 }

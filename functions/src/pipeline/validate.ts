@@ -1,7 +1,7 @@
 // 4단계 치수 검증. 통로, 좌석 간격, 기구 간격, 겹침, 공간 밖 배치를 확인한다.
 import type { Room } from "../types";
 import type { Layout, PlacedItem } from "./layout";
-import { ENTRY_CLEAR_MM, entryZone } from "./knowledge";
+import { ENTRY_CLEAR_MM, entryZone, ruleOf } from "./knowledge";
 import { MIN_AISLE_MM, requiredGapMm } from "./rules";
 
 export type ViolationRule = "not_fit" | "overlap" | "aisle" | "gap" | "entry";
@@ -56,7 +56,10 @@ function isOutsideRoom(room: Room, item: PlacedItem): boolean {
   return item.x < 0 || item.y < 0 || item.x + item.widthMm > room.widthMm || item.y + item.depthMm > room.depthMm;
 }
 
+const COUNTER_FRONT_MM = ruleOf("counter.front").value as number;
+
 function checkPair(a: PlacedItem, b: PlacedItem): Violation | null {
+  if (a.hanging || b.hanging) return null; // 천장에 매단 물건은 바닥 규칙을 보지 않는다.
   const overlapX = a.x < b.x + b.widthMm && b.x < a.x + a.widthMm;
   const overlapY = a.y < b.y + b.depthMm && b.y < a.y + a.depthMm;
   const productIds = [a.productId, b.productId];
@@ -68,10 +71,12 @@ function checkPair(a: PlacedItem, b: PlacedItem): Violation | null {
   // 위아래로 마주 보면 통로 규칙을 본다.
   if (overlapX) {
     const gap = Math.max(a.y - (b.y + b.depthMm), b.y - (a.y + a.depthMm));
-    if (gap < MIN_AISLE_MM) {
+    // 카운터 앞은 손님이 서는 공간이라 더 넓게 본다.
+    const required = a.category === "counter" || b.category === "counter" ? COUNTER_FRONT_MM : MIN_AISLE_MM;
+    if (gap < required) {
       return {
         rule: "aisle",
-        message: `${a.name}과(와) ${b.name} 사이 통로가 ${gap}mm입니다. ${MIN_AISLE_MM}mm 이상이어야 합니다.`,
+        message: `${a.name}과(와) ${b.name} 사이 통로가 ${gap}mm입니다. ${required}mm 이상이어야 합니다.`,
         productIds,
       };
     }

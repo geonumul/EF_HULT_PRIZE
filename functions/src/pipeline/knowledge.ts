@@ -34,6 +34,9 @@ export const DESIGN_RULES: DesignRule[] = [
   // ---- 동선 ----
   { id: "aisle.main", group: "동선", label: "주 통로 폭", unit: "mm", min: 1200, max: 1520, enforced: false, status: "survey", source: "Oak Street 좌석 가이드, 장애인등편의법 복도 1.2m", note: "입구에서 카운터와 좌석 구역으로 가는 길. 두 사람이 마주 지나가는 폭." },
   { id: "aisle.sub", group: "동선", label: "보조 통로 폭", unit: "mm", min: 910, max: 1120, value: 900, enforced: true, status: "survey", source: "Oak Street 좌석 가이드", note: "줄 사이 통로. 배치는 900을 쓰고, 검증 최소값은 850이다." },
+  { id: "counter.front", group: "동선", label: "카운터 앞 손님 공간(카운터와 첫 테이블 줄 사이)", unit: "mm", value: 1200, enforced: true, status: "proposal", source: "주 통로 폭 1200~1520(자료 종합)과 팀 기준", note: "주문하는 사람이 서고 다른 손님이 지나가는 공간. 카페와 팝업 계산대 모두 적용." },
+  { id: "counter.back", group: "동선", label: "카운터 뒤 직원 통로(벽과 카운터 사이)", unit: "mm", value: 900, enforced: true, status: "proposal", source: "직원 통로 610~760(출처 약함)보다 넓게 잡은 제안값", note: "직원이 지나가고 장비를 쓰는 공간. 한국 실무 기준 확인 필요." },
+  { id: "layout.frontEmpty", group: "동선", label: "카메라 쪽 바닥 중 아무것도 없는 부분의 비율 상한", unit: "%", max: 50, enforced: true, status: "proposal", source: "팀 검수 의견(앞이 너무 비어 보임)", note: "렌더링 자동 검수에서 쓴다. 통로로 쓰이는 여유는 포함되므로 지나치게 엄격하지 않게 잡았다." },
   { id: "aisle.staff", group: "동선", label: "카운터 안쪽 직원 통로 폭", unit: "mm", min: 610, max: 760, enforced: false, status: "proposal", source: "RFP Space Planning 자료", note: "출처 1건이고 약하다." },
   { id: "chair.pullout", group: "동선", label: "의자 뒤 여유(앉고 일어서는 공간)", unit: "mm", value: 450, enforced: true, status: "survey", source: "Oak Street 좌석 가이드(약 460)", note: "테이블 세트 깊이에 양쪽 450을 더한다." },
   { id: "chair.back", group: "동선", label: "테이블 사이 의자 간격", unit: "mm", min: 610, max: 760, enforced: false, status: "survey", source: "Oak Street, Toast 가이드", note: "앉은 사람 뒤로 지나가려면 더 넓어야 한다." },

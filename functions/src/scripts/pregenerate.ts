@@ -6,15 +6,19 @@
 //   --structure 구조그림.png  : tools/clay_render.py로 만든 점토 렌더링. 원근과 물건 위치를 정확히 따르게 한다.
 //   --refs "체어=a.jpg,조명=b.jpg" : 상품 사진. 그 상품의 생김새로 그리게 한다.
 //   --structure-kind edges : --structure가 tools/edge_map.py로 만든 건축 요소 선화일 때. 창, 기둥, 보, 천장 구조를 같은 자리에 둔다.
+//   --attempts N : 만든 이미지를 설계 기준 체크리스트로 자동 검수하고, 실패하면 최대 N번까지 다시 만들어 가장 나은 것을 저장한다.
+//   --critic     : 다시 만들지 않고 검수 결과만 남긴다.
 //   --restyle  : --photo가 이미 꾸며진 기준 이미지일 때, 구도는 그대로 두고 --prompt의 스타일로만 바꾼다.
 //   --dry-run 을 붙이면 키 없이 배치와 프롬프트만 출력한다.
 // 키는 functions/.env의 GEMINI_API_KEY 에서 읽는다.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
+import { GeminiCritic, type CritiqueResult } from "../adapters/geminiCritic";
 import { GeminiImageGenerator, buildPrompt } from "../adapters/geminiImageGenerator";
 import type { ImageGenerationRequest } from "../adapters/imageGenerator";
 import { FakeDatabase } from "../adapters/supabaseClient";
 import { buildLayout } from "../pipeline/layout";
+import { zonedPacker } from "../pipeline/zoning";
 import { legalNotes } from "../pipeline/legal";
 import { unitsFromTemplate } from "../pipeline/template";
 
@@ -60,7 +64,7 @@ async function main() {
   // 배치를 계산하고 치수 검증을 통과하는지 확인한다.
   const catalog = await new FakeDatabase().listProducts();
   const { units } = unitsFromTemplate(useType, room, catalog);
-  const { layout, violations } = buildLayout(room, units, "text");
+  const { layout, violations } = buildLayout(room, units, "text", zonedPacker(useType));
   console.log(`배치 ${layout.placed.length}개, 놓지 못한 물건 ${layout.unplaced.length}개, 치수 위반 ${violations.length}건`);
   for (const violation of violations) console.log(`  - ${violation.message}`);
 
@@ -106,16 +110,33 @@ async function main() {
   writeFileSync(join(outDir, `${useType}-layout.json`), JSON.stringify({ room, placed: layout.placed }, null, 2));
 
   const generator = new GeminiImageGenerator(apiKey, process.env.GEMINI_IMAGE_MODEL || undefined);
+  // --attempts N: 기준표 체크리스트로 자동 검수하고, 실패하면 최대 N번까지 다시 만들어 가장 나은 것을 저장한다.
+  const attempts = Math.max(1, Number(args.attempts ?? 1));
+  const critic = attempts > 1 || args.critic === "true" ? new GeminiCritic(apiKey, process.env.GEMINI_CRITIC_MODEL || undefined) : null;
+
   for (let n = 1; n <= count; n++) {
-    try {
-      const image = await generator.generate(request);
-      const extension = image.contentType.includes("jpeg") ? "jpg" : "png";
-      const file = join(outDir, `${useType}-${n}.${extension}`);
-      writeFileSync(file, image.bytes);
-      console.log(`저장: ${file}`);
-    } catch (error) {
-      console.log(`${n}번째 실패: ${error instanceof Error ? error.message : error}`);
+    let best: { image: Awaited<ReturnType<typeof generator.generate>>; result: CritiqueResult | null } | null = null;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        const image = await generator.generate(request);
+        const result = critic ? await critic.critique({ image, original: spacePhoto, useType }) : null;
+        if (result) {
+          const failedText = result.failed.map((item) => `${item.id}: ${item.note}`).join(" / ");
+          console.log(`  시도 ${attempt}: ${result.passed ? "통과" : "실패"} (통과 ${result.score}/${result.items.length})${failedText ? ` ${failedText}` : ""}`);
+        }
+        const better = !best || (result?.passed && !best.result?.passed) || (result && best.result && result.passed === best.result.passed && result.score > best.result.score);
+        if (better || !result) best = { image, result };
+        if (result?.passed || !critic) break;
+      } catch (error) {
+        console.log(`${n}번째 시도 ${attempt} 실패: ${error instanceof Error ? error.message : error}`);
+      }
     }
+    if (!best) continue;
+    const extension = best.image.contentType.includes("jpeg") ? "jpg" : "png";
+    const file = join(outDir, `${useType}-${n}.${extension}`);
+    writeFileSync(file, best.image.bytes);
+    if (best.result) writeFileSync(join(outDir, `${useType}-${n}-critique.json`), JSON.stringify(best.result, null, 2));
+    console.log(`저장: ${file}${best.result ? (best.result.passed ? " (검수 통과)" : " (검수 미통과, 가장 나은 것)") : ""}`);
   }
 }
 

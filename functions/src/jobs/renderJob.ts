@@ -1,6 +1,7 @@
 // runRenderJob의 본체. 7단계를 순서대로 실행하고 단계마다 진행률을 남긴다.
 import type { Adapters } from "../adapters";
 import { buildLayout } from "../pipeline/layout";
+import { zonedPacker } from "../pipeline/zoning";
 import { legalNotes } from "../pipeline/legal";
 import { buildQuote } from "../pipeline/quote";
 import { unitsFromProducts, unitsFromTemplate } from "../pipeline/template";
@@ -45,7 +46,7 @@ async function runSteps(request: RenderJobRequest, adapters: Adapters, report: R
   await report("running", 25);
 
   // 3. 치수 검증. 미달이면 buildLayout이 최대 3번 다시 배치한다.
-  const { layout, violations } = buildLayout(room, units, request.mode);
+  const { layout, violations } = buildLayout(room, units, request.mode, zonedPacker(request.useType));
   if (violations.length > 0) {
     throw new Error(`치수 검증에 실패했습니다. ${violations.map((violation) => violation.message).join(" ")}`);
   }

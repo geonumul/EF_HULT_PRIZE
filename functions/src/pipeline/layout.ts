@@ -18,6 +18,10 @@ export interface LayoutUnit {
   chairHeightMm?: number;
   /** 기구 둘레에 두는 여유(mm, 한쪽). 발자국(widthMm, depthMm)에 이미 더해져 있다. 구조 그림은 이만큼 안쪽에 기구를 그린다. */
   clearanceMm?: number;
+  /** 상품 분류(counter, lamp, table 등). 업종별 배치가 카운터와 조명을 따로 다룬다. */
+  category?: string;
+  /** 천장에 매다는 물건. 바닥을 차지하지 않아 다른 물건과 겹쳐도 위반이 아니다. */
+  hanging?: boolean;
 }
 
 export interface PlacedItem extends LayoutUnit {
@@ -29,6 +33,9 @@ export interface Layout {
   placed: PlacedItem[];
   unplaced: LayoutUnit[];
 }
+
+/** 물건 목록을 공간에 놓는 방법. 업종마다 다른 배치기를 쓸 수 있다. */
+export type Packer = (room: Room, units: LayoutUnit[]) => Layout;
 
 export function packLayout(room: Room, units: LayoutUnit[]): Layout {
   const placed: PlacedItem[] = [];
@@ -85,16 +92,16 @@ export interface BuildLayoutResult {
  * text 모드는 들어가지 않은 물건을 빼고 다시 배치한다. 사용자가 개수를 정하지 않았기 때문이다.
  * products 모드는 사용자가 고른 상품이라 빼지 않고 큰 것부터 다시 채운다.
  */
-export function buildLayout(room: Room, units: LayoutUnit[], mode: "text" | "products"): BuildLayoutResult {
+export function buildLayout(room: Room, units: LayoutUnit[], mode: "text" | "products", pack: Packer = packLayout): BuildLayoutResult {
   let currentUnits = units;
-  let layout = packLayout(room, currentUnits);
+  let layout = pack(room, currentUnits);
   let violations = validateLayout(room, layout);
   let relayoutCount = 0;
 
   while (violations.length > 0 && relayoutCount < MAX_RELAYOUT_COUNT) {
     relayoutCount += 1;
     currentUnits = mode === "text" ? removeUnplaced(currentUnits, layout) : sortByAreaDesc(currentUnits);
-    layout = packLayout(room, currentUnits);
+    layout = pack(room, currentUnits);
     violations = validateLayout(room, layout);
   }
 
