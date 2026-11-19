@@ -77,6 +77,11 @@ export const LISTINGS: Listing[] = [
   },
 ];
 
+/** 서버에서 받은 공간을 목록에 더한다. 이미 있으면 그대로 둔다. */
+export function addListing(listing: Listing): void {
+  if (!findListing(listing.id)) LISTINGS.push(listing);
+}
+
 /** id로 공실 하나를 찾는다. 없으면 undefined. */
 export function findListing(id: string): Listing | undefined {
   return LISTINGS.find((listing) => listing.id === id);

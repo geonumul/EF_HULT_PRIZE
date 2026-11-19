@@ -65,6 +65,9 @@ class MemoryStore:
     def list_candidates(self, bbox=None, min_confidence: float = 0, limit: int = 500) -> list[dict]:
         return []  # 후보는 탐색 도구가 DB에 저장한다. 메모리 모드에는 없다.
 
+    def get_candidate(self, candidate_id: str) -> dict | None:
+        return None
+
     def get_listing(self, listing_id: str) -> dict | None:
         for listing in self.listings:
             if listing["id"] == listing_id:
@@ -312,6 +315,16 @@ class PostgresStore:
         sql += " order by confidence desc, id limit %s"
         params.append(limit)
         return [candidate_from_row(row) for row in self._run(sql, tuple(params))]
+
+    def get_candidate(self, candidate_id: str) -> dict | None:
+        row = self._run(
+            """select id, address, building_name, floor, floor_use, floor_detail, floor_area_m2, confidence, reasons, status,
+                      stores_on_floor, unknown_floor_stores, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng
+               from vacancy_candidates where id = %s and status <> 'rejected'""",
+            (candidate_id,),
+            one=True,
+        )
+        return candidate_from_row(row) if row else None
 
     def get_listing(self, listing_id: str) -> dict | None:
         row = self._run(LISTING_SQL + " where l.id = %s", (listing_id,), one=True)

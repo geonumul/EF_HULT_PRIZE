@@ -107,3 +107,51 @@
   background: var(--brand-500);
   color: var(--gray-0);
 }
+
+/* 업종별 창업비 */
+.uses {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
+
+.use {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-0);
+}
+
+.useName {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.useCost {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.useVerdict {
+  font-size: 11px;
+  color: var(--brand-600);
+}
+
+/* 스튜디오로 가는 버튼 */
+.studio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--brand-500);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-0);
+}

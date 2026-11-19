@@ -68,7 +68,7 @@ export default function QuoteList() {
                 {formatArea(listing.areaM2)} · {listing.floor}층 · 천장 {listing.ceilingHeightM}m
               </p>
               <p className={styles.rent}>
-                보증금 {listing.deposit.toLocaleString("ko-KR")} · 월세 {listing.rent}
+                {listing.terms === "inquiry" ? "임대 조건 문의" : `보증금 ${listing.deposit.toLocaleString("ko-KR")} · 월세 ${listing.rent}`}
               </p>
               <p className={styles.condition}>{CONDITION_LABELS[listing.condition]}</p>
             </div>

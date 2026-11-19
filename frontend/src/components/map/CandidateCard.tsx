@@ -1,6 +1,12 @@
-// 공실 후보를 눌렀을 때 지도 왼쪽 아래에 뜨는 카드.
+// 공실 후보를 눌렀을 때 지도 왼쪽 아래에 뜨는 카드. 업종별 창업비와 스튜디오로 가는 버튼을 함께 보여 준다.
+import Link from "next/link";
+import { formatMan, USE_LABELS } from "@/lib/format";
+import { useSpace } from "@/lib/spaces";
+import type { UseType, Verdict } from "@/types";
 import type { VacancyCandidate } from "@/types/vacancy";
 import styles from "./CandidateCard.module.css";
+
+const VERDICT_LABELS: Record<Verdict, string> = { possible: "가능", conditional: "조건부", impossible: "불가" };
 
 type Props = {
   candidate: VacancyCandidate;
@@ -10,6 +16,7 @@ type Props = {
 };
 
 export default function CandidateCard({ candidate, floors, onSelectFloor, onClose }: Props) {
+  const { listing } = useSpace(candidate.id); // 업종별 창업비와 판정. 스튜디오와 견적도 같은 공간 정보를 쓴다.
   const area = candidate.floorAreaM2 !== null ? `${candidate.floorAreaM2}m²` : "면적 미확인";
   return (
     <aside className={`glass ${styles.card}`} aria-label="공실 후보 정보">
@@ -40,6 +47,22 @@ export default function CandidateCard({ candidate, floors, onSelectFloor, onClos
       <p className={styles.sub}>
         {candidate.floorUse} · {area}
       </p>
+      {listing && (
+        <>
+          <div className={styles.uses}>
+            {(Object.keys(listing.costs) as UseType[]).map((use) => (
+              <div key={use} className={styles.use}>
+                <span className={styles.useName}>{USE_LABELS[use]}</span>
+                <span className={styles.useCost}>{formatMan(listing.costs[use] ?? 0)}</span>
+                <span className={styles.useVerdict}>{listing.verdicts[use] ? VERDICT_LABELS[listing.verdicts[use] as Verdict] : ""}</span>
+              </div>
+            ))}
+          </div>
+          <Link href={`/space/${encodeURIComponent(candidate.id)}/studio`} className={styles.studio}>
+            스튜디오에서 꾸며 보기
+          </Link>
+        </>
+      )}
       <p className={styles.confidence}>비어 있을 가능성 {Math.round(candidate.confidence * 100)}%</p>
       <ul className={styles.reasons}>
         {candidate.reasons.slice(0, 3).map((reason) => (

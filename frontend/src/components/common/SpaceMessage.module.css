@@ -1,0 +1,21 @@
+.box {
+  min-height: calc(100dvh - var(--header-height));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 16px;
+}
+
+.text {
+  margin: 0;
+  font-size: 16px;
+  color: var(--gray-600);
+}
+
+.link {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand-600);
+}

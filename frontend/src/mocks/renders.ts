@@ -1,8 +1,8 @@
 // 가짜 렌더링 결과. 스튜디오 화면과 견적 화면이 같이 쓴다.
 // 렌더링 id는 "r-<공실id>-<업종>" 형식이고, 상품 먼저 방식은 뒤에 "-products"가 붙는다.
 // 이미지 파일(/images/render-*.jpg)은 스튜디오 화면 작업에서 시안 이미지를 내려받아 채운다.
-import type { RenderResult, RenderTag, UseType } from "@/types";
-import { LISTINGS } from "./listings";
+import type { Listing, RenderResult, RenderTag, UseType } from "@/types";
+import { LISTINGS, addListing, findListing } from "./listings";
 
 // 업종별 기본 배치. 태그의 x, y는 이미지 안 위치(%)다.
 const TAGS_BY_USE: Partial<Record<UseType, RenderTag[]>> = {
@@ -48,6 +48,13 @@ function makeRender(listingId: string, useType: UseType): RenderResult {
 export const RENDERS: RenderResult[] = LISTINGS.flatMap((listing) =>
   (Object.keys(listing.costs) as UseType[]).map((useType) => makeRender(listing.id, useType)),
 );
+
+/** 서버에서 받은 공간을 등록하고, 업종별 렌더링을 함께 만든다. 같은 공간을 다시 등록해도 한 번만 만든다. */
+export function addSpace(listing: Listing): void {
+  if (findListing(listing.id)) return;
+  addListing(listing);
+  for (const useType of Object.keys(listing.costs) as UseType[]) RENDERS.push(makeRender(listing.id, useType));
+}
 
 /**
  * id로 렌더링을 찾는다.

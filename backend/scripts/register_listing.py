@@ -37,15 +37,9 @@ def load_env_file() -> None:
 
 from app.services import suitability  # noqa: E402
 from app.services.external import building_hub, kakao_local, store_info, vworld  # noqa: E402
-from app.services.quote import CONSTRUCTION_WON_PER_M2, facility_cost  # noqa: E402
+from app.services.costs import FURNITURE_WON_PER_M2, USES, estimate_costs  # noqa: E402, F401
 
 FRONTEND_IMAGES = BACKEND.parent / "frontend" / "public" / "images" / "listings"
-USES = ["cafe", "popup", "pilates"]
-
-# 집기 비용을 면적에 비례해 잡는 예시 단가(원/m²). 기본 배치(카페 11개 테이블 등)의 집기 합계에서 계산했다.
-FURNITURE_WON_PER_M2 = {"cafe": 287000, "popup": 85000, "pilates": 490000}
-
-
 def floor_building_use(title: dict, floor_data: dict) -> str:
     """해당 층의 용도 분류를 돌려준다. 층별 설명에 '제1종근린생활시설(소매점)'처럼 적혀 있으면 그것을 쓴다."""
     for use in floor_data.get("uses", []):
@@ -53,16 +47,6 @@ def floor_building_use(title: dict, floor_data: dict) -> str:
         if found:
             return "".join(found.group(0).split())
     return title.get("mainPurpose", "")
-
-
-def estimate_costs(area_m2: float) -> dict:
-    """업종별 창업비를 만원 단위로 추정한다. 집기, 설비, 시공을 더한다. 철거비는 견적서에서 따로 더한다."""
-    costs = {}
-    for use in USES:
-        furniture = area_m2 * FURNITURE_WON_PER_M2[use]
-        construction = area_m2 * CONSTRUCTION_WON_PER_M2
-        costs[use] = round((furniture + facility_cost(use) + construction) / 10000)
-    return costs
 
 
 def slug_from(address: str, floor: int) -> str:

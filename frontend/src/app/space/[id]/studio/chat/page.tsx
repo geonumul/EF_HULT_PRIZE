@@ -1,8 +1,5 @@
 // S04 텍스트 렌더링 요청. Figma 25:242.
-import { notFound } from "next/navigation";
-import type { UseType } from "@/types";
-import { findListing } from "@/mocks/listings";
-import ChatView from "@/components/studio/ChatView";
+import ChatLoader from "@/components/studio/ChatLoader";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -12,12 +9,5 @@ type Props = {
 export default async function StudioChatPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { use } = await searchParams;
-
-  const listing = findListing(id);
-  if (!listing) notFound();
-
-  const uses = Object.keys(listing.costs) as UseType[];
-  const initialUse = uses.find((candidate) => candidate === use) ?? uses[0];
-
-  return <ChatView listing={listing} initialUse={initialUse} />;
+  return <ChatLoader id={id} use={use} />;
 }

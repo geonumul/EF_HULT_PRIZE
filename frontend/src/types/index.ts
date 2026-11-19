@@ -24,6 +24,7 @@ export type Listing = {
   deposit: number; // 보증금
   rent: number; // 월세
   buildingUse: string; // 건축물대장 주용도
+  terms?: "inquiry"; // 보증금과 월세를 모르는 공간. 화면에 "임대 조건 문의"로 보여 준다.
   condition: SpaceCondition;
   thumbnail: string; // /images/... 경로
   renderCount: number; // AI 렌더링 개수. 0이면 "빈 공간"

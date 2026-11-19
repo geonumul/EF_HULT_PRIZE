@@ -41,7 +41,7 @@ export default function StudioSubHeader({ listing, active, onSelect, right }: Pr
             {listing.address} · {listing.tag}
           </span>
           <span className={styles.meta}>
-            {formatArea(listing.areaM2)} · 천장고 {listing.ceilingHeightM}m · 보증금 {listing.deposit.toLocaleString("ko-KR")} / 월세 {listing.rent}
+            {formatArea(listing.areaM2)} · 천장고 {listing.ceilingHeightM}m · {listing.terms === "inquiry" ? "임대 조건 문의" : `보증금 ${listing.deposit.toLocaleString("ko-KR")} / 월세 ${listing.rent}`}
           </span>
         </span>
       </Link>
