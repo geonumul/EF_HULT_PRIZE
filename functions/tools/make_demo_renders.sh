@@ -13,11 +13,16 @@ WOOD="warm natural wood tones, oak furniture, warm lighting"
 WHITE="white minimal, white walls, light oak furniture, bright clean Scandinavian feel"
 INDUSTRIAL="industrial, exposed concrete and black steel, dark metal pendant lights, leather and dark wood"
 
-run() {  # 인수: 출력 폴더, 이어서 pregenerate 옵션. 실패하면 한 번 더 한다.
+has_image() {  # 폴더에 생성된 이미지(jpg 또는 png)가 있으면 성공
+  compgen -G "$1/*-1.jpg" >/dev/null || compgen -G "$1/*-1.png" >/dev/null || compgen -G "$1/*-1.jpeg" >/dev/null
+}
+
+run() {  # 인수: 출력 폴더, 이어서 pregenerate 옵션. 이미 만든 이미지는 건너뛰고, 실패하면 한 번 더 한다.
   local dir="$1"; shift
+  has_image "$dir" && { echo "건너뜀(이미 있음): $dir"; return 0; }
   for attempt in 1 2; do
     node lib/scripts/pregenerate.js "$@" --count 1 --out "$dir" 2>&1 | tail -1
-    ls "$dir"/*.jp* "$dir"/*.png >/dev/null 2>&1 && return 0
+    has_image "$dir" && return 0
     sleep 5
   done
   return 1
