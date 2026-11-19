@@ -65,3 +65,19 @@ test("다른 업종은 기존 줄 배치를 쓴다", () => {
   const { layout } = buildLayout(room, units, "text", zonedPacker("pilates"));
   assert.equal(layout.placed.length, 2);
 });
+
+test("카페: 의자가 딸린 테이블은 벽에서 600 이상 떨어진다", () => {
+  const { layout, violations } = buildLayout(room, cafeUnits(), "text", zonedPacker("cafe"));
+  const tables = layout.placed.filter((item) => item.kind === "table");
+  for (const table of tables) {
+    assert.ok(table.x >= 600, `${table.name} x=${table.x}`);
+    assert.ok(room.widthMm - (table.x + table.widthMm) >= 600, `${table.name} 오른쪽`);
+    assert.ok(room.depthMm - (table.y + table.depthMm) >= 600, `${table.name} 앞쪽`);
+  }
+  assert.deepEqual(violations, []);
+});
+
+test("의자 딸린 테이블이 벽에 300만 떨어져 있으면 위반이다", () => {
+  const layout = { placed: [{ ...unit("테이블", "table", 600, 1500, "table"), chairs: 2, x: 300, y: 3000 }], unplaced: [] };
+  assert.ok(validateLayout(room, layout).some((violation) => violation.rule === "wall"));
+});

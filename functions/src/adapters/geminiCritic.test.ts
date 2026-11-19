@@ -55,17 +55,18 @@ test("검수 요청이 실패하면 상태 코드를 담아 오류를 낸다", a
 import { judgeMeasurements } from "./geminiCritic";
 
 test("추정 길이가 기준표 값보다 작으면 모델이 통과라고 해도 실패로 판정한다", () => {
-  const items = judgeMeasurements({ counter_front_m: 0.8, counter_back_m: 0.5, main_aisle_m: 1.3, front_empty_percent: 70 }, "cafe");
+  const items = judgeMeasurements({ counter_front_m: 0.8, counter_back_m: 0.5, main_aisle_m: 1.3, front_empty_percent: 70, wall_to_chair_m: 0.2 }, "cafe");
   const byId = Object.fromEntries(items.map((item) => [item.id, item]));
   assert.equal(byId.counter_front.pass, false);
   assert.equal(byId.counter_back.pass, false);
   assert.equal(byId.aisle_main.pass, true);
   assert.equal(byId.empty_zone.pass, false);
+  assert.equal(byId.wall_seating.pass, false); // 벽과 의자 뒤 0.2m는 600 미만
   assert.match(byId.counter_front.note, /1.2m 이상/);
 });
 
 test("업종에 맞지 않는 측정값은 판정하지 않는다", () => {
-  const ids = judgeMeasurements({ counter_front_m: 1.5, counter_back_m: 0.2, main_aisle_m: 1.5, front_empty_percent: 10 }, "popup").map((item) => item.id);
+  const ids = judgeMeasurements({ counter_front_m: 1.5, counter_back_m: 0.2, main_aisle_m: 1.5, front_empty_percent: 10, wall_to_chair_m: 0.1 }, "popup").map((item) => item.id);
   assert.ok(!ids.includes("counter_back")); // 카운터 뒤 통로는 카페만 본다.
 });
 

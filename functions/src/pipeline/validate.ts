@@ -4,7 +4,7 @@ import type { Layout, PlacedItem } from "./layout";
 import { ENTRY_CLEAR_MM, entryZone, ruleOf } from "./knowledge";
 import { MIN_AISLE_MM, requiredGapMm } from "./rules";
 
-export type ViolationRule = "not_fit" | "overlap" | "aisle" | "gap" | "entry";
+export type ViolationRule = "not_fit" | "overlap" | "aisle" | "gap" | "entry" | "wall";
 
 export interface Violation {
   rule: ViolationRule;
@@ -36,6 +36,15 @@ export function validateLayout(room: Room, layout: Layout): Violation[] {
     }
   }
 
+  // 의자가 딸린 테이블은 벽과 창에서 띄워야 앉고 일어설 수 있다. 줄 배치기는 벽 여유 300을 써서 여기서 걸린다.
+  for (const item of layout.placed) {
+    if (item.hanging || item.chairs === 0) continue;
+    const nearWall = Math.min(item.x, room.widthMm - (item.x + item.widthMm), room.depthMm - (item.y + item.depthMm));
+    if (nearWall < SEAT_WALL_MM) {
+      violations.push({ rule: "wall", message: `${item.name}이(가) 벽에서 ${Math.round(nearWall)}mm 떨어져 있습니다. 의자 뒤 ${SEAT_WALL_MM}mm 이상 띄워야 합니다.`, productIds: [item.productId] });
+    }
+  }
+
   const items = layout.placed;
   for (let i = 0; i < items.length; i += 1) {
     for (let j = i + 1; j < items.length; j += 1) {
@@ -57,6 +66,7 @@ function isOutsideRoom(room: Room, item: PlacedItem): boolean {
 }
 
 const COUNTER_FRONT_MM = ruleOf("counter.front").value as number;
+const SEAT_WALL_MM = ruleOf("wall.seat").value as number;
 
 function checkPair(a: PlacedItem, b: PlacedItem): Violation | null {
   if (a.hanging || b.hanging) return null; // 천장에 매단 물건은 바닥 규칙을 보지 않는다.

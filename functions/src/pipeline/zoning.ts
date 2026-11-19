@@ -9,6 +9,7 @@ import { LAYOUT_AISLE_MM, WALL_MARGIN_MM, requiredGapMm } from "./rules";
 const COUNTER_FRONT_MM = ruleOf("counter.front").value as number; // 카운터 앞 손님 공간
 const COUNTER_BACK_MM = ruleOf("counter.back").value as number; // 카운터 뒤 직원 통로
 const POPUP_AISLE_MAX_MM = ruleOf("popup.aisle").max as number; // 진열 줄 사이 통로의 상한
+export const SEAT_WALL_MM = ruleOf("wall.seat").value as number; // 앉는 자리와 벽 사이 간격
 
 type Room = { widthMm: number; depthMm: number; ceilingMm: number };
 
@@ -18,7 +19,8 @@ const isLamp = (unit: LayoutUnit) => unit.category === "lamp";
 export function zonedPacker(useType: string): Packer {
   if (useType === "cafe") return packCafe;
   if (useType === "popup") return packPopup;
-  return packLayout;
+  // 필라테스 같은 이용자가 움직이는 자리도 벽에서 띄운다.
+  return (room, units) => packLayout(room, units, SEAT_WALL_MM);
 }
 
 /** 카페. 카운터는 안쪽 벽에, 테이블은 카운터 앞 손님 공간 너머에 놓는다. */
@@ -43,9 +45,9 @@ export function packCafe(room: Room, units: LayoutUnit[]): Layout {
   }
 
   // 테이블: 카운터 앞 손님 공간을 비운 아래쪽 공간에 줄 단위로
-  const seatTop = counterBottom > 0 ? counterBottom + COUNTER_FRONT_MM : WALL_MARGIN_MM;
-  const shift = seatTop - WALL_MARGIN_MM;
-  const sub = packLayout({ ...room, depthMm: room.depthMm - shift }, rest);
+  const seatTop = counterBottom > 0 ? counterBottom + COUNTER_FRONT_MM : SEAT_WALL_MM;
+  const shift = seatTop - SEAT_WALL_MM;
+  const sub = packLayout({ ...room, depthMm: room.depthMm - shift }, rest, SEAT_WALL_MM); // 의자가 벽에 붙지 않게 벽에서 띄운다.
   placed.push(...sub.placed.map((item) => ({ ...item, y: item.y + shift })));
   unplaced.push(...sub.unplaced);
 

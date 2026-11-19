@@ -35,6 +35,7 @@ const ENDPOINT = (model: string) => `https://generativelanguage.googleapis.com/v
 const COUNTER_FRONT_M = (ruleOf("counter.front").value as number) / 1000;
 const COUNTER_BACK_M = (ruleOf("counter.back").value as number) / 1000;
 const MAIN_AISLE_M = (ruleOf("aisle.main").min as number) / 1000;
+const WALL_SEAT_M = (ruleOf("wall.seat").value as number) / 1000;
 
 /** 업종별 체크리스트. 값은 기준표에서 읽는다. */
 export function checklistFor(useType: string, hasOriginal: boolean): ChecklistEntry[] {
@@ -51,6 +52,7 @@ export function checklistFor(useType: string, hasOriginal: boolean): ChecklistEn
     cafe: [
       { id: "counter_back", critical: true, question: `카운터 뒤쪽 벽과 카운터 사이에 직원이 지나갈 폭(약 ${COUNTER_BACK_M}m 이상)이 있어 보이는가? 카운터가 벽에 거의 붙어 있으면 실패다.` },
       { id: "counter_front", critical: true, question: `카운터 앞에서 가장 가까운 테이블이나 의자까지 손님이 서고 지나갈 수 있는 공간(약 ${COUNTER_FRONT_M}m 이상)이 있어 보이는가? 테이블이 카운터에 바짝 붙어 있으면 실패다.` },
+      { id: "wall_seating", critical: true, question: `벽이나 유리창과 가장 가까운 의자(또는 스툴) 뒤 사이에 사람이 앉고 지나갈 간격(약 ${WALL_SEAT_M}m 이상)이 있어 보이는가? 의자나 테이블이 벽이나 유리에 붙어 있으면 실패다.` },
       { id: "aisle_main", critical: false, question: `입구에서 카운터와 좌석 구역으로 이어지는 주 통로가 약 ${MAIN_AISLE_M}m 이상 폭으로 끊기지 않고 보이는가?` },
       { id: "use_features", critical: false, question: "카페로 보이는가? (주문 카운터, 좌석이 있는 테이블, 조명)" },
     ],
@@ -75,6 +77,7 @@ export interface Measurements {
   counter_back_m: number | null;
   main_aisle_m: number | null;
   front_empty_percent: number | null;
+  wall_to_chair_m: number | null;
 }
 
 const FRONT_EMPTY_MAX = ruleOf("layout.frontEmpty").max as number;
@@ -86,6 +89,7 @@ export function judgeMeasurements(measurements: Measurements | undefined, useTyp
     { id: "counter_front", value: measurements.counter_front_m, min: COUNTER_FRONT_M, unit: "m", label: "카운터 앞 공간", uses: ["cafe", "popup"] },
     { id: "counter_back", value: measurements.counter_back_m, min: COUNTER_BACK_M, unit: "m", label: "카운터 뒤 통로", uses: ["cafe"] },
     { id: "aisle_main", value: measurements.main_aisle_m, min: MAIN_AISLE_M, unit: "m", label: "주 통로 폭", uses: ["cafe", "popup"] },
+    { id: "wall_seating", value: measurements.wall_to_chair_m, min: WALL_SEAT_M, unit: "m", label: "벽, 창과 의자 뒤 간격", uses: ["cafe"] },
     { id: "empty_zone", value: measurements.front_empty_percent, max: FRONT_EMPTY_MAX, unit: "%", label: "카메라 쪽 빈 바닥 비율" },
   ];
   const items: CritiqueItem[] = [];
@@ -128,6 +132,7 @@ export class GeminiCritic {
       "- counter_front_m: 카운터 앞면에서 가장 가까운 테이블, 의자, 진열대까지의 거리",
       "- counter_back_m: 카운터 뒤쪽 벽에서 카운터까지의 거리(직원 통로)",
       "- main_aisle_m: 입구에서 안쪽으로 이어지는 가장 좁은 주 통로 폭",
+      "- wall_to_chair_m: 벽이나 유리창에서 가장 가까운 의자(스툴 포함) 등받이까지의 거리",
       "- front_empty_percent: 화면 아래쪽 절반(카메라에 가까운 바닥)에서 가구나 진열이 전혀 없는 바닥이 차지하는 비율(0~100)",
       "",
       ...lines,
@@ -156,6 +161,7 @@ export class GeminiCritic {
                   counter_back_m: { type: "NUMBER", nullable: true },
                   main_aisle_m: { type: "NUMBER", nullable: true },
                   front_empty_percent: { type: "NUMBER", nullable: true },
+                  wall_to_chair_m: { type: "NUMBER", nullable: true },
                 },
               },
               items: {

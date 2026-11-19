@@ -37,15 +37,15 @@ export interface Layout {
 /** 물건 목록을 공간에 놓는 방법. 업종마다 다른 배치기를 쓸 수 있다. */
 export type Packer = (room: Room, units: LayoutUnit[]) => Layout;
 
-export function packLayout(room: Room, units: LayoutUnit[]): Layout {
+export function packLayout(room: Room, units: LayoutUnit[], margin: number = WALL_MARGIN_MM): Layout {
   const placed: PlacedItem[] = [];
   const unplaced: LayoutUnit[] = [];
-  const maxX = room.widthMm - WALL_MARGIN_MM;
-  const maxY = room.depthMm - WALL_MARGIN_MM;
+  const maxX = room.widthMm - margin;
+  const maxY = room.depthMm - margin;
 
   const zone = entryZone(room);
-  let x = WALL_MARGIN_MM;
-  let y = WALL_MARGIN_MM;
+  let x = margin;
+  let y = margin;
   let rowDepth = 0;
   let previous: LayoutUnit | null = null;
 
@@ -59,7 +59,7 @@ export function packLayout(room: Room, units: LayoutUnit[]): Layout {
     // 줄 끝에 닿으면 통로를 두고 다음 줄로 내려간다.
     if (previous && startX + unit.widthMm > maxX) {
       y += rowDepth + LAYOUT_AISLE_MM;
-      x = WALL_MARGIN_MM;
+      x = margin;
       startX = x;
       rowDepth = 0;
       previous = null;
