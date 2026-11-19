@@ -4,17 +4,28 @@
 // 시안에 없는 화면이라 QuotePanel과 같은 폭과 줄 모양을 따랐다. docs/FEATURES.md 1번.
 import Link from "next/link";
 import { useRenderBoard } from "@/lib/renderBoard";
+import { autoProductSet } from "@/lib/productSet";
+import { isPartnerProduct } from "@/lib/shopping";
+import type { UseType } from "@/types";
 import { findProduct } from "@/mocks/products";
 import { formatWon } from "@/lib/format";
 import styles from "./BoardPanel.module.css";
 
 type Props = {
+  useType: UseType;
+  areaM2: number;
   onRender: () => void;
   progress: number | null; // 렌더링 중이면 0~100, 아니면 null
 };
 
-export default function BoardPanel({ onRender, progress }: Props) {
+export default function BoardPanel({ useType, areaM2, onRender, progress }: Props) {
   const board = useRenderBoard();
+
+  /** 이 업종과 면적에 맞는 상품 세트를 보드에 담는다. 입점 업체 상품을 먼저 고르고, 없는 칸은 인터넷 상품으로 채운다. */
+  function fillRecommended() {
+    board.clear();
+    for (const item of autoProductSet(useType, areaM2)) board.add(item.productId, item.qty);
+  }
   const rows = board.items.flatMap((item) => {
     const product = findProduct(item.productId);
     return product ? [{ item, product }] : [];
@@ -36,8 +47,12 @@ export default function BoardPanel({ onRender, progress }: Props) {
         {rows.length === 0 && (
           <div className={styles.empty}>
             <p className={styles.emptyText}>집기 마켓에서 상품을 담아 주세요</p>
+            <button type="button" className={styles.recommend} onClick={fillRecommended}>
+              추천 상품 세트 담기
+            </button>
+            <p className={styles.emptyHint}>입점 업체 상품을 먼저 고르고, 없는 칸은 인터넷 상품으로 채워요.</p>
             <Link href="/market" className={styles.marketLink}>
-              집기 마켓 가기
+              직접 고르러 집기 마켓 가기
             </Link>
           </div>
         )}
@@ -46,7 +61,10 @@ export default function BoardPanel({ onRender, progress }: Props) {
           <div key={product.id} className={styles.row}>
             <img className={styles.thumb} src={product.imageUrl} alt="" />
             <div className={styles.rowText}>
-              <span className={styles.rowName}>{product.name}</span>
+              <span className={styles.rowName}>
+                {isPartnerProduct(product) && <span className={styles.adChip}>광고</span>}
+                {product.name}
+              </span>
               <span className={styles.rowSpec}>
                 W{product.widthMm} × D{product.depthMm} · {formatWon(product.price)}
               </span>

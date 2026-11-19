@@ -402,7 +402,7 @@ export default function StudioView({ listing, initialUse }: Props) {
 
   let panel;
   if (isBoardStage) {
-    panel = <BoardPanel onRender={startBoardRender} progress={boardProgress} />;
+    panel = <BoardPanel useType={useType} areaM2={listing.areaM2} onRender={startBoardRender} progress={boardProgress} />;
   } else if (quoteRender && quote) {
     panel = (
       <QuotePanel
