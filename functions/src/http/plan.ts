@@ -67,11 +67,17 @@ export function validatePlanInput(body: unknown): { input: PlanInput } | { error
     for (const item of data.items) {
       const ok =
         item && typeof item.productId === "string" && typeof item.name === "string" && typeof item.category === "string" &&
-        inRange(item.widthMm, 50, 10000) && inRange(item.depthMm, 50, 10000) && inRange(item.heightMm, 10, 5000) && inRange(item.qty, 1, 80);
+        inRange(item.widthMm, 10, 10000) && inRange(item.depthMm, 10, 10000) && inRange(item.heightMm, 10, 5000) && inRange(item.qty, 1, 80);
       if (!ok) return { error: "items 항목의 값이 올바르지 않습니다." };
     }
   }
   return { input: { room: room as Room, useType: data.useType, items: data.items } };
+}
+
+/** 상품 분류가 넓은 값(machine 등)이면 이름으로 기구 종류를 알아낸다. */
+function normalizeCategory(item: PlanItem): PlanItem {
+  if (item.category === "machine" && /리포머|reformer/i.test(item.name)) return { ...item, category: "reformer" };
+  return item;
 }
 
 /** 상품 목록을 배치할 물건으로 바꾼다. 의자는 테이블에 딸린 수로 합치고, 조명은 바닥에 두지 않는다. */
@@ -81,7 +87,9 @@ export function unitsFromItems(items: PlanItem[], useType: string): LayoutUnit[]
   const chairsPerTable = tableCount > 0 ? Math.min(4, Math.round(chairCount / tableCount)) : 0;
   const units: LayoutUnit[] = [];
 
-  for (const item of items) {
+  for (const rawItem of items) {
+    if (rawItem.category === "mirror") continue; // 벽에 붙이는 물건이라 바닥에 놓지 않는다.
+    const item = normalizeCategory(rawItem);
     if (item.category === "chair" && tableCount > 0) continue; // 테이블에 딸려 배치된다.
     for (let i = 0; i < item.qty && units.length < MAX_UNITS; i += 1) {
       const isTable = item.category === "table";

@@ -71,3 +71,17 @@ test("카운터와 테이블이 가까우면 카운터 앞 간격이 미달로 �
   assert.equal(counterFront.valueMm, 700);
   assert.equal(counterFront.ok, false);
 });
+
+test("필라테스: 분류가 machine인 리포머는 기구 여유를 받고, 벽거울은 바닥에 놓지 않는다", () => {
+  const items: PlanItem[] = [
+    { productId: "reformer", name: "필라테스 리포머", category: "machine", widthMm: 2400, depthMm: 700, heightMm: 400, qty: 4 },
+    { productId: "mirror", name: "전신 벽거울 1200", category: "mirror", widthMm: 1200, depthMm: 30, heightMm: 1800, qty: 4 },
+  ];
+  assert.ok("input" in validatePlanInput({ room, useType: "pilates", items })); // 두께 30mm도 받는다.
+  const plan = computePlan({ room, useType: "pilates", items });
+  const reformers = plan.placed.filter((item) => item.category === "reformer");
+  assert.equal(reformers.length, 4);
+  assert.ok(reformers.every((item) => item.clearanceMm === 450));
+  assert.equal(plan.placed.some((item) => item.category === "mirror"), false);
+  assert.deepEqual(plan.violations, []);
+});
