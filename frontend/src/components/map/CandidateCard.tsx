@@ -97,7 +97,7 @@ export default function CandidateCard({ candidate, floors, onSelectFloor, onClos
           </Link>
         </>
       )}
-      <p className={styles.confidence}>비어 있을 가능성 {Math.round(candidate.confidence * 100)}%</p>
+      <p className={styles.confidence}>공실 가능성 높음</p>
       <ul className={styles.reasons}>
         {candidate.reasons.slice(0, 3).map((reason) => (
           <li key={reason}>{reason}</li>

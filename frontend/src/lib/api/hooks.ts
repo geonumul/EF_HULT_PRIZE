@@ -2,6 +2,7 @@
 
 // 목록 데이터를 읽는 훅. 처음에는 가짜 데이터로 바로 그리고, 백엔드 응답이 오면 그 데이터로 바꾼다.
 // 그래서 서버가 느려도 화면이 비지 않고, 서버가 꺼져 있어도 화면이 동작한다.
+import { isHighCandidate } from "@/lib/vacancy";
 import { useEffect, useState } from "react";
 import { LISTINGS } from "@/mocks/listings";
 import { withShoppingLinks } from "@/lib/shopping";
@@ -52,7 +53,7 @@ export function useProducts() {
   return { products, source };
 }
 
-/** 공실 후보. GET /vacancy-candidates. enabled가 true가 될 때 한 번 읽는다. 서버가 없으면 빈 목록이다. */
+/** 공실 후보. GET /vacancy-candidates. enabled가 true가 될 때 한 번 읽고, 가능성이 높은 후보만 남긴다. 서버가 없으면 빈 목록이다. */
 export function useCandidates(enabled: boolean) {
   const [candidates, setCandidates] = useState<VacancyCandidate[]>([]);
 
@@ -60,7 +61,7 @@ export function useCandidates(enabled: boolean) {
     if (!enabled || candidates.length > 0) return;
     let cancelled = false;
     apiGet<VacancyCandidate[]>("/vacancy-candidates?minConfidence=0&limit=20000").then((data) => {
-      if (!cancelled && data) setCandidates(data);
+      if (!cancelled && data) setCandidates(data.filter(isHighCandidate)); // 공실 가능성이 높은 후보만 보여 준다.
     });
     return () => {
       cancelled = true;
