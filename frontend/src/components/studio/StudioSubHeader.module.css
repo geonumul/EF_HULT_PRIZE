@@ -162,3 +162,9 @@
     margin-left: 0;
   }
 }
+
+/* 이미지가 없는 업종 탭 */
+.tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

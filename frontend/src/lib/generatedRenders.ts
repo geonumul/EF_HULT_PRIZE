@@ -15,3 +15,16 @@ export function generatedRenderUrl(thumbnail: string, use: string, style: Render
   if (!number || !GENERATED_RENDERS.includes(`${number}-${use}-${style}`)) return null;
   return `/images/renders/space-${number}-${use}-${style}.jpg`;
 }
+
+/** 이 공간 사진으로 만든 렌더링이 하나라도 있으면 true. 사전 생성한 공간이다. */
+export function hasGeneratedSpace(thumbnail: string): boolean {
+  const number = photoNumberOf(thumbnail);
+  return number !== null && GENERATED_RENDERS.some((name) => name.startsWith(`${number}-`));
+}
+
+/** 사전 생성한 공간인데 이 업종의 이미지가 없으면 true. 이 업종 탭은 기본 이미지가 대신 보여 공간과 맞지 않는다. */
+export function isUseMissing(thumbnail: string, use: string): boolean {
+  const number = photoNumberOf(thumbnail);
+  if (!number || !hasGeneratedSpace(thumbnail)) return false;
+  return !GENERATED_RENDERS.some((name) => name.startsWith(`${number}-${use}-`));
+}

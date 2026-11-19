@@ -8,6 +8,7 @@ import Link from "next/link";
 import type { Listing, UseType } from "@/types";
 import type { StudioView } from "@/types/studio";
 import { formatArea, USE_LABELS } from "@/lib/format";
+import { isUseMissing } from "@/lib/generatedRenders";
 import { COMING_USES } from "@/mocks/studio";
 import styles from "./StudioSubHeader.module.css";
 
@@ -53,6 +54,8 @@ export default function StudioSubHeader({ listing, active, onSelect, right }: Pr
             type="button"
             className={active === tab.key ? `${styles.tab} ${styles.tabActive}` : styles.tab}
             onClick={() => onSelect(tab.key)}
+            disabled={tab.key !== "empty" && isUseMissing(listing.thumbnail, tab.key)}
+            title={tab.key !== "empty" && isUseMissing(listing.thumbnail, tab.key) ? "이 공간의 이 업종 이미지는 준비 중이에요" : undefined}
           >
             {tab.label}
           </button>
