@@ -58,3 +58,22 @@ test("요청이 실패하면 상태 코드를 담아 오류를 낸다. 키는 �
   const generator = new GeminiImageGenerator("secret-key", "m", failing);
   await assert.rejects(generator.generate(request), (error: Error) => error.message.includes("429") && !error.message.includes("secret-key"));
 });
+
+test("구조 그림과 상품 사진은 이미지 입력으로 뒤에 붙고 프롬프트에 설명이 들어간다", async () => {
+  let body: any = null;
+  const fakeFetch = (async (_url: string, init: any) => {
+    body = JSON.parse(init.body);
+    return { ok: true, status: 200, json: async () => ({ steps: [{ content: [{ type: "image", mime_type: "image/png", data: "QUJD" }] }] }) };
+  }) as unknown as typeof fetch;
+  const image = (value: number) => ({ bytes: new Uint8Array([value]), contentType: "image/png" });
+
+  await new GeminiImageGenerator("k", "m", fakeFetch).generate({
+    ...request,
+    structureImage: image(1),
+    referenceImages: [{ label: "oak chair", ...image(2) }],
+  });
+
+  assert.match(body.input[0].text, /clay render/);
+  assert.match(body.input[0].text, /oak chair/);
+  assert.equal(body.input.filter((block: any) => block.type === "image").length, 2);
+});

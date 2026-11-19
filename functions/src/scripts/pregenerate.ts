@@ -3,6 +3,8 @@
 //
 // 실행 (functions 폴더에서, 먼저 npm run build):
 //   node lib/scripts/pregenerate.js --photo C:/사진/space.jpg --use cafe --width 6000 --depth 6600 --ceiling 3200 --count 3 --out C:/결과
+//   --structure 구조그림.png  : tools/clay_render.py로 만든 점토 렌더링. 원근과 물건 위치를 정확히 따르게 한다.
+//   --refs "체어=a.jpg,조명=b.jpg" : 상품 사진. 그 상품의 생김새로 그리게 한다.
 //   --dry-run 을 붙이면 키 없이 배치와 프롬프트만 출력한다.
 // 키는 functions/.env의 GEMINI_API_KEY 에서 읽는다.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -12,6 +14,13 @@ import type { ImageGenerationRequest } from "../adapters/imageGenerator";
 import { FakeDatabase } from "../adapters/supabaseClient";
 import { buildLayout } from "../pipeline/layout";
 import { unitsFromTemplate } from "../pipeline/template";
+
+function readImage(path: string): { bytes: Uint8Array; contentType: string } {
+  const file = resolve(path);
+  const contentType = MIME_BY_EXTENSION[extname(file).toLowerCase()];
+  if (!existsSync(file) || !contentType) throw new Error(`이미지를 읽을 수 없습니다(jpg, png, webp만): ${file}`);
+  return { bytes: readFileSync(file), contentType };
+}
 
 const MIME_BY_EXTENSION: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp" };
 
@@ -60,7 +69,24 @@ async function main() {
     spacePhoto = { bytes: readFileSync(photoPath), contentType };
   }
 
-  const request: ImageGenerationRequest = { prompt: args.prompt ?? "", useType, room, placed: layout.placed, referenceImageUrls: [], spacePhoto };
+  // --structure 점토 렌더링 그림, --refs "이름=경로,이름=경로" 상품 사진
+  const structureImage = args.structure ? readImage(args.structure) : undefined;
+  const referenceImages = args.refs
+    ? args.refs.split(",").map((pair) => {
+        const [label, path] = pair.split("=");
+        return { label, ...readImage(path) };
+      })
+    : undefined;
+  const request: ImageGenerationRequest = {
+    prompt: args.prompt ?? "",
+    useType,
+    room,
+    placed: layout.placed,
+    referenceImageUrls: [],
+    spacePhoto,
+    structureImage,
+    referenceImages,
+  };
   if (dryRun) {
     console.log("\n--- 프롬프트 ---\n" + buildPrompt(request));
     return;

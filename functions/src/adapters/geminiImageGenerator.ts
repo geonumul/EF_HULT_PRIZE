@@ -44,6 +44,12 @@ export function buildPrompt(request: ImageGenerationRequest): string {
     request.spacePhoto
       ? "Keep the walls, windows, door, floor, ceiling and the camera angle exactly as in the photo."
       : "Show the space from the entrance looking inward.",
+    request.structureImage
+      ? "One attached image is a rough 3D clay render of this room. It shows the exact camera, perspective, scale and position of every object. Turn it into a photorealistic photo and keep every object at the same place, size and perspective as in the clay render. Do not move or add objects."
+      : "",
+    request.referenceImages?.length
+      ? `Attached product photos (${request.referenceImages.map((image) => image.label).join(", ")}) show the exact appearance of the furniture. Draw the matching objects in the room to look like these products.`
+      : "",
     `Room size: ${size}. Do not add more furniture than listed.`,
     "Furniture to place, with the real products as references where provided:",
     describeItems(request),
@@ -87,6 +93,11 @@ export class GeminiImageGenerator implements ImageGenerator {
         mime_type: request.spacePhoto.contentType,
         data: Buffer.from(request.spacePhoto.bytes).toString("base64"),
       });
+    }
+
+    for (const image of [request.structureImage, ...(request.referenceImages ?? [])]) {
+      if (!image) continue;
+      input.push({ type: "image", mime_type: image.contentType, data: Buffer.from(image.bytes).toString("base64") });
     }
 
     const response = await this.fetchImpl(ENDPOINT, {

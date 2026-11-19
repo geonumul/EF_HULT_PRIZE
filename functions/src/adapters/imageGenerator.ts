@@ -13,6 +13,10 @@ export interface ImageGenerationRequest {
   referenceImageUrls: string[];
   /** 실제 공간 사진. 있으면 벽, 창, 문 위치를 그대로 두고 꾸미게 한다. */
   spacePhoto?: { bytes: Uint8Array; contentType: string };
+  /** 우리가 계산한 좌표로 그린 구조 그림(점토 렌더링). 공간의 원근, 크기, 물건 위치를 정확히 따르게 하는 가이드다. */
+  structureImage?: { bytes: Uint8Array; contentType: string };
+  /** 상품 사진. 이름과 함께 주면 그 상품의 생김새를 따라 그리게 한다. */
+  referenceImages?: Array<{ label: string; bytes: Uint8Array; contentType: string }>;
 }
 
 export interface GeneratedImage {
