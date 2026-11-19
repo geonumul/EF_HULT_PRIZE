@@ -17,6 +17,8 @@ export interface ImageGenerationRequest {
   structureImage?: { bytes: Uint8Array; contentType: string };
   /** 상품 사진. 이름과 함께 주면 그 상품의 생김새를 따라 그리게 한다. */
   referenceImages?: Array<{ label: string; bytes: Uint8Array; contentType: string }>;
+  /** restyle이면 spacePhoto는 이미 꾸며진 기준 이미지다. 구도와 가구는 그대로 두고 재료와 색만 prompt의 스타일로 바꾼다. */
+  mode?: "restyle";
 }
 
 export interface GeneratedImage {

@@ -93,3 +93,10 @@ test("비율 옵션을 거부하면 옵션 없이 다시 요청한다", async ()
   assert.equal(bodies[1].response_format, undefined);
   assert.equal(Buffer.from(image.bytes).toString(), "ABC");
 });
+
+test("restyle은 구도와 가구를 그대로 두고 스타일만 바꾸라고 요청한다", () => {
+  const text = buildPrompt({ ...request, mode: "restyle", prompt: "industrial" });
+  assert.match(text, /Keep the exact same room/);
+  assert.match(text, /style: industrial/);
+  assert.ok(!text.includes("Furniture to place"));
+});

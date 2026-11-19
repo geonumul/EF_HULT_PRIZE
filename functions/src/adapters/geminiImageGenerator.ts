@@ -48,7 +48,19 @@ export function describeItems(request: Pick<ImageGenerationRequest, "room" | "pl
   return lines.join("\n");
 }
 
+/** 기준 이미지의 구도와 가구는 그대로 두고 스타일만 바꾸는 요청 */
+export function buildRestylePrompt(request: ImageGenerationRequest): string {
+  const use = USE_NAMES[request.useType] ?? "a small business";
+  return [
+    `This photo shows the interior of ${use}.`,
+    "Keep the exact same room, architecture, camera position, lens, viewing angle, furniture, equipment and decor placement. Keep the number of every object the same.",
+    `Change only the materials, finishes, colors and lighting to this style: ${request.prompt}.`,
+    "Photorealistic interior photograph, no people, no text, no watermark.",
+  ].join("\n");
+}
+
 export function buildPrompt(request: ImageGenerationRequest): string {
+  if (request.mode === "restyle") return buildRestylePrompt(request);
   const use = USE_NAMES[request.useType] ?? "a small business";
   const room = request.room;
   const size = `${(room.widthMm / 1000).toFixed(1)}m wide, ${(room.depthMm / 1000).toFixed(1)}m deep, ${(room.ceilingMm / 1000).toFixed(1)}m ceiling`;
