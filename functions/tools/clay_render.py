@@ -78,7 +78,9 @@ def box(draw, camera, x, y, z, width, depth, height, color):
 def parts_of(item, room):
     """배치 한 개를 (x, y, z, 너비, 깊이, 높이, 색) 상자 목록으로 바꾼다."""
     name = item["name"]
-    x, y, width, depth = item["x"], item["y"], item["widthMm"], item["depthMm"]
+    clearance = item.get("clearanceMm") or 0
+    x, y = item["x"] + clearance, item["y"] + clearance
+    width, depth = item["widthMm"] - 2 * clearance, item["depthMm"] - 2 * clearance
     if "조명" in name:
         return [(x, y, 2250, width, depth, item.get("heightMm") or 350, COLORS["lamp"])]
     if "카운터" in name:
@@ -93,6 +95,8 @@ def parts_of(item, room):
         if chairs >= 2:
             parts.append((x + (width - 450) / 2, y + depth - 450, 0, 450, 450, 450, COLORS["chair"]))
         return parts
+    if item["kind"] == "fixture" and ("리포머" in name or "사물함" in name):
+        return [(x, y, 0, width, depth, item.get("heightMm") or 400, COLORS["other"])]
     if "선반" in name:
         return [(x, y, 0, width, depth, item.get("heightMm") or 1800, COLORS["shelf"])]
     return [(x, y, 0, width, depth, item.get("heightMm") or 900, COLORS["other"])]

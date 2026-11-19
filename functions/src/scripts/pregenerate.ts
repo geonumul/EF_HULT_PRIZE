@@ -13,6 +13,7 @@ import { GeminiImageGenerator, buildPrompt } from "../adapters/geminiImageGenera
 import type { ImageGenerationRequest } from "../adapters/imageGenerator";
 import { FakeDatabase } from "../adapters/supabaseClient";
 import { buildLayout } from "../pipeline/layout";
+import { legalNotes } from "../pipeline/legal";
 import { unitsFromTemplate } from "../pipeline/template";
 
 function readImage(path: string): { bytes: Uint8Array; contentType: string } {
@@ -60,6 +61,8 @@ async function main() {
   const { layout, violations } = buildLayout(room, units, "text");
   console.log(`배치 ${layout.placed.length}개, 놓지 못한 물건 ${layout.unplaced.length}개, 치수 위반 ${violations.length}건`);
   for (const violation of violations) console.log(`  - ${violation.message}`);
+
+  for (const note of legalNotes(room, useType)) console.log(`  [${note.level === "error" ? "문제" : "확인"}] ${note.text}`);
 
   let spacePhoto: ImageGenerationRequest["spacePhoto"];
   if (args.photo) {

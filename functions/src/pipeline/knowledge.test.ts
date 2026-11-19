@@ -15,7 +15,8 @@ test("기준 id는 중복되지 않고 모든 값에 상태가 있다", () => {
   const ids = DESIGN_RULES.map((rule) => rule.id);
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(DESIGN_RULES.every((rule) => rule.status && rule.label));
-  assert.equal(ruleOf("entry.clear").valueMm, ENTRY_CLEAR_MM);
+  assert.equal(ruleOf("entry.clear").value, ENTRY_CLEAR_MM);
+  assert.ok(DESIGN_RULES.every((rule) => rule.source));
 });
 
 test("입구 앞 비움 구역에 놓으면 위반이다", () => {

@@ -1,5 +1,6 @@
 // Supabase 어댑터. 작업 상태, 공간, 상품, 결과 저장을 Database 하나로 묶는다.
 // 환경변수가 없으면 메모리에서 도는 FakeDatabase를 쓴다.
+import type { DesignNote } from "../pipeline/legal";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { NormalizedItem } from "../pipeline/normalize";
 import type { Candidate, JobStatus, Product, ProductCategory, ProductLink, Quote, RenderItem, RenderMode, Room } from "../types";
@@ -21,6 +22,8 @@ export interface SaveRenderInput {
   imageUrl: string;
   quote: Quote;
   items: RenderItem[];
+  /** 이 공간과 업종에서 확인할 법령, 설계 점검 항목. 아직 DB 열은 없고 가짜 DB가 보관한다. */
+  notes?: DesignNote[];
 }
 
 export interface LinkPatch {

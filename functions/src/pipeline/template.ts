@@ -1,6 +1,7 @@
 // 업종 템플릿. 어떤 집기를 몇 개 놓을지 정하고, 상품 치수로 배치할 물건 목록을 만든다.
 import type { Product, ProductCategory, Room } from "../types";
 import type { LayoutUnit } from "./layout";
+import { ruleOf } from "./knowledge";
 import { CHAIR_DEPTH_MM, kindOfCategory } from "./rules";
 
 interface TemplateEntry {
@@ -11,6 +12,8 @@ interface TemplateEntry {
   fixed?: number;
   /** 테이블 하나에 딸리는 의자 수 */
   chairsPerUnit?: number;
+  /** 기구 둘레에 두는 여유(mm, 한쪽). 리포머처럼 사방에 공간이 필요한 기구에 쓴다. */
+  clearanceMm?: number;
 }
 
 // 카페 39.6m²이면 2인 테이블 11, 의자 22, 바 카운터 1이 나온다. (Figma "상품 수집·적용" 4단계)
@@ -26,7 +29,8 @@ const TEMPLATES: Record<string, TemplateEntry[]> = {
     { category: "counter", fixed: 1 },
   ],
   pilates: [
-    { category: "reformer", perSqm: 0.12 },
+    // 리포머 사이 간격 900을 기구마다 양쪽 450씩 나눠 둔다.
+    { category: "reformer", perSqm: 0.12, clearanceMm: (ruleOf("pilates.gap").value as number) / 2 },
     { category: "locker", fixed: 1 },
   ],
 };
@@ -67,7 +71,7 @@ export function unitsFromTemplate(useType: string, room: Room, catalog: Product[
     const chair = entry.chairsPerUnit ? cheapestOf(catalog, "chair") : undefined;
     const count = countFor(entry, areaSqm);
     for (let i = 0; i < count; i += 1) {
-      units.push(makeUnit(product, entry.chairsPerUnit ?? 0, chair));
+      units.push(makeUnit(product, entry.chairsPerUnit ?? 0, chair, entry.clearanceMm ?? 0));
     }
   }
 
@@ -79,18 +83,19 @@ export function unitsFromProducts(products: Product[]): LayoutUnit[] {
   return products.map((product) => makeUnit(product, 0, undefined));
 }
 
-function makeUnit(product: Product, chairs: number, chair: Product | undefined): LayoutUnit {
+function makeUnit(product: Product, chairs: number, chair: Product | undefined, clearanceMm = 0): LayoutUnit {
   // 의자는 테이블 긴 변 양쪽에 놓이므로 발자국 깊이에 의자 깊이를 두 번 더한다.
   const chairDepth = chairs > 0 ? CHAIR_DEPTH_MM * 2 : 0;
   return {
     productId: product.id,
     name: product.name,
     kind: kindOfCategory(product.category),
-    widthMm: product.widthMm,
-    depthMm: product.depthMm + chairDepth,
+    widthMm: product.widthMm + 2 * clearanceMm,
+    depthMm: product.depthMm + chairDepth + 2 * clearanceMm,
     chairs,
     chairProductId: chair?.id ?? null,
     heightMm: product.heightMm,
     chairHeightMm: chair?.heightMm,
+    clearanceMm: clearanceMm || undefined,
   };
 }

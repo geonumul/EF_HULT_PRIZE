@@ -1,5 +1,6 @@
 // Gemini 이미지 모델로 렌더링을 만든다. 공간 사진이 있으면 참고 이미지로 넣고, 치수 검증을 통과한 배치를 글로 설명해 그대로 그리게 한다.
 // 키는 GEMINI_API_KEY, 모델은 GEMINI_IMAGE_MODEL(기본 gemini-nano-banana-2.1)이다. 가격은 이미지 한 장에 약 $0.034(1K)다.
+import { ruleOf } from "../pipeline/knowledge";
 import type { PlacedItem } from "../pipeline/layout";
 import type { GeneratedImage, ImageGenerationRequest, ImageGenerator } from "./imageGenerator";
 
@@ -19,6 +20,17 @@ const USE_NAMES: Record<string, string> = {
 };
 
 type FetchLike = typeof fetch;
+
+const CAMERA_HEIGHT_M = (ruleOf("camera.height").value as number) / 1000;
+const LENS_MM = ruleOf("camera.lens").min as number;
+const COLOR_TEMP_K = ruleOf("light.color").max as number;
+
+/** 업종마다 달라지는 계획 특징. 기준표의 조사 결과에서 가져온다. */
+const USE_TRAITS: Record<string, string> = {
+  cafe: "Keep a clear main aisle from the entrance to the counter. Warm pendant lights hang about 0.8 m above the table tops.",
+  pilates: "Reformers are lined up with clear space on every side. One wall is a full-height mirror. Light wooden floor, ceiling at least 2.7 m, bright even lighting.",
+  popup: "Aisles are about 1.2 m wide. Display shelves stand along the walls, any central display is low so sight lines stay open. Track spot lights accent the displays.",
+};
 
 /** 배치된 집기를 "이름 x 개수, 위치" 문장으로 줄인다. 위치는 방 안의 대략적인 방향이다. */
 export function describeItems(request: Pick<ImageGenerationRequest, "room" | "placed">): string {
@@ -55,7 +67,10 @@ export function buildPrompt(request: ImageGenerationRequest): string {
     "Furniture to place, with the real products as references where provided:",
     describeItems(request),
     request.prompt ? `Extra request: ${request.prompt}` : "",
-    "Photorealistic interior photograph, natural daylight, no people, no text, no watermark.",
+    "Keep the area just inside the entrance clear and keep every aisle at least 0.9 m wide.",
+    USE_TRAITS[request.useType] ?? "",
+    `Interior photograph taken at eye level about ${CAMERA_HEIGHT_M} m, ${LENS_MM}mm equivalent lens, camera level with vertical lines straight and parallel (two-point perspective), no fisheye or barrel distortion, natural proportions.`,
+    `Soft natural daylight from the storefront window with warm ${COLOR_TEMP_K}K interior lighting and high color rendering. Photorealistic, no people, no text, no watermark.`,
   ]
     .filter(Boolean)
     .join("\n");

@@ -1,6 +1,7 @@
 // runRenderJob의 본체. 7단계를 순서대로 실행하고 단계마다 진행률을 남긴다.
 import type { Adapters } from "../adapters";
 import { buildLayout } from "../pipeline/layout";
+import { legalNotes } from "../pipeline/legal";
 import { buildQuote } from "../pipeline/quote";
 import { unitsFromProducts, unitsFromTemplate } from "../pipeline/template";
 import type { JobStatus, Product, RenderJobRequest, Room } from "../types";
@@ -82,6 +83,7 @@ async function runSteps(request: RenderJobRequest, adapters: Adapters, report: R
     imageUrl,
     quote,
     items,
+    notes: legalNotes(room, request.useType),
   });
   await db.updateJob(request.jobId, { status: "done", progress: 100, resultRenderId: renderId, error: null });
   await adapters.progress.publish(request.jobId, "done", 100);

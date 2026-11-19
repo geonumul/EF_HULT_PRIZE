@@ -16,6 +16,8 @@ export interface LayoutUnit {
   /** 상품의 실제 높이(mm). 구조 그림을 실제 크기로 그리는 데 쓴다. */
   heightMm?: number;
   chairHeightMm?: number;
+  /** 기구 둘레에 두는 여유(mm, 한쪽). 발자국(widthMm, depthMm)에 이미 더해져 있다. 구조 그림은 이만큼 안쪽에 기구를 그린다. */
+  clearanceMm?: number;
 }
 
 export interface PlacedItem extends LayoutUnit {
