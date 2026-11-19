@@ -90,5 +90,7 @@ function makeUnit(product: Product, chairs: number, chair: Product | undefined):
     depthMm: product.depthMm + chairDepth,
     chairs,
     chairProductId: chair?.id ?? null,
+    heightMm: product.heightMm,
+    chairHeightMm: chair?.heightMm,
   };
 }

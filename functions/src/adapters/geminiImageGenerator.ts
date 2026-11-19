@@ -6,6 +6,7 @@ import type { GeneratedImage, ImageGenerationRequest, ImageGenerator } from "./i
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const API_REVISION = "2026-05-20";
 const DEFAULT_MODEL = "gemini-nano-banana-2.1";
+const ASPECT_RATIO = "16:9";
 
 const USE_NAMES: Record<string, string> = {
   cafe: "a cafe",
@@ -45,7 +46,7 @@ export function buildPrompt(request: ImageGenerationRequest): string {
       ? "Keep the walls, windows, door, floor, ceiling and the camera angle exactly as in the photo."
       : "Show the space from the entrance looking inward.",
     request.structureImage
-      ? "One attached image is a rough 3D clay render of this room. It shows the exact camera, perspective, scale and position of every object. Turn it into a photorealistic photo and keep every object at the same place, size and perspective as in the clay render. Do not move or add objects."
+      ? "One attached image is a rough 3D clay render of this room. It shows the exact camera, perspective, scale and position of every object. Turn it into a photorealistic photo and keep every object at the same place, size and perspective as in the clay render. Do not move or add objects. The dark rectangle on the back wall is a 0.9 m wide, 2.1 m tall door that marks the human scale: keep every piece of furniture proportioned to it (table top about 0.72 m, bar counter about 1.0 m, chair seat about 0.45 m)."
       : "",
     request.referenceImages?.length
       ? `Attached product photos (${request.referenceImages.map((image) => image.label).join(", ")}) show the exact appearance of the furniture. Draw the matching objects in the room to look like these products.`
@@ -100,11 +101,19 @@ export class GeminiImageGenerator implements ImageGenerator {
       input.push({ type: "image", mime_type: image.contentType, data: Buffer.from(image.bytes).toString("base64") });
     }
 
-    const response = await this.fetchImpl(ENDPOINT, {
-      method: "POST",
-      headers: { "x-goog-api-key": this.apiKey, "Api-Revision": API_REVISION, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: this.model, input }),
-    });
+    // 구조 그림과 같은 가로 비율로 받는다. 이 옵션을 거부하면(400) 옵션 없이 다시 요청한다.
+    const send = (withFormat: boolean) =>
+      this.fetchImpl(ENDPOINT, {
+        method: "POST",
+        headers: { "x-goog-api-key": this.apiKey, "Api-Revision": API_REVISION, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: this.model,
+          input,
+          ...(withFormat ? { response_format: { type: "image", aspect_ratio: ASPECT_RATIO } } : {}),
+        }),
+      });
+    let response = await send(true);
+    if (response.status === 400) response = await send(false);
     if (!response.ok) {
       const body = (await response.text()).slice(0, 300);
       throw new Error(`이미지 생성 요청이 실패했습니다(${response.status}). ${body}`);

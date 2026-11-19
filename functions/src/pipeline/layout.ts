@@ -1,5 +1,6 @@
 // 줄 단위로 집기를 채워 넣는 평면 배치. 좌표와 크기는 모두 mm다.
 import type { Room } from "../types";
+import { entryZone } from "./knowledge";
 import { ItemKind, LAYOUT_AISLE_MM, MAX_RELAYOUT_COUNT, WALL_MARGIN_MM, requiredGapMm } from "./rules";
 import { Violation, validateLayout } from "./validate";
 
@@ -12,6 +13,9 @@ export interface LayoutUnit {
   depthMm: number;
   chairs: number;
   chairProductId: string | null;
+  /** 상품의 실제 높이(mm). 구조 그림을 실제 크기로 그리는 데 쓴다. */
+  heightMm?: number;
+  chairHeightMm?: number;
 }
 
 export interface PlacedItem extends LayoutUnit {
@@ -30,6 +34,7 @@ export function packLayout(room: Room, units: LayoutUnit[]): Layout {
   const maxX = room.widthMm - WALL_MARGIN_MM;
   const maxY = room.depthMm - WALL_MARGIN_MM;
 
+  const zone = entryZone(room);
   let x = WALL_MARGIN_MM;
   let y = WALL_MARGIN_MM;
   let rowDepth = 0;
@@ -38,6 +43,9 @@ export function packLayout(room: Room, units: LayoutUnit[]): Layout {
   for (const unit of units) {
     const gap = previous ? requiredGapMm(previous.kind, unit.kind) : 0;
     let startX = x + gap;
+
+    // 입구 앞 비움 구역에 걸리면 그 구역 오른쪽으로 옮긴다.
+    if (startX < zone.right && startX + unit.widthMm > zone.left && y + unit.depthMm > zone.top) startX = zone.right;
 
     // 줄 끝에 닿으면 통로를 두고 다음 줄로 내려간다.
     if (previous && startX + unit.widthMm > maxX) {

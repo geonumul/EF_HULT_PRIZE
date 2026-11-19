@@ -27,7 +27,11 @@ COLORS = {
     "lamp": (250, 250, 245),
     "shelf": (120, 120, 120),
     "other": (110, 140, 170),
+    "door": (70, 60, 52),
 }
+
+DOOR_WIDTH, DOOR_HEIGHT = 900, 2100  # 크기를 가늠하는 기준 문(mm)
+SEAT_HEIGHT = 450
 
 
 def shade(color, factor):
@@ -76,22 +80,22 @@ def parts_of(item, room):
     name = item["name"]
     x, y, width, depth = item["x"], item["y"], item["widthMm"], item["depthMm"]
     if "조명" in name:
-        return [(x, y, 2250, width, depth, 350, COLORS["lamp"])]
+        return [(x, y, 2250, width, depth, item.get("heightMm") or 350, COLORS["lamp"])]
     if "카운터" in name:
-        return [(x, y, 0, width, depth, 1000, COLORS["counter"])]
+        return [(x, y, 0, width, depth, item.get("heightMm") or 1000, COLORS["counter"])]
     if item["kind"] == "table":
         chairs = item.get("chairs", 0)
         chair_depth = 450 if chairs else 0
         top_depth = depth - 2 * chair_depth if chairs >= 2 else depth - chair_depth
-        parts = [(x, y + chair_depth, 0, width, max(top_depth, 300), 720, COLORS["table"])]
+        parts = [(x, y + chair_depth, 0, width, max(top_depth, 300), item.get("heightMm") or 720, COLORS["table"])]
         if chairs >= 1:
             parts.append((x + (width - 450) / 2, y, 0, 450, 450, 450, COLORS["chair"]))
         if chairs >= 2:
             parts.append((x + (width - 450) / 2, y + depth - 450, 0, 450, 450, 450, COLORS["chair"]))
         return parts
     if "선반" in name:
-        return [(x, y, 0, width, depth, 1800, COLORS["shelf"])]
-    return [(x, y, 0, width, depth, 900, COLORS["other"])]
+        return [(x, y, 0, width, depth, item.get("heightMm") or 1800, COLORS["shelf"])]
+    return [(x, y, 0, width, depth, item.get("heightMm") or 900, COLORS["other"])]
 
 
 def main(layout_path, out_path):
@@ -110,6 +114,9 @@ def main(layout_path, out_path):
     polygon(draw, camera, [(0, 0, 0), (w, 0, 0), (w, d - 200, 0), (0, d - 200, 0)], COLORS["floor"])
 
     parts = [part for item in layout["placed"] for part in parts_of(item, room)]
+    # 안쪽 벽에 폭 0.9m, 높이 2.1m 문을 그린다. 사람 크기를 가늠하는 기준이다. 사람 모형은 배치를 흐트러뜨려 쓰지 않는다.
+    door_x = room["widthMm"] * 0.72
+    polygon(draw, camera, [(door_x, 1, 0), (door_x + DOOR_WIDTH, 1, 0), (door_x + DOOR_WIDTH, 1, DOOR_HEIGHT), (door_x, 1, DOOR_HEIGHT)], COLORS["door"])
     parts.sort(key=lambda part: -camera.distance(part[0] + part[3] / 2, part[1] + part[4] / 2))  # 먼 것부터 그린다
     for x, y, z, width, depth, height, color in parts:
         box(draw, camera, x, y, z, width, depth, height, color)

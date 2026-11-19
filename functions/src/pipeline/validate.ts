@@ -1,9 +1,10 @@
 // 4단계 치수 검증. 통로, 좌석 간격, 기구 간격, 겹침, 공간 밖 배치를 확인한다.
 import type { Room } from "../types";
 import type { Layout, PlacedItem } from "./layout";
+import { ENTRY_CLEAR_MM, entryZone } from "./knowledge";
 import { MIN_AISLE_MM, requiredGapMm } from "./rules";
 
-export type ViolationRule = "not_fit" | "overlap" | "aisle" | "gap";
+export type ViolationRule = "not_fit" | "overlap" | "aisle" | "gap" | "entry";
 
 export interface Violation {
   rule: ViolationRule;
@@ -28,6 +29,13 @@ export function validateLayout(room: Room, layout: Layout): Violation[] {
     }
   }
 
+  // 입구는 앞쪽 벽(깊이 끝) 가운데에 있다고 보고, 그 앞은 비워 둔다.
+  for (const item of layout.placed) {
+    if (isInEntryZone(room, item)) {
+      violations.push({ rule: "entry", message: `${item.name}이(가) 입구 앞 비움 구역(${ENTRY_CLEAR_MM}mm)에 놓입니다.`, productIds: [item.productId] });
+    }
+  }
+
   const items = layout.placed;
   for (let i = 0; i < items.length; i += 1) {
     for (let j = i + 1; j < items.length; j += 1) {
@@ -37,6 +45,11 @@ export function validateLayout(room: Room, layout: Layout): Violation[] {
   }
 
   return violations;
+}
+
+function isInEntryZone(room: Room, item: PlacedItem): boolean {
+  const zone = entryZone(room);
+  return item.x < zone.right && item.x + item.widthMm > zone.left && item.y + item.depthMm > zone.top;
 }
 
 function isOutsideRoom(room: Room, item: PlacedItem): boolean {

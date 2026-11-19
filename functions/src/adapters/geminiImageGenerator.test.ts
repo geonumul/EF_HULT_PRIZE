@@ -77,3 +77,19 @@ test("구조 그림과 상품 사진은 이미지 입력으로 뒤에 붙고 프
   assert.match(body.input[0].text, /oak chair/);
   assert.equal(body.input.filter((block: any) => block.type === "image").length, 2);
 });
+
+test("비율 옵션을 거부하면 옵션 없이 다시 요청한다", async () => {
+  const bodies: any[] = [];
+  const flaky = (async (_url: string, init: any) => {
+    const body = JSON.parse(init.body);
+    bodies.push(body);
+    if (body.response_format) return { ok: false, status: 400, text: async () => "bad option" };
+    return { ok: true, status: 200, json: async () => ({ steps: [{ content: [{ type: "image", mime_type: "image/png", data: "QUJD" }] }] }) };
+  }) as unknown as typeof fetch;
+
+  const image = await new GeminiImageGenerator("k", "m", flaky).generate(request);
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0].response_format.aspect_ratio, "16:9");
+  assert.equal(bodies[1].response_format, undefined);
+  assert.equal(Buffer.from(image.bytes).toString(), "ABC");
+});
