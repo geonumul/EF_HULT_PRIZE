@@ -9,6 +9,8 @@ import styles from "./StyleBar.module.css";
 
 type Props = {
   imageUrl: string;
+  /** 스타일마다 만들어 둔 이미지 주소. 없으면 imageUrl에 색 필터를 건다. */
+  styleImageUrl?: (key: RenderStyleKey) => string | null;
   styleKey: RenderStyleKey;
   emptyActive: boolean;
   onSelectEmpty: () => void;
@@ -16,7 +18,7 @@ type Props = {
   textHref?: string;
 };
 
-export default function StyleBar({ imageUrl, styleKey, emptyActive, onSelectEmpty, onSelectStyle, textHref }: Props) {
+export default function StyleBar({ imageUrl, styleImageUrl, styleKey, emptyActive, onSelectEmpty, onSelectStyle, textHref }: Props) {
   const textButton = (
     <>
       <span className={styles.textBox}>
@@ -40,7 +42,10 @@ export default function StyleBar({ imageUrl, styleKey, emptyActive, onSelectEmpt
         return (
           <button key={style.key} type="button" className={styles.item} onClick={() => onSelectStyle(style.key)}>
             <span className={selected ? `${styles.thumb} ${styles.thumbActive}` : styles.thumb}>
-              <img src={imageUrl} alt="" style={{ filter: style.filter }} />
+              {(() => {
+                const own = styleImageUrl?.(style.key);
+                return own ? <img src={own} alt="" /> : <img src={imageUrl} alt="" style={{ filter: style.filter }} />;
+              })()}
             </span>
             <span className={selected ? styles.labelActive : styles.label}>{style.label}</span>
           </button>

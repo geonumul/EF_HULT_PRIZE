@@ -14,6 +14,7 @@ import { USE_LABELS, formatArea } from "@/lib/format";
 import { findProduct } from "@/mocks/products";
 import { findRender } from "@/mocks/renders";
 import { RENDER_STYLES } from "@/mocks/studio";
+import { generatedRenderUrl } from "@/lib/generatedRenders";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
 import ModeSwitch from "./ModeSwitch";
@@ -165,7 +166,9 @@ export default function StudioView({ listing, initialUse }: Props) {
   let imageUrl = `/images/render-${useType}.jpg`;
   let leftBadge = `AI 렌더링 · 판매 상품 ${productCount}개`;
   let rightBadge = render ? `${render.checks.slice(0, 2).join(" · ")} · 치수 검증 완료` : measuredBadge;
-  const showTags = !showEmpty && !isBoardStage;
+  const generatedUrl = mode === "image" ? generatedRenderUrl(listing.thumbnail, useType, styleKey) : null; // 이 공간 사진으로 만든 렌더링
+  const showTags = !showEmpty && !isBoardStage && !generatedUrl; // 만든 이미지에는 번호 태그 위치가 맞지 않아 숨긴다.
+  if (generatedUrl) imageUrl = generatedUrl;
   if (mode === "products") {
     leftBadge = `AI 렌더링 · 상품 먼저 · 상품 ${productCount}개`;
     rightBadge = warnCount > 0 ? `치수 확인 필요 ${warnCount}건` : "치수 검증 완료";
@@ -178,7 +181,7 @@ export default function StudioView({ listing, initialUse }: Props) {
   }
 
   const currentFilter = RENDER_STYLES.find((style) => style.key === styleKey)?.filter;
-  const imageFilter = showEmpty || isBoardStage ? "none" : currentFilter;
+  const imageFilter = showEmpty || isBoardStage || generatedUrl ? "none" : currentFilter;
 
   let loading: { label: string; progress?: number } | undefined;
   if (boardProgress !== null) loading = { label: "선택한 상품으로 렌더링 중", progress: boardProgress };
@@ -217,6 +220,7 @@ export default function StudioView({ listing, initialUse }: Props) {
       {!isBoardStage && (
         <StyleBar
           imageUrl={`/images/render-${useType}.jpg`}
+          styleImageUrl={(key) => (mode === "image" ? generatedRenderUrl(listing.thumbnail, useType, key) : null)}
           styleKey={styleKey}
           emptyActive={showEmpty}
           onSelectEmpty={() => selectView("empty")}
