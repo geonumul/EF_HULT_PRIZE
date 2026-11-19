@@ -1,0 +1,31 @@
+.chip {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.confirmed {
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+.estimated {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.ad {
+  background: var(--brand-500);
+  color: var(--gray-0);
+}
+
+@media (max-width: 768px) {
+  .chip {
+    font-size: 11px;
+  }
+}

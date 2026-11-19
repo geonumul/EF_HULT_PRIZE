@@ -56,6 +56,9 @@ export default function QuoteView({ renderId, title, today, initialUsedIds }: Pr
           <p className={styles.meta}>
             집기 {itemCount}개 · 설비 {facilityCount}건 · 시공 견적 3곳 평균 · {today} 기준
           </p>
+          <p className={styles.split}>
+            확정 {formatMan(Math.round(quote.confirmedTotal / 10000))} + 예상 {formatMan(Math.round(quote.estimatedTotal / 10000))}
+          </p>
           {quote.usedSaving > 0 && <p className={styles.saving}>중고 선택으로 {formatWon(quote.usedSaving)} 절약 중</p>}
         </header>
 

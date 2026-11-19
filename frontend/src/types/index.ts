@@ -78,12 +78,18 @@ export type RenderResult = {
   checks: string[]; // 치수 검증 결과 문구
 };
 
+/** 가격이 확정인지 예상인지. 입점 업체 가격과 확정된 철거 금액만 확정이다. */
+export type Certainty = "confirmed" | "estimated";
+
 export type QuoteItem = {
   name: string;
   spec: string;
   qty: number;
   unitPrice: number; // 원
   productId?: string;
+  certainty: Certainty;
+  /** 집기 판매처 종류. partner는 입점 업체(광고), internet은 쇼핑몰 기준 가격, used는 중고 */
+  source?: "partner" | "internet" | "used";
 };
 
 export type QuoteGroup = {
@@ -98,5 +104,7 @@ export type Quote = {
   renderId: string;
   groups: QuoteGroup[];
   total: number; // 원
+  confirmedTotal: number; // 확정 금액의 합. 원
+  estimatedTotal: number; // 예상 금액의 합. 원
   usedSaving: number; // 중고로 바꿨을 때 줄어드는 금액. 원
 };

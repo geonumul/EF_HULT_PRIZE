@@ -177,6 +177,33 @@ button.row:hover {
   color: var(--gray-500);
 }
 
+/* 이름 앞의 광고 칩 */
+.rowName > span {
+  margin-right: 4px;
+}
+
+.rowNote {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+.rowRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* 합계 위의 확정/예상 분해 */
+.split {
+  margin: 0;
+  padding: 6px 20px 0;
+  font-size: 11px;
+  text-align: right;
+  color: var(--gray-500);
+}
+
 .rowPrice {
   font-size: 12px;
   font-weight: 500;

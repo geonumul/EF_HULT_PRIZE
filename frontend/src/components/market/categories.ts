@@ -8,6 +8,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   machine: "기기",
   shelf: "선반",
   mirror: "거울",
+  locker: "사물함",
 };
 
 export const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS);

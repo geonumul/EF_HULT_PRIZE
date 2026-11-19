@@ -63,7 +63,7 @@ function seedProduct(id: string, name: string, category: ProductCategory, w: num
   return { id, name, category, widthMm: w, depthMm: d, heightMm: h, price, imageUrl: `https://example.com/${id}.jpg`, embedding };
 }
 
-const SEED_PRODUCTS: Product[] = [
+export const SEED_PRODUCTS: Product[] = [
   seedProduct("p-chair-1", "오크 원목 체어", "chair", 450, 520, 780, 89000),
   seedProduct("p-chair-2", "블랙 철제 체어", "chair", 420, 480, 800, 69000),
   seedProduct("p-table-1", "2인 원형 테이블", "table", 600, 600, 720, 129000),

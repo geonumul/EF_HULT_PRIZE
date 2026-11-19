@@ -30,7 +30,8 @@
 .info { flex: 1; min-width: 0; }
 .name { margin: 0; font-size: 13px; font-weight: 500; color: var(--gray-900); }
 .spec { margin: 0; font-size: 11px; color: var(--gray-500); }
-.price { margin: 0; width: 100px; text-align: right; font-size: 13px; font-weight: 700; color: var(--gray-900); }
+.priceBox { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; width: 100px; }
+.price { margin: 0; text-align: right; font-size: 13px; font-weight: 700; color: var(--gray-900); }
 
 .toggle {
   display: flex;
@@ -115,9 +116,12 @@
     font-size: 13px;
   }
 
-  .price {
+  .priceBox {
     width: auto;
     margin-left: auto;
+  }
+
+  .price {
     font-size: 15px;
   }
 }

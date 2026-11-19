@@ -43,3 +43,4 @@ secrets/
 # 공실 등록 도구가 남기는 조회 기록
 backend/data/
 functions/renders-raw/
+functions/renders-raw-v2/

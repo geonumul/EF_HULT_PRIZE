@@ -42,7 +42,7 @@ export default function ProductCard({ product, showUsed, count, onAdd }: Props) 
 
       <p className={styles.category}>
         {CATEGORY_LABELS[product.category] ?? product.category}
-        {partner && <span className={styles.partnerBadge}>입점 업체 · 상단 노출</span>}
+        {partner && <span className={styles.partnerBadge}>광고 · 입점 업체</span>}
       </p>
       <p className={styles.name}>{product.name}</p>
       <p className={styles.size}>W·D·H {size}</p>

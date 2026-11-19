@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { Quote, RenderResult } from "@/types";
 import { findProduct } from "@/mocks/products";
 import { formatMan } from "@/lib/format";
+import { AdChip, CertaintyChip } from "@/components/quote/CertaintyChip";
 import TotalBar from "./TotalBar";
 import styles from "./QuotePanel.module.css";
 
@@ -94,13 +95,20 @@ export default function QuotePanel(props: Props) {
                         />
                       )}
                       <span className={styles.rowText}>
-                        <span className={styles.rowName}>{item.name}</span>
+                        <span className={styles.rowName}>
+                          {item.source === "partner" && <AdChip />}
+                          {item.name}
+                        </span>
                         <span className={styles.rowSpec}>
                           {item.spec}
                           {item.productId ? ` · ${item.qty}개` : ""}
                         </span>
+                        {item.source === "internet" && <span className={styles.rowNote}>인터넷 최저가 기준</span>}
                       </span>
-                      <span className={styles.rowPrice}>{formatMan(Math.round((item.unitPrice * item.qty) / 10000))}</span>
+                      <span className={styles.rowRight}>
+                        <span className={styles.rowPrice}>{formatMan(Math.round((item.unitPrice * item.qty) / 10000))}</span>
+                        <CertaintyChip certainty={item.certainty} />
+                      </span>
                     </>
                   );
 
@@ -128,6 +136,11 @@ export default function QuotePanel(props: Props) {
         })}
       </div>
 
+      {!props.disabled && (
+        <p className={styles.split}>
+          확정 {formatMan(Math.round(quote.confirmedTotal / 10000))} + 예상 {formatMan(Math.round(quote.estimatedTotal / 10000))}
+        </p>
+      )}
       <TotalBar
         quote={quote}
         baseTotal={props.baseTotal}

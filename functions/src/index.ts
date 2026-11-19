@@ -5,6 +5,7 @@ import { logger } from "firebase-functions";
 import { createAdapters } from "./adapters";
 import { executeCollect } from "./jobs/collectJob";
 import { executeLinkCheck } from "./jobs/linkCheckJob";
+import { DailyLimiter, handleGenerate, handlePlan } from "./http/handlers";
 import { executeRenderJob } from "./jobs/renderJob";
 import type { RenderJobRequest } from "./types";
 
@@ -29,6 +30,38 @@ export const runRenderJob = onRequest(
       logger.error("렌더링 작업 실패", { jobId: request.jobId, error: String(error) });
       res.status(200).json({ ok: false });
     }
+  },
+);
+
+/** 배치를 계산하고 설계 기준을 점검한다. 이미지는 만들지 않아 비용이 없다. 화면이 직접 부른다. docs/RENDER_API.md */
+export const planLayout = onRequest({ region: REGION, cors: true, timeoutSeconds: 30, memory: "256MiB", maxInstances: 5 }, (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "POST만 받습니다." });
+    return;
+  }
+  const result = handlePlan(req.body);
+  res.status(result.status).json(result.body);
+});
+
+// 이미지 생성은 돈이 든다. 접근 코드와 하루 호출 한도로 막는다(DEMO_RENDER_CODE, DAILY_RENDER_LIMIT).
+const renderLimiter = new DailyLimiter(Number(process.env.DAILY_RENDER_LIMIT ?? 60));
+
+/** 공간 사진과 배치로 렌더링 이미지를 만들고 가구를 상품과 잇는다. 20~90초 걸린다. docs/RENDER_API.md */
+export const generateRender = onRequest(
+  { region: REGION, cors: true, timeoutSeconds: 300, memory: "1GiB", maxInstances: 3 },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "POST만 받습니다." });
+      return;
+    }
+    const result = await handleGenerate(req.body, {
+      accessCode: process.env.DEMO_RENDER_CODE,
+      apiKey: process.env.GEMINI_API_KEY,
+      siteOrigin: process.env.SITE_ORIGIN ?? "https://shopportunity.vercel.app",
+      limiter: renderLimiter,
+    });
+    if (result.status >= 500) logger.error("렌더링 생성 실패", { body: result.body });
+    res.status(result.status).json(result.body);
   },
 );
 

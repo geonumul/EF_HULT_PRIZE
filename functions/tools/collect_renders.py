@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "functions" / "renders-raw"
+RAW = ROOT / "functions" / "renders-raw-v2"
 OUT = ROOT / "frontend" / "public" / "images" / "renders"
 OUT.mkdir(parents=True, exist_ok=True)
 

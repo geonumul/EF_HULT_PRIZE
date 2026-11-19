@@ -147,6 +147,20 @@ const RAW_PRODUCTS: Product[] = [
       { id: "mirror-wall-a", source: "coupang", label: "쿠팡", url: "https://example.com/coupang/mirror", price: 180000, status: "live" },
     ],
   },
+  {
+    id: "locker-steel",
+    name: "스틸 사물함 6칸",
+    category: "locker",
+    widthMm: 900,
+    depthMm: 400,
+    heightMm: 1800,
+    price: 240000,
+    usedPrice: 140000,
+    imageUrl: "/images/prod-counter.jpg",
+    links: [
+      { id: "locker-steel-a", source: "coupang", label: "쿠팡", url: "https://example.com/coupang/locker", price: 240000, status: "live" },
+    ],
+  },
 ];
 
 /** id로 상품 하나를 찾는다. 없으면 undefined. */

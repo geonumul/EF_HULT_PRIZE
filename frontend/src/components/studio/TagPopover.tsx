@@ -5,6 +5,8 @@
 // 판매처 버튼은 /go/<링크id>가 생기기 전까지 상품 주소를 새 탭으로 연다.
 import type { Product, RenderTag } from "@/types";
 import { formatWon } from "@/lib/format";
+import { isPartnerProduct } from "@/lib/shopping";
+import { AdChip, CertaintyChip } from "@/components/quote/CertaintyChip";
 import styles from "./TagPopover.module.css";
 
 type Props = {
@@ -31,7 +33,13 @@ function similarityLabel(similarity?: number): string {
 
 export default function TagPopover(props: Props) {
   const { tag, product, qty, isUsed, isIncluded } = props;
-  const links = product.links.filter((link) => link.status === "live").slice(0, MAX_LINKS);
+  // 입점 업체 링크를 위에 둔다. sort는 같은 순위끼리 원래 순서(최저가 순)를 지킨다.
+  const links = product.links
+    .filter((link) => link.status === "live")
+    .sort((a, b) => Number(b.source === "partner") - Number(a.source === "partner"))
+    .slice(0, MAX_LINKS);
+  const isPartner = isPartnerProduct(product);
+  const isConfirmed = isPartner && !isUsed;
   const canUseUsed = product.usedPrice !== undefined;
 
   // 오른쪽 끝에 가까운 태그는 팝오버를 왼쪽에 연다.
@@ -51,7 +59,7 @@ export default function TagPopover(props: Props) {
         <img className={styles.photo} src={product.imageUrl} alt="" />
         <div className={styles.info}>
           <p className={styles.number}>
-            {tag.n}번 · {similarityLabel(tag.similarity)}
+            {isPartner && <AdChip />} {tag.n}번 · {similarityLabel(tag.similarity)}
           </p>
           <p className={styles.name}>{product.name}</p>
           <p className={styles.size}>
@@ -65,6 +73,10 @@ export default function TagPopover(props: Props) {
           <p className={styles.price}>
             {formatWon(isUsed && product.usedPrice !== undefined ? product.usedPrice : product.price)}
             <span className={styles.times}> × {qty}</span>
+          </p>
+          <p className={styles.certainty}>
+            <CertaintyChip certainty={isConfirmed ? "confirmed" : "estimated"} />{" "}
+            {isConfirmed ? "확정 가격" : isUsed ? "예상 가격 · 중고 기준" : "예상 가격 · 인터넷 최저가 기준"}
           </p>
           {canUseUsed && !isUsed && (
             <p className={styles.usedHint}>중고 대안 {formatWon(product.usedPrice as number)}</p>

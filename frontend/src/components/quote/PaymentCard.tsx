@@ -143,6 +143,13 @@ export default function PaymentCard({ renderId, quote, usedIds, title }: Props) 
         <span className={styles.todayLabel}>오늘 결제</span>
         <span className={styles.todayValue}>{formatManWon(plan.today)}</span>
       </div>
+      {quote.estimatedTotal > 0 && (
+        <p className={styles.note}>
+          확정 {formatManWon(quote.confirmedTotal)} + 예상 {formatManWon(quote.estimatedTotal)}
+          <br />
+          예상 금액은 판매처 가격 변동과 실제 견적에 따라 달라질 수 있어요.
+        </p>
+      )}
       <p className={styles.note}>잔금 {formatManWon(plan.balance)}은 시공 완료 후 정산</p>
 
       <div className={styles.form}>

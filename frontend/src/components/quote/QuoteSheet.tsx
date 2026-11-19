@@ -3,6 +3,7 @@
 import type { Product, Quote } from "@/types";
 import { findProduct } from "@/mocks/products";
 import { formatWon } from "@/lib/format";
+import { AdChip, CertaintyChip } from "./CertaintyChip";
 import styles from "./QuoteSheet.module.css";
 
 type Props = {
@@ -35,9 +36,12 @@ export default function QuoteSheet({ quote, usedIds, onToggleUsed }: Props) {
             return (
               <div key={item.name} className={styles.item}>
                 <div className={styles.info}>
-                  <p className={styles.name}>{item.name}</p>
+                  <p className={styles.name}>
+                    {item.source === "partner" && <AdChip />} {item.name}
+                  </p>
                   <p className={styles.spec}>
                     {item.spec} · {formatWon(item.unitPrice)} × {item.qty}
+                    {item.source === "internet" && " · 인터넷 최저가 기준"}
                   </p>
                 </div>
 
@@ -68,7 +72,10 @@ export default function QuoteSheet({ quote, usedIds, onToggleUsed }: Props) {
                   </a>
                 )}
 
-                <p className={styles.price}>{formatWon(item.unitPrice * item.qty)}</p>
+                <div className={styles.priceBox}>
+                  <p className={styles.price}>{formatWon(item.unitPrice * item.qty)}</p>
+                  <CertaintyChip certainty={item.certainty} />
+                </div>
               </div>
             );
           })}
