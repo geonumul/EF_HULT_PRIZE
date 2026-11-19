@@ -30,7 +30,7 @@ export default function MapScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const use = parseUse(searchParams.get("use"));
-  const [showCandidates, setShowCandidates] = useState(false);
+  const [showCandidates, setShowCandidates] = useState(true); // 지도를 열면 후보 점이 바로 보인다.
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const { listings } = useListings();
   const { candidates } = useCandidates(showCandidates);
