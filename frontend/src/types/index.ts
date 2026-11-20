@@ -29,6 +29,8 @@ export type Listing = {
   thumbnail: string; // /images/... 경로
   renderCount: number; // AI 렌더링 개수. 0이면 "빈 공간"
   position: { lat: number; lng: number };
+  /** 사용자가 직접 입력한 방 크기(mm). 내 공간에만 있고, 있으면 배치 계산이 면적 비율 대신 이 값을 쓴다. */
+  roomMm?: { widthMm: number; depthMm: number };
   /** 업종별 창업비 */
   costs: Partial<Record<UseType, number>>;
   /** 업종별 적합성 */

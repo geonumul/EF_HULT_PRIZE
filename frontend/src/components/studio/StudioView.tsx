@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import type { Listing, RenderResult, UseType } from "@/types";
 import type { RenderStyleKey, StudioMode } from "@/types/studio";
 import { buildQuote } from "@/lib/quote";
+import { sceneToRender } from "@/lib/scene";
+import { useSceneEditor } from "@/lib/useSceneEditor";
 import { runFakeProgress } from "@/lib/fakeProgress";
 import { buildProductsRender } from "@/lib/productsRender";
 import { useRenderBoard } from "@/lib/renderBoard";
@@ -28,6 +30,9 @@ import QuotePanel from "./QuotePanel";
 import BoardPanel from "./BoardPanel";
 import CanvasActions from "./CanvasActions";
 import PlanDialog from "./PlanDialog";
+import PlanEditor from "./PlanEditor";
+import SceneViewer3D from "./SceneViewer3D";
+import type { ViewMode } from "./SceneViewer3D";
 import CodeDialog from "./CodeDialog";
 import RenderProgress from "./RenderProgress";
 
@@ -80,12 +85,16 @@ export default function StudioView({ listing, initialUse }: Props) {
   const [edits, setEdits] = useState<Record<string, TagEdit>>({});
   const [productResult, setProductResult] = useState<RenderResult | null>(null);
   const [boardProgress, setBoardProgress] = useState<number | null>(null);
+  const isMySpace = listing.id.startsWith("my-"); // 사용자가 직접 입력한 공간. 사진이 없어서 배치 편집이 기본이다.
+  const [viewer, setViewer] = useState<ViewMode | null>(null); // 3D 둘러보기, 360 보기
+  const [editing, setEditing] = useState(isMySpace); // 배치 편집. 켜면 평면도에서 고친 배치로 견적이 바로 계산된다.
 
   // AI로 새로 만든 렌더링. 스타일이나 업종을 바꾸면 버린다.
   const [generated, setGenerated] = useState<RenderOutput | null>(null);
   const [rendering, setRendering] = useState(false);
   const [renderNotice, setRenderNotice] = useState("");
   const [dialog, setDialog] = useState<"plan" | "code" | null>(null);
+  const sceneEditor = useSceneEditor(listing, useType, editing);
   const [codeMessage, setCodeMessage] = useState("");
   const renderToken = useRef(0); // 값이 바뀌면 진행 중인 요청 결과는 버린다.
   const mounted = useRef(true);
@@ -178,7 +187,10 @@ export default function StudioView({ listing, initialUse }: Props) {
   // ---- 보여 줄 값 계산 ----
 
   const isBoardStage = mode === "products" && !productResult;
-  const render: RenderResult | null = mode === "image" ? (findRender(`r-${listing.id}-${useType}`) ?? null) : productResult;
+  const baseRender: RenderResult | null = mode === "image" ? (findRender(`r-${listing.id}-${useType}`) ?? null) : productResult;
+  // 배치 편집 중이면 도면(Scene)에서 센 수량으로 견적을 만든다. 도면을 고치면 견적이 바로 바뀐다.
+  const sceneActive = editing && mode === "image" && !showEmpty && sceneEditor.scene !== null && sceneEditor.scene.useType === useType;
+  const render: RenderResult | null = sceneActive && sceneEditor.scene && baseRender ? sceneToRender(sceneEditor.scene, listing.id, baseRender.imageUrl) : baseRender;
 
   // 캔버스에는 모든 태그를 그리고, 견적에는 "견적에서 뺀" 상품을 제외한다.
   const displayTags = render
@@ -218,21 +230,20 @@ export default function StudioView({ listing, initialUse }: Props) {
   }
 
   const usedInThisRender = usedIds.filter((id) => quoteRender?.tags.some((tag) => tag.productId === id));
-  const confirmHref = quoteRender
-    ? `/quote/${quoteRender.id}${usedInThisRender.length > 0 ? `?used=${usedInThisRender.join(",")}` : ""}`
-    : "/quote";
+  const confirmQuery = [usedInThisRender.length > 0 ? `used=${usedInThisRender.join(",")}` : "", sceneActive ? "scene=1" : ""].filter(Boolean).join("&");
+  const confirmHref = quoteRender ? `/quote/${quoteRender.id}${confirmQuery ? `?${confirmQuery}` : ""}` : "/quote";
 
   // 캔버스 위 글자
   const productCount = canvasTags.reduce((sum, tag) => sum + tag.qty, 0);
   const warnCount = render ? render.checks.filter((text) => text.startsWith("확인 필요")).length : 0;
   const isCandidate = listing.terms === "inquiry"; // 공실 후보 공간. 실측과 사진이 없다.
-  const measuredBadge = `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · ${isCandidate ? "건축물대장 기준" : "실측 기준"}`;
+  const measuredBadge = `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · ${isMySpace ? "직접 입력 기준" : isCandidate ? "건축물대장 기준" : "실측 기준"}`;
 
   let imageUrl = `/images/render-${useType}.jpg`;
   let leftBadge = `AI 렌더링 · 판매 상품 ${productCount}개`;
   let rightBadge = render ? `${render.checks.slice(0, 2).join(" · ")} · 치수 검증 완료` : measuredBadge;
   const generatedUrl = mode === "image" ? generatedRenderUrl(listing.thumbnail, useType, styleKey) : null; // 이 공간 사진으로 만든 렌더링
-  const showTags = !showEmpty && !isBoardStage && (!generatedUrl || generatedActive); // 미리 만든 이미지에는 번호 태그 위치가 맞지 않아 숨긴다.
+  const showTags = !showEmpty && !isBoardStage && !sceneActive && (!generatedUrl || generatedActive); // 미리 만든 이미지에는 번호 태그 위치가 맞지 않아 숨긴다.
   if (generatedUrl) imageUrl = generatedUrl;
   if (generatedActive && generated) {
     imageUrl = generated.imageDataUrl;
@@ -249,12 +260,18 @@ export default function StudioView({ listing, initialUse }: Props) {
     if (isBoardStage) leftBadge = "AI 렌더링 · 상품 먼저";
   }
 
+  if (isMySpace) {
+    imageUrl = listing.thumbnail;
+    leftBadge = "내 공간 · 사진 없음";
+    rightBadge = measuredBadge;
+  }
+
   const currentFilter = RENDER_STYLES.find((style) => style.key === styleKey)?.filter;
-  const imageFilter = showEmpty || isBoardStage || generatedUrl || generatedActive ? "none" : currentFilter;
+  const imageFilter = showEmpty || isBoardStage || isMySpace || generatedUrl || generatedActive ? "none" : currentFilter;
 
   // 근거 표시. 후보 공간이거나 AI로 만든 이미지면 예시 사진 기반이라고 밝힌다.
   const extraBadges: { text: string; tone?: "ok" | "bad" }[] = [];
-  if (mode === "image" && !isBoardStage && (generatedActive || (isCandidate && !showEmpty) || (generatedUrl && !showEmpty))) {
+  if (mode === "image" && !isBoardStage && (generatedActive || (isCandidate && !isMySpace && !showEmpty) || (generatedUrl && !showEmpty))) {
     extraBadges.push({ text: "예시 사진 기반" });
   }
   // 미리 만들어 둔 렌더링도 AI가 만든 예시다.
@@ -269,6 +286,8 @@ export default function StudioView({ listing, initialUse }: Props) {
     );
   }
   if (renderNotice) extraBadges.push({ text: renderNotice, tone: "bad" });
+  if (sceneActive && sceneEditor.scene?.edited && !isMySpace) extraBadges.push({ text: "배치를 고쳤어요. 이미지는 처음 배치 그대로예요", tone: "bad" });
+  if (editing && sceneEditor.status === "failed") extraBadges.push({ text: "배치를 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요.", tone: "bad" });
 
   // 배치도와 렌더링 요청에 쓰는 입력. 견적에 들어 있는 상품을 그대로 넘긴다.
   const layoutItems: LayoutItem[] = [];
@@ -292,6 +311,16 @@ export default function StudioView({ listing, initialUse }: Props) {
     ...(layoutItems.length > 0 ? { items: layoutItems } : {}),
   };
   const spaceNumber = listing.thumbnail.match(/\/images\/spaces\/space-(\d\d)\.jpg$/)?.[1];
+
+  // 3D를 열면 배치 편집도 같이 켠다. 3D와 평면도, 견적이 같은 Scene을 읽는다.
+  function open3D() {
+    if (viewer) {
+      setViewer(null);
+      return;
+    }
+    setEditing(true);
+    setViewer("orbit");
+  }
 
   // ---- AI로 새로 렌더링 ----
 
@@ -330,6 +359,7 @@ export default function StudioView({ listing, initialUse }: Props) {
 
   let loading: { label: string; progress?: number } | undefined;
   if (boardProgress !== null) loading = { label: "선택한 상품으로 렌더링 중", progress: boardProgress };
+  else if (editing && sceneEditor.status === "loading") loading = { label: "배치를 불러오는 중" };
   else if (loadingLabel) loading = { label: loadingLabel };
 
   // ---- 화면 ----
@@ -364,6 +394,10 @@ export default function StudioView({ listing, initialUse }: Props) {
       actions={
         <CanvasActions
           onOpenPlan={() => setDialog("plan")}
+          onToggleEdit={mode === "image" && !isBoardStage && !showEmpty ? () => setEditing(!editing) : undefined}
+          editing={editing}
+          onOpen3D={mode === "image" && !isBoardStage && !showEmpty ? open3D : undefined}
+          viewing3D={viewer !== null}
           onRender={mode === "image" && !isBoardStage && spaceNumber ? startRender : undefined}
           rendering={rendering}
         />
@@ -388,6 +422,13 @@ export default function StudioView({ listing, initialUse }: Props) {
         />
       )}
       {rendering && <RenderProgress />}
+      {viewer && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
+        <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} />
+      )}
+      {editing && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
+        <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />
+      )}
+
       {dialogs}
       {!isBoardStage && (
         <StyleBar

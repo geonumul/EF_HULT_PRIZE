@@ -9,7 +9,7 @@ import { findRender } from "@/mocks/renders";
 import QuoteView from "./QuoteView";
 import { parseUsedParam } from "./payment";
 
-export default function QuoteLoader({ renderId, used }: { renderId: string; used?: string }) {
+export default function QuoteLoader({ renderId, used, fromScene }: { renderId: string; used?: string; fromScene?: boolean }) {
   const { listing, status } = useSpace(spaceIdOfRender(renderId));
   const render = listing ? findRender(renderId) : undefined;
   if (!listing || !render) return <SpaceMessage status={listing ? "missing" : status} />;
@@ -18,7 +18,7 @@ export default function QuoteLoader({ renderId, used }: { renderId: string; used
   const today = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
   return (
     <>
-      <QuoteView renderId={renderId} title={title} today={today} initialUsedIds={parseUsedParam(used)} />
+      <QuoteView renderId={renderId} title={title} today={today} initialUsedIds={parseUsedParam(used)} fromScene={fromScene} />
       <Footer />
     </>
   );

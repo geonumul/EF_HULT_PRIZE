@@ -162,3 +162,25 @@
   font-weight: 700;
   fill: #fff;
 }
+
+/* 평면도 편집 */
+.interactive {
+  touch-action: none;
+  user-select: none;
+}
+
+.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.selected {
+  fill: none;
+  stroke: #3182f6;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+  pointer-events: none;
+}

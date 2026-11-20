@@ -3,11 +3,11 @@ import QuoteLoader from "@/components/quote/QuoteLoader";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ used?: string }>;
+  searchParams: Promise<{ used?: string; scene?: string }>;
 };
 
 export default async function QuotePage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { used } = await searchParams;
-  return <QuoteLoader renderId={id} used={used} />;
+  const { used, scene } = await searchParams;
+  return <QuoteLoader renderId={id} used={used} fromScene={scene === "1"} />;
 }

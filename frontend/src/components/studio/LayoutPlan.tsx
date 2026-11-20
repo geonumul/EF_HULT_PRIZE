@@ -1,5 +1,6 @@
 // planLayout 응답을 그리는 평면도(SVG). 안쪽 벽이 위, 입구는 아래 벽 가운데다.
 // 길이는 mm이고 화면 좌표로 바꿀 때 scale을 곱한다. viewBox 덕분에 화면 폭에 맞게 줄어든다.
+import type { MutableRefObject, PointerEvent as ReactPointerEvent, ReactNode, RefObject } from "react";
 import type { Clearance, PlacedItem, PlanResult } from "@/lib/api/functions";
 import styles from "./LayoutPlan.module.css";
 
@@ -99,7 +100,20 @@ function clearanceLine(c: Clearance, plan: PlanResult): Line | null {
   return null;
 }
 
-export default function LayoutPlan({ plan }: { plan: PlanResult }) {
+/** 평면도에서 가구를 끌어 옮길 때 쓰는 값. 편집기(PlanEditor)가 넘긴다. */
+export type PlanInteraction = {
+  /** plan.placed의 몇 번째 가구가 선택됐는지 */
+  selectedIndex: number | null;
+  /** 겹치거나 방 밖으로 나가 빨갛게 보일 가구의 번호 */
+  badIndexes: Set<number>;
+  onPointerDown: (index: number, event: ReactPointerEvent<SVGGElement>) => void;
+  onBackgroundPointerDown: () => void;
+  svgRef: RefObject<SVGSVGElement | null>;
+  /** 화면 좌표를 mm로 바꿀 때 쓰는 값. 그릴 때마다 채워진다. */
+  geometryRef: MutableRefObject<{ ox: number; oy: number; scale: number }>;
+};
+
+export default function LayoutPlan({ plan, interactive, compact }: { plan: PlanResult; interactive?: PlanInteraction; compact?: boolean }) {
   const { room, placed, entryZone, clearances, violations } = plan;
   const scale = Math.min(MAX_DRAW_W / room.widthMm, MAX_DRAW_H / room.depthMm);
   const px = (mm: number) => mm * scale;
@@ -110,9 +124,10 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
   const oy = 52;
   const wallY = oy + drawH;
   const legendTop = wallY + 52;
-  const viewH = legendTop + 62;
+  const viewH = compact ? wallY + 26 : legendTop + 62;
 
   const badIds = new Set(violations.flatMap((v) => v.productIds));
+  if (interactive) interactive.geometryRef.current = { ox, oy, scale };
 
   const doorCenter = ox + drawW / 2;
   const doorHalf = px(DOOR_MM) / 2;
@@ -120,8 +135,8 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
   const scaleBar = px(1000);
 
   return (
-    <svg className={styles.svg} viewBox={`0 0 ${viewW} ${viewH}`} role="img" aria-label={`배치도. 가로 ${room.widthMm}mm, 깊이 ${room.depthMm}mm`}>
-      <rect x={ox} y={oy} width={drawW} height={drawH} className={styles.floor} />
+    <svg ref={interactive?.svgRef} className={interactive ? `${styles.svg} ${styles.interactive}` : styles.svg} viewBox={`0 0 ${viewW} ${viewH}`} role="img" aria-label={`배치도. 가로 ${room.widthMm}mm, 깊이 ${room.depthMm}mm`}>
+      <rect x={ox} y={oy} width={drawW} height={drawH} className={styles.floor} onPointerDown={interactive?.onBackgroundPointerDown} />
 
       {/* 입구 앞 비움 구역 */}
       <rect
@@ -187,18 +202,18 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
         const y = oy + px(item.y);
         const w = px(item.widthMm);
         const h = px(item.depthMm);
-        const bad = badIds.has(item.productId);
+        const bad = interactive ? interactive.badIndexes.has(index) : badIds.has(item.productId);
+        let node: ReactNode;
         if (item.hanging) {
-          return <ellipse key={index} cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} className={bad ? `${styles.lamp} ${styles.bad}` : styles.lamp} />;
-        }
-        if (item.round && item.tableDiaMm) {
+          node = <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} className={bad ? `${styles.lamp} ${styles.bad}` : styles.lamp} />;
+        } else if (item.round && item.tableDiaMm) {
           // 둥근 테이블: 원 하나와 지정한 방향의 의자들
           const cx = x + w / 2;
           const cy = y + h / 2;
           const tableR = px(item.tableDiaMm) / 2;
           const seat = px(380);
-          return (
-            <g key={index}>
+          node = (
+            <g>
               {(item.chairAngles ?? []).map((deg) => {
                 const rad = (deg * Math.PI) / 180;
                 const dist = tableR + seat * 0.62;
@@ -207,20 +222,29 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
               <circle cx={cx} cy={cy} r={tableR} fill={COLORS.tableChairs} className={bad ? `${styles.box} ${styles.bad}` : styles.box} />
             </g>
           );
+        } else {
+          const chairs = item.kind === "table" ? item.chairs : 0;
+          const topChairs = Math.ceil(chairs / 2);
+          const chairSize = Math.max(4, Math.min(8, w / 4));
+          const chairRow = (count: number, cy: number) =>
+            Array.from({ length: count }, (_, i) => (
+              <rect key={`${cy}-${i}`} x={x + (w * (i + 1)) / (count + 1) - chairSize / 2} y={cy} width={chairSize} height={chairSize / 1.5} rx={1.5} fill={COLORS.chair} />
+            ));
+          node = (
+            <g>
+              <rect x={x} y={y} width={w} height={h} rx={2} fill={colorOf(item)} className={bad ? `${styles.box} ${styles.bad}` : styles.box} />
+              {/* 응답의 상자 크기에 의자 자리가 들어 있어서 의자는 상자 안쪽 위아래에 그린다. */}
+              {chairRow(topChairs, y + 1)}
+              {chairRow(chairs - topChairs, y + h - chairSize / 1.5 - 1)}
+            </g>
+          );
         }
-        const chairs = item.kind === "table" ? item.chairs : 0;
-        const topChairs = Math.ceil(chairs / 2);
-        const chairSize = Math.max(4, Math.min(8, w / 4));
-        const chairRow = (count: number, cy: number) =>
-          Array.from({ length: count }, (_, i) => (
-            <rect key={`${cy}-${i}`} x={x + (w * (i + 1)) / (count + 1) - chairSize / 2} y={cy} width={chairSize} height={chairSize / 1.5} rx={1.5} fill={COLORS.chair} />
-          ));
+        if (!interactive) return <g key={index}>{node}</g>;
+        const selected = interactive.selectedIndex === index;
         return (
-          <g key={index}>
-            <rect x={x} y={y} width={w} height={h} rx={2} fill={colorOf(item)} className={bad ? `${styles.box} ${styles.bad}` : styles.box} />
-            {/* 응답의 상자 크기에 의자 자리가 들어 있어서 의자는 상자 안쪽 위아래에 그린다. */}
-            {chairRow(topChairs, y + 1)}
-            {chairRow(chairs - topChairs, y + h - chairSize / 1.5 - 1)}
+          <g key={index} onPointerDown={(event) => interactive.onPointerDown(index, event)} className={styles.draggable}>
+            {node}
+            {selected && <rect x={x - 2} y={y - 2} width={w + 4} height={h + 4} className={styles.selected} />}
           </g>
         );
       })}
@@ -265,7 +289,7 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
       </text>
 
       {/* 간격 치수선 */}
-      {clearances.map((c) => {
+      {!compact && clearances.map((c) => {
         const line = clearanceLine(c, plan);
         if (!line) return null;
         const x1 = ox + px(line.x1);
@@ -283,15 +307,15 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
       })}
 
       {/* 축척 */}
-      <g transform={`translate(${ox},${wallY + 30})`}>
+      {!compact && <g transform={`translate(${ox},${wallY + 30})`}>
         <path d={`M0,0 L${scaleBar},0 M0,-3 L0,3 M${scaleBar},-3 L${scaleBar},3`} className={styles.scaleLine} />
         <text x={scaleBar + 6} y={4} className={styles.muted}>
           1m
         </text>
-      </g>
+      </g>}
 
       {/* 범례 */}
-      <g transform={`translate(${Math.max(8, ox - 40)},${legendTop})`} className={styles.legend}>
+      {!compact && <g transform={`translate(${Math.max(8, ox - 40)},${legendTop})`} className={styles.legend}>
         {LEGEND.map((entry, i) => (
           <g key={entry.label} transform={`translate(${(i % 3) * 112},${Math.floor(i / 3) * 18})`}>
             <rect width={10} height={10} rx={2} fill={entry.color} />
@@ -318,7 +342,7 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
             입구 비움
           </text>
         </g>
-      </g>
+      </g>}
     </svg>
   );
 }

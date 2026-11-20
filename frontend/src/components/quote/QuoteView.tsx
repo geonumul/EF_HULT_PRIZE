@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { findConfirmedDemolition } from "@/lib/demolition";
 import { buildQuote, withConfirmedDemolition } from "@/lib/quote";
+import { loadScene, sceneToRender } from "@/lib/scene";
+import { spaceIdOfRender } from "@/lib/spaces";
 import { findRender } from "@/mocks/renders";
 import { formatMan, formatWon } from "@/lib/format";
 import OrderTargets from "./OrderTargets";
@@ -15,18 +17,22 @@ type Props = {
   title: string; // "성수동2가 1층 · 카페"
   today: string; // "2026년 11월 17일"
   initialUsedIds: string[];
+  /** 스튜디오에서 평면도로 고친 배치(localStorage의 Scene)로 견적을 만든다. */
+  fromScene?: boolean;
 };
 
 // 항목별 금액의 점 색. 시안의 초록 3단계에 철거용 한 단계를 더했다.
 const DOT_COLORS = ["#00b368", "#12c9a4", "#8ae3c1", "#c5f0de"];
 
-export default function QuoteView({ renderId, title, today, initialUsedIds }: Props) {
+export default function QuoteView({ renderId, title, today, initialUsedIds, fromScene }: Props) {
   const [usedIds, setUsedIds] = useState<string[]>(initialUsedIds);
 
   // 철거 업체를 확정한 공실이면 그 금액을 쓴다. 확정 기록은 브라우저에만 있어서 화면이 뜬 뒤에 읽는다.
   const [confirmedDemolitionWon, setConfirmedDemolitionWon] = useState<number | null>(null);
 
-  const render = findRender(renderId);
+  const baseRender = findRender(renderId);
+  const scene = fromScene && baseRender ? loadScene(spaceIdOfRender(renderId), baseRender.useType) : null;
+  const render = scene && baseRender ? sceneToRender(scene, baseRender.listingId, baseRender.imageUrl) : baseRender;
   const listingId = render?.listingId;
   useEffect(() => {
     if (!listingId) return;

@@ -1,0 +1,24 @@
+// 공간 상태 하나(Scene). 평면도, 견적, 텍스트 수정이 모두 이 모양을 읽고 쓴다.
+// 도면의 가구(placed)와 구조물(structures)은 functions의 planLayout 응답과 같은 모양이다.
+import type { PlacedItem, PlanCamera, PlanResult, PlanStructure } from "@/lib/api/functions";
+import type { UseType } from "@/types";
+
+/** 도면의 가구 하나. id는 드래그와 텍스트 수정이 가리키는 이름표다. */
+export type SceneItem = PlacedItem & { id: string };
+
+export type Scene = {
+  version: 1;
+  spaceId: string;
+  useType: UseType;
+  room: PlanResult["room"];
+  items: SceneItem[];
+  structures: PlanStructure[];
+  /** 법령과 설계 확인 사항. 공간과 업종이 정해지면 바뀌지 않는다. */
+  notes: PlanResult["notes"];
+  camera?: PlanCamera;
+  /** 처음 배치가 어디서 왔는지. 화면에 근거로 보여 준다. */
+  source: "image-plan" | "auto-layout";
+  updatedAt: number;
+  /** 처음 배치에서 한 번이라도 고쳤으면 true. 렌더링 이미지는 처음 배치 그대로라서 화면에 알린다. */
+  edited?: boolean;
+};

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api/client";
 import { addSpace } from "@/mocks/renders";
 import { findListing } from "@/mocks/listings";
+import { findMySpace } from "@/lib/mySpaces";
 import type { Listing } from "@/types";
 
 export type SpaceStatus = "loading" | "ready" | "missing";
@@ -31,6 +32,13 @@ export function useSpace(id: string): { listing: Listing | null; status: SpaceSt
     const known = findListing(id);
     if (known) {
       setListing(known);
+      setStatus("ready");
+      return;
+    }
+    const mine = findMySpace(id);
+    if (mine) {
+      addSpace(mine);
+      setListing(findListing(id) ?? mine);
       setStatus("ready");
       return;
     }

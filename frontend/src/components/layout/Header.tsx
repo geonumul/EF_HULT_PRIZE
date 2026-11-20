@@ -9,6 +9,7 @@ import styles from "./Header.module.css";
 
 const MENUS = [
   { label: "지도 매물", href: "/map" },
+  { label: "내 공간", href: "/space/new" },
   { label: "업종별 견적", href: "/quote" },
   { label: "집기 마켓", href: "/market" },
   { label: "창업 가이드", href: "/guide" },
