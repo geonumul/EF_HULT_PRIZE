@@ -22,8 +22,9 @@ export type SceneCheck = {
   problems: string[];
 };
 
-export function entryZone(room: { widthMm: number; depthMm: number }) {
-  const left = (room.widthMm - ENTRY_CLEAR_MM) / 2;
+export function entryZone(room: { widthMm: number; depthMm: number }, entryX?: number) {
+  const center = entryX ?? room.widthMm / 2;
+  const left = Math.min(Math.max(0, center - ENTRY_CLEAR_MM / 2), Math.max(0, room.widthMm - ENTRY_CLEAR_MM));
   return { left, right: left + ENTRY_CLEAR_MM, top: room.depthMm - ENTRY_CLEAR_MM };
 }
 
@@ -38,7 +39,7 @@ export function floorItems(items: SceneItem[]): SceneItem[] {
   return items.filter((item) => !item.hanging);
 }
 
-export function checkScene(scene: Pick<Scene, "room" | "items" | "structures">): SceneCheck {
+export function checkScene(scene: Pick<Scene, "room" | "items" | "structures"> & { entryX?: number }): SceneCheck {
   const { room, items, structures } = scene;
   const floor = floorItems(items);
   const clearances: Clearance[] = [];
@@ -76,7 +77,7 @@ export function checkScene(scene: Pick<Scene, "room" | "items" | "structures">):
   }
   if (Number.isFinite(narrowest)) clearances.push({ id: "aisle", label: "줄 사이 통로", valueMm: Math.round(narrowest), requiredMm: MIN_AISLE_MM, ok: narrowest >= MIN_AISLE_MM });
 
-  const zone = entryZone(room);
+  const zone = entryZone(room, scene.entryX);
   const blocked = floor.some((item) => item.x < zone.right && item.x + item.widthMm > zone.left && item.y + item.depthMm > zone.top);
   clearances.push({ id: "entry", label: "입구 앞 비움", valueMm: blocked ? 0 : ENTRY_CLEAR_MM, requiredMm: ENTRY_CLEAR_MM, ok: !blocked });
 

@@ -82,6 +82,8 @@ export type RenderResult = {
   imageUrl: string;
   tags: RenderTag[];
   checks: string[]; // 치수 검증 결과 문구
+  /** 실측해서 고친 면적(㎡). 있으면 견적의 시공, 철거 금액이 이 면적으로 계산된다. */
+  areaM2?: number;
 };
 
 /** 가격이 확정인지 예상인지. 입점 업체 가격과 확정된 철거 금액만 확정이다. */

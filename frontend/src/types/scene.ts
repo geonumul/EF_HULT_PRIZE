@@ -24,6 +24,10 @@ export type Scene = {
   camera?: PlanCamera;
   /** 처음 배치가 어디서 왔는지. 화면에 근거로 보여 준다. */
   source: "image-plan" | "auto-layout";
+  /** 입구(아래쪽 벽 문) 가운데의 가로 위치(mm). 없으면 가운데. 실측한 값을 넣을 때 쓴다. */
+  entryX?: number;
+  /** 방 크기나 기둥, 창, 문을 실측값으로 고쳤으면 true. 사진 보정에 맞춘 가이드 이미지는 더 쓸 수 없다. */
+  measured?: boolean;
   updatedAt: number;
   /** 처음 배치에서 한 번이라도 고쳤으면 true. 렌더링 이미지는 처음 배치 그대로라서 화면에 알린다. */
   edited?: boolean;

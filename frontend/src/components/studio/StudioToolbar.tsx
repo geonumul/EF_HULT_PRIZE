@@ -112,7 +112,7 @@ export default function StudioToolbar(props: Props) {
       )}
 
       <button type="button" className={styles.tool} onClick={props.onOpenSheet}>
-        배치도·점검
+        배치도
       </button>
 
       {editable && (
@@ -155,7 +155,7 @@ export default function StudioToolbar(props: Props) {
             되돌리기
           </button>
           <button type="button" className={styles.ghost} onClick={() => setMessage(props.onRearrange())} disabled={!scene}>
-            다른 배치안
+            배치안
           </button>
           <button type="button" className={styles.ghost} onClick={props.onReset} disabled={!scene}>
             처음으로
@@ -165,7 +165,7 @@ export default function StudioToolbar(props: Props) {
 
       <div className={styles.pickerWrap}>
         <button type="button" className={moodOpen || props.moodRefs.length > 0 ? `${styles.tool} ${styles.toolOn}` : styles.tool} onClick={() => setMoodOpen(!moodOpen)} aria-expanded={moodOpen}>
-          무드·요청{props.moodRefs.length > 0 || props.note ? " ●" : ""}
+          무드{props.moodRefs.length > 0 || props.note ? " ●" : ""}
         </button>
         {moodOpen && (
           <div
@@ -233,7 +233,7 @@ export default function StudioToolbar(props: Props) {
 
       {props.onPanoRender && view !== "photo" && (
         <button type="button" className={styles.tool} onClick={props.onPanoRender} disabled={props.panoBusy !== null}>
-          {props.panoBusy !== null ? `360 만드는 중 ${props.panoBusy}/4` : "360 다시 만들기"}
+          {props.panoBusy !== null ? `360 생성 ${props.panoBusy}/4` : "360 재생성"}
         </button>
       )}
 

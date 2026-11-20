@@ -34,6 +34,7 @@ import TagPopover from "./TagPopover";
 import QuotePanel from "./QuotePanel";
 import BoardPanel from "./BoardPanel";
 import PanelTabs from "./PanelTabs";
+import SpaceMeasure from "./SpaceMeasure";
 import type { PanelTab } from "./PanelTabs";
 import TotalBar from "./TotalBar";
 import StudioToolbar from "./StudioToolbar";
@@ -257,7 +258,10 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const productCount = canvasTags.reduce((sum, tag) => sum + tag.qty, 0);
   const warnCount = render ? render.checks.filter((text) => text.startsWith("확인 필요")).length : 0;
   const isCandidate = listing.terms === "inquiry"; // 공실 후보 공간. 실측과 사진이 없다.
-  const measuredBadge = `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · ${isMySpace ? "직접 입력 기준" : isCandidate ? "건축물대장 기준" : "실측 기준"}`;
+  const measuredScene = sceneActive && sceneEditor.scene?.measured ? sceneEditor.scene : null;
+  const measuredBadge = measuredScene
+    ? `${formatArea(Math.round(((measuredScene.room.widthMm * measuredScene.room.depthMm) / 1_000_000) * 10) / 10)} · 천장고 ${(measuredScene.room.ceilingMm / 1000).toFixed(2)}m · 직접 실측 입력`
+    : `${formatArea(listing.areaM2)} · 천장고 ${listing.ceilingHeightM}m · ${isMySpace ? "직접 입력 기준" : isCandidate ? "건축물대장 기준" : "실측 기준"}`;
 
   let imageUrl = `/images/render-${useType}.jpg`;
   let leftBadge = `AI 렌더링 · 판매 상품 ${productCount}개`;
@@ -328,7 +332,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     });
   }
   const layoutInput = {
-    room: roomFromArea(listing.areaM2, listing.ceilingHeightM),
+    room: sceneActive && sceneEditor.scene ? sceneEditor.scene.room : roomFromArea(listing.areaM2, listing.ceilingHeightM), // 실측값을 넣었으면 그 크기로 만든다.
     useType,
     ...(layoutItems.length > 0 ? { items: layoutItems } : {}),
   };
@@ -389,7 +393,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     setRenderNotice("");
     // 평면도가 열려 있고 사진 보정값이 있으면, 지금 배치를 사진과 같은 원근으로 그려서 그대로 그리게 한다.
     const scene = sceneActive ? sceneEditor.scene : null;
-    const guideNumber = scene ? guideNumberOf(listing.thumbnail) : null;
+    const guideNumber = scene && !scene.measured ? guideNumberOf(listing.thumbnail) : null; // 실측으로 바꾼 방은 사진 보정과 맞지 않아 가이드를 쓰지 않는다.
     let guide: RenderInput["guide"];
     if (scene && guideNumber) {
       try {
@@ -562,8 +566,8 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
           styleKey={styleKey}
           mode={viewer}
           onChange={sceneEditor.change}
-          photo={viewerPhoto}
-          pano={livePanoNow?.set ?? panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)}
+          photo={sceneEditor.scene.measured ? null : viewerPhoto}
+          pano={livePanoNow?.set ?? (sceneEditor.scene.measured ? null : panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null))}
           captureRef={captureRef}
           overlayStale={sceneEditor.scene.edited === true && livePanoNow?.at !== sceneEditor.scene.updatedAt}
           sideImageUrl={viewerPhotoUrl ?? imageUrl}
@@ -617,7 +621,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       <PanelTabs
         value={panelTab}
         onChange={(tab) => {
-          if (tab === "plan") setEditing(true);
+          if (tab !== "quote") setEditing(true);
           setPanelTab(tab);
         }}
       >
@@ -626,7 +630,11 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
         ) : (
           <>
             {sceneEditor.scene && sceneReady ? (
-              <PlanEditor embedded scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />
+              panelTab === "plan" ? (
+                <PlanEditor embedded scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />
+              ) : (
+                <SpaceMeasure scene={sceneEditor.scene} onChange={sceneEditor.change} />
+              )
             ) : (
               <p style={{ padding: 20, fontSize: 13, color: "var(--gray-600)" }}>{sceneEditor.status === "failed" ? "배치를 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요." : "배치를 불러오는 중이에요."}</p>
             )}

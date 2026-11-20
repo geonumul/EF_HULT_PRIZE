@@ -97,7 +97,7 @@ export function buildQuote(render: RenderResult, usedProductIds: string[] = []):
   groups.push({ key: "facility", title: "설비 추가 공사", sum: sumOf(facilityItems), items: facilityItems });
 
   // 3. 인테리어 시공
-  const area = listing?.areaM2 ?? 0;
+  const area = render.areaM2 ?? listing?.areaM2 ?? 0;
   const constructionItems: QuoteItem[] = [
     { name: "인테리어 시공", spec: `${area}m² 기준 평균 단가`, qty: 1, unitPrice: Math.round(area * CONSTRUCTION_WON_PER_M2), certainty: "estimated" },
   ];

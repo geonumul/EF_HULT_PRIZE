@@ -3,7 +3,7 @@
 import { IMAGE_PLANS } from "@/lib/imagePlans";
 import { checkScene, entryZone, overlaps } from "@/lib/sceneCheck";
 import { planLayout, roomFromArea } from "@/lib/api/functions";
-import type { PlanResult } from "@/lib/api/functions";
+import type { PlanResult, PlanStructure } from "@/lib/api/functions";
 import { PRODUCTS } from "@/mocks/products";
 import type { Listing, Product, RenderResult, RenderTag, UseType } from "@/types";
 import type { Scene, SceneItem } from "@/types/scene";
@@ -240,7 +240,7 @@ export function findSpot(scene: Scene, item: SceneItem, anchor: Anchor): { x: nu
     return { x: Math.round(anchor.x - 150), y: Math.round(anchor.y - 150) };
   }
 
-  const zone = entryZone(room);
+  const zone = entryZone(room, scene.entryX);
   const candidates: { x: number; y: number; d: number }[] = [];
   for (let x = 0; x + item.widthMm <= room.widthMm; x += SCAN_STEP_MM) {
     for (let y = 0; y + item.depthMm <= room.depthMm; y += SCAN_STEP_MM) {
@@ -281,10 +281,88 @@ export function scenePlanResult(scene: Scene): PlanResult {
     unplaced: [],
     violations: [],
     notes: [],
-    entryZone: entryZone(scene.room),
+    entryZone: entryZone(scene.room, scene.entryX),
     clearances: checkScene(scene).clearances,
     structures: scene.structures,
   };
+}
+
+// ---- 실측 ----
+
+export const ROOM_LIMITS = { minMm: 2000, maxMm: 40000, minCeilingMm: 2000, maxCeilingMm: 8000 };
+
+const isSolid = (s: PlanStructure) => s.kind === "column" || s.kind === "stairs";
+
+/** 구조물을 방 안으로 맞춘다. 방보다 큰 것은 방 크기로 줄인다. */
+function fitStructure(room: Scene["room"], s: PlanStructure): PlanStructure {
+  const widthMm = Math.min(s.widthMm, room.widthMm);
+  const depthMm = Math.min(s.depthMm, room.depthMm);
+  return { ...s, widthMm, depthMm, x: Math.min(Math.max(0, s.x), room.widthMm - widthMm), y: Math.min(Math.max(0, s.y), room.depthMm - depthMm) };
+}
+
+/** 방과 구조물이 바뀐 뒤 가구를 방 안으로 넣고, 기둥이나 계단, 다른 가구와 겹치면 가까운 빈자리로 옮긴다. */
+function refitItems(scene: Scene): Scene {
+  let current: Scene = scene;
+  for (const original of scene.items) {
+    const item = current.items.find((other) => other.id === original.id);
+    if (!item) continue;
+    const others = { ...current, items: current.items.filter((other) => other.id !== item.id) };
+    const spot = placeNear(others, item, item.x, item.y);
+    const moved = { ...item, x: spot.x, y: spot.y };
+    // 놓을 곳이 없으면 원래 자리를 방 안으로만 맞춰 두고, 설계 점검이 겹침을 알린다.
+    const fallback = clampToRoom(current, item, item.x, item.y);
+    const next = blockedAt(others, moved, spot) ? { ...item, ...fallback } : moved;
+    current = { ...current, items: current.items.map((other) => (other.id === item.id ? next : other)) };
+  }
+  return current;
+}
+
+/** 실측한 방 크기와 입구 위치를 적용한다. 범위를 벗어나면 ok가 false다. */
+export function applyRoom(scene: Scene, next: { widthMm: number; depthMm: number; ceilingMm: number; entryX?: number }): { scene: Scene; ok: boolean; message: string } {
+  const { widthMm, depthMm, ceilingMm } = next;
+  const bad = (value: number) => !Number.isFinite(value);
+  if (bad(widthMm) || bad(depthMm) || bad(ceilingMm)) return { scene, ok: false, message: "숫자로 입력해 주세요." };
+  if (widthMm < ROOM_LIMITS.minMm || depthMm < ROOM_LIMITS.minMm || widthMm > ROOM_LIMITS.maxMm || depthMm > ROOM_LIMITS.maxMm) {
+    return { scene, ok: false, message: `가로와 깊이는 ${ROOM_LIMITS.minMm / 1000}m에서 ${ROOM_LIMITS.maxMm / 1000}m 사이로 입력해 주세요.` };
+  }
+  if (ceilingMm < ROOM_LIMITS.minCeilingMm || ceilingMm > ROOM_LIMITS.maxCeilingMm) {
+    return { scene, ok: false, message: `천장 높이는 ${ROOM_LIMITS.minCeilingMm / 1000}m에서 ${ROOM_LIMITS.maxCeilingMm / 1000}m 사이로 입력해 주세요.` };
+  }
+  const room = { widthMm: Math.round(widthMm), depthMm: Math.round(depthMm), ceilingMm: Math.round(ceilingMm) };
+  const entryX = next.entryX === undefined ? scene.entryX : Math.min(Math.max(600, Math.round(next.entryX)), Math.max(600, room.widthMm - 600));
+  const base: Scene = { ...scene, room, entryX, structures: scene.structures.map((s) => fitStructure(room, s)), measured: true, updatedAt: Date.now(), edited: true };
+  return { scene: refitItems(base), ok: true, message: `방을 ${(room.widthMm / 1000).toFixed(2)} x ${(room.depthMm / 1000).toFixed(2)}m, 천장 ${(room.ceilingMm / 1000).toFixed(2)}m로 바꿨어요. 가구는 새 크기에 맞춰 옮겼어요.` };
+}
+
+/** 기둥, 창, 문, 계단 하나의 위치와 크기를 고친다. */
+export function setStructure(scene: Scene, index: number, patch: Partial<Pick<PlanStructure, "x" | "y" | "widthMm" | "depthMm">>): Scene {
+  const target = scene.structures[index];
+  if (!target) return scene;
+  const merged = fitStructure(scene.room, { ...target, ...patch });
+  const base: Scene = { ...scene, structures: scene.structures.map((s, i) => (i === index ? merged : s)), measured: true, updatedAt: Date.now(), edited: true };
+  return isSolid(merged) ? refitItems(base) : base;
+}
+
+const STRUCTURE_LABELS: Record<PlanStructure["kind"], string> = { column: "기둥", stairs: "계단", window: "창", door: "문", ring: "천장 구조물" };
+
+/** 구조물을 방 가운데(문과 창은 벽)에 더한다. 위치와 크기는 입력 칸에서 고친다. */
+export function addStructure(scene: Scene, kind: PlanStructure["kind"]): Scene {
+  const { room } = scene;
+  const count = scene.structures.filter((s) => s.kind === kind).length + 1;
+  const label = `${STRUCTURE_LABELS[kind]} ${count}`;
+  let s: PlanStructure;
+  if (kind === "column") s = { kind, label, x: Math.round(room.widthMm / 2 - 200), y: Math.round(room.depthMm / 2 - 200), widthMm: 400, depthMm: 400 };
+  else if (kind === "stairs") s = { kind, label, x: 0, y: 0, widthMm: 1200, depthMm: 3000 };
+  else if (kind === "window") s = { kind, label, x: 0, y: Math.round(room.depthMm / 2 - 1500), widthMm: 100, depthMm: 3000 };
+  else if (kind === "door") s = { kind, label, x: Math.round((scene.entryX ?? room.widthMm / 2) - 450), y: room.depthMm - 100, widthMm: 900, depthMm: 100 };
+  else s = { kind, label, x: Math.round(room.widthMm / 2 - 1000), y: Math.round(room.depthMm / 2 - 1000), widthMm: 2000, depthMm: 2000 };
+  const base: Scene = { ...scene, structures: [...scene.structures, fitStructure(room, s)], measured: true, updatedAt: Date.now(), edited: true };
+  return isSolid(s) ? refitItems(base) : base;
+}
+
+export function removeStructure(scene: Scene, index: number): Scene {
+  if (!scene.structures[index]) return scene;
+  return { ...scene, structures: scene.structures.filter((_, i) => i !== index), measured: true, updatedAt: Date.now(), edited: true };
 }
 
 // ---- 다른 배치안 ----
@@ -532,5 +610,6 @@ export function quantitiesOf(scene: Scene): Record<string, number> {
 export function sceneToRender(scene: Scene, listingId: string, imageUrl: string): RenderResult {
   const qty = quantitiesOf(scene);
   const tags: RenderTag[] = Object.entries(qty).map(([productId, count], index) => ({ n: index + 1, x: 50, y: 50, productId, qty: count }));
-  return { id: `r-${listingId}-${scene.useType}`, listingId, useType: scene.useType, mode: "text", imageUrl, tags, checks: [] };
+  const areaM2 = scene.measured ? Math.round(((scene.room.widthMm * scene.room.depthMm) / 1_000_000) * 10) / 10 : undefined;
+  return { id: `r-${listingId}-${scene.useType}`, listingId, useType: scene.useType, mode: "text", imageUrl, tags, checks: [], ...(areaM2 ? { areaM2 } : {}) };
 }

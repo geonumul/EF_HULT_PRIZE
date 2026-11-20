@@ -476,7 +476,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       }
 
       // 입구 앞 비움 자리
-      const zone = entryZone(room);
+      const zone = entryZone(room, current.entryX);
       const entry = new THREE.Mesh(new THREE.PlaneGeometry(zone.right - zone.left, room.depthMm - zone.top), new THREE.MeshBasicMaterial({ color: "#00b368", transparent: true, opacity: 0.18 }));
       entry.rotation.x = -Math.PI / 2;
       entry.position.set((zone.left + zone.right) / 2, 4, (zone.top + room.depthMm) / 2);
