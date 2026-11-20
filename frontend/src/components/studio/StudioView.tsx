@@ -455,7 +455,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
         <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} photo={viewerPhoto} pano={panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)} />
       )}
       {editing && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
-        <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />
+        <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} viewing3D={viewer !== null} />
       )}
 
       {dialogs}

@@ -826,7 +826,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
             360 보기
           </button>
         </div>
-        {photoReady && (
+        {photoReady && mode === "pano" && (
           <button type="button" className={photoOn ? `${styles.close} ${styles.closeOn}` : styles.close} aria-pressed={photoOn} onClick={() => setPhotoOn((on) => !on)}>
             AI 이미지 입히기
           </button>

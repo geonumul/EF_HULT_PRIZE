@@ -20,12 +20,14 @@ type Props = {
   onChange: (next: Scene) => void;
   onUndo: () => void;
   onReset: () => void;
+  /** 3D가 열려 있으면 평면도가 3D를 가리지 않게 작은 지도로 시작한다. */
+  viewing3D?: boolean;
 };
 
 const EXAMPLES = ["테이블 2개 더 놔줘", "의자 하나 빼줘", "카운터를 입구 쪽으로"];
 
-export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset }: Props) {
-  const [open, setOpen] = useState(true);
+export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, viewing3D = false }: Props) {
+  const [open, setOpen] = useState(!viewing3D);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Scene | null>(null); // 끄는 동안의 임시 배치
   const [message, setMessage] = useState("");
@@ -38,10 +40,10 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset }
   latest.current = scene;
   const draftRef = useRef<Scene | null>(null);
 
-  // 좁은 화면에서는 처음에 접어 둔다.
+  // 좁은 화면에서는 처음에 접어 둔다. 3D를 열고 닫을 때도 맞춰서 줄이고 늘린다.
   useEffect(() => {
-    if (window.matchMedia("(max-width: 768px)").matches) setOpen(false);
-  }, []);
+    setOpen(!viewing3D && !window.matchMedia("(max-width: 768px)").matches);
+  }, [viewing3D]);
 
   const shown = draft ?? scene;
   const check = useMemo(() => checkScene(shown), [shown]);
@@ -142,14 +144,39 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset }
   const okCount = check.total - check.clearances.filter((c) => !c.ok).length;
   const allOk = check.failed === 0;
 
-  return (
-    <section className={open ? styles.panel : `${styles.panel} ${styles.closed}`} onClick={(event) => event.stopPropagation()} aria-label="배치 편집">
-      <button type="button" className={styles.head} onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className={styles.title}>배치 편집</span>
-        <span className={allOk ? styles.chipOk : styles.chipBad}>
-          {allOk ? `기준 충족 ${okCount}/${check.total}` : `기준 미달 ${check.failed}건`}
+  const chip = (
+    <span className={allOk ? styles.chipOk : styles.chipBad}>{allOk ? `기준 충족 ${okCount}/${check.total}` : `기준 미달 ${check.failed}건`}</span>
+  );
+
+  // 작은 지도. 누르면 편집 패널로 커진다. 3D에서 가구를 옮기면 이 지도도 같이 바뀐다.
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className={styles.mini}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
+        aria-label="배치 편집 크게 보기"
+      >
+        <span className={styles.miniPlan}>
+          <LayoutPlan plan={plan} compact />
         </span>
-        <span className={styles.toggle}>{open ? "접기" : "펼치기"}</span>
+        <span className={styles.miniFoot}>
+          {chip}
+          <span className={styles.miniHint}>눌러서 크게</span>
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <section className={styles.panel} onClick={(event) => event.stopPropagation()} aria-label="배치 편집">
+      <button type="button" className={styles.head} onClick={() => setOpen(false)} aria-expanded>
+        <span className={styles.title}>배치 편집</span>
+        {chip}
+        <span className={styles.toggle}>작게</span>
       </button>
 
       {open && (
