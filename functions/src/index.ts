@@ -6,6 +6,7 @@ import { createAdapters } from "./adapters";
 import { executeCollect } from "./jobs/collectJob";
 import { executeLinkCheck } from "./jobs/linkCheckJob";
 import { DailyLimiter, handleGenerate, handlePlan } from "./http/handlers";
+import { fetchNeighborElements, validateNeighborQuery } from "./http/neighbors";
 import { executeRenderJob } from "./jobs/renderJob";
 import type { RenderJobRequest } from "./types";
 
@@ -41,6 +42,22 @@ export const planLayout = onRequest({ region: REGION, cors: true, timeoutSeconds
   }
   const result = handlePlan(req.body);
   res.status(result.status).json(result.body);
+});
+
+/** 공간 주변 건물 윤곽을 받아 돌려준다. 공개 지도 서버를 대신 부르고 하루 동안 저장한다. 3D 뷰어가 창밖 건물을 세울 때 쓴다. */
+export const neighbors = onRequest({ region: REGION, cors: true, timeoutSeconds: 60, memory: "256MiB", maxInstances: 3 }, async (req, res) => {
+  const checked = validateNeighborQuery({ lat: req.query.lat, lng: req.query.lng });
+  if ("error" in checked) {
+    res.status(400).json({ error: checked.error });
+    return;
+  }
+  try {
+    const elements = await fetchNeighborElements(checked.lat, checked.lng, fetch as never);
+    res.status(200).json({ elements });
+  } catch (error) {
+    logger.warn("주변 건물을 받지 못했습니다", { error: String(error) });
+    res.status(502).json({ error: "주변 건물을 받지 못했습니다." });
+  }
 });
 
 // 이미지 생성은 돈이 든다. 접근 코드와 하루 호출 한도로 막는다(DEMO_RENDER_CODE, DAILY_RENDER_LIMIT).

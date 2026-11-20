@@ -579,6 +579,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
           photo={sceneEditor.scene.measured ? null : viewerPhoto}
           pano={livePanoNow?.set ?? (sceneEditor.scene.measured ? null : panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null))}
           captureRef={captureRef}
+          site={isMySpace ? null : listing.position}
           eyeCommand={eyeCommand}
           onEye={setEye}
           overlayStale={sceneEditor.scene.edited === true && livePanoNow?.at !== sceneEditor.scene.updatedAt}

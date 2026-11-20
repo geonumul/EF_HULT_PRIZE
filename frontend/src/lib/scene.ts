@@ -365,6 +365,77 @@ export function removeStructure(scene: Scene, index: number): Scene {
   return { ...scene, structures: scene.structures.filter((_, i) => i !== index), measured: true, updatedAt: Date.now(), edited: true };
 }
 
+// ---- 창과 방위 ----
+
+export type Wall = "left" | "right" | "back" | "front";
+export const WALL_LABELS: Record<Wall, string> = { left: "왼쪽 벽", right: "오른쪽 벽", back: "안쪽 벽", front: "입구 쪽 벽" };
+
+/** 창이나 문이 어느 벽에 있는지. 벽에서 50mm 안에 붙어 있으면 그 벽이다. 아니면 null. */
+export function wallOf(room: Scene["room"], s: PlanStructure): Wall | null {
+  if (s.kind !== "window" && s.kind !== "door") return null;
+  const edge = 50;
+  if (s.x <= edge && s.widthMm <= s.depthMm) return "left";
+  if (s.x + s.widthMm >= room.widthMm - edge && s.widthMm <= s.depthMm) return "right";
+  if (s.y <= edge && s.depthMm <= s.widthMm) return "back";
+  if (s.y + s.depthMm >= room.depthMm - edge && s.depthMm <= s.widthMm) return "front";
+  return null;
+}
+
+/** 창이나 문을 다른 벽의 가운데로 옮긴다. 길이는 그대로다. */
+export function setStructureWall(scene: Scene, index: number, wall: Wall): Scene {
+  const s = scene.structures[index];
+  if (!s || (s.kind !== "window" && s.kind !== "door")) return scene;
+  const { room } = scene;
+  const length = Math.max(s.widthMm, s.depthMm);
+  const thickness = s.kind === "window" ? 100 : 100;
+  let next: PlanStructure;
+  if (wall === "left") next = { ...s, x: 0, widthMm: thickness, y: Math.round(room.depthMm / 2 - length / 2), depthMm: length };
+  else if (wall === "right") next = { ...s, x: room.widthMm - thickness, widthMm: thickness, y: Math.round(room.depthMm / 2 - length / 2), depthMm: length };
+  else if (wall === "back") next = { ...s, y: 0, depthMm: thickness, x: Math.round(room.widthMm / 2 - length / 2), widthMm: length };
+  else next = { ...s, y: room.depthMm - thickness, depthMm: thickness, x: Math.round(room.widthMm / 2 - length / 2), widthMm: length };
+  const fitted = fitStructure(room, next);
+  return { ...scene, structures: scene.structures.map((other, i) => (i === index ? fitted : other)), measured: true, updatedAt: Date.now(), edited: true };
+}
+
+/** 입구에서 안쪽 벽을 볼 때 바라보는 방위를 정한다. 해와 주변 건물에만 영향을 주고 가구 배치는 그대로라서 edited로 치지 않는다. */
+export function setFacing(scene: Scene, deg: number): Scene {
+  if (!Number.isFinite(deg)) return scene;
+  return { ...scene, facingDeg: ((Math.round(deg) % 360) + 360) % 360, updatedAt: Date.now() };
+}
+
+// ---- 주변 건물(직접 입력) ----
+
+export type SceneBuilding = NonNullable<Scene["buildings"]>[number];
+
+/** 주변 건물 상자 하나를 왼쪽 맞은편에 더한다. 위치와 크기는 입력 칸에서 고친다. */
+export function addBuilding(scene: Scene): Scene {
+  const count = scene.buildings?.length ?? 0;
+  const building: SceneBuilding = {
+    id: `b${Date.now().toString(36)}${count}`,
+    x: -(6000 + 8000),
+    y: Math.round(scene.room.depthMm / 2 - 4000 + count * 9000),
+    widthMm: 8000,
+    depthMm: 8000,
+    heightMm: 12000,
+  };
+  return { ...scene, buildings: [...(scene.buildings ?? []), building], updatedAt: Date.now() };
+}
+
+export function setBuilding(scene: Scene, id: string, patch: Partial<Omit<SceneBuilding, "id">>): Scene {
+  const limits = { widthMm: [1000, 100000], depthMm: [1000, 100000], heightMm: [2000, 250000] } as const;
+  const clean: Partial<Omit<SceneBuilding, "id">> = {};
+  for (const [key, value] of Object.entries(patch) as [keyof Omit<SceneBuilding, "id">, number][]) {
+    if (!Number.isFinite(value)) continue;
+    const range = key === "x" || key === "y" ? [-200000, 200000] : limits[key as "widthMm" | "depthMm" | "heightMm"];
+    clean[key] = Math.round(Math.min(Math.max(value, range[0]), range[1]));
+  }
+  return { ...scene, buildings: (scene.buildings ?? []).map((b) => (b.id === id ? { ...b, ...clean } : b)), updatedAt: Date.now() };
+}
+
+export function removeBuilding(scene: Scene, id: string): Scene {
+  return { ...scene, buildings: (scene.buildings ?? []).filter((b) => b.id !== id), updatedAt: Date.now() };
+}
+
 // ---- 다른 배치안 ----
 
 /** 가구를 좌우로 뒤집는다. 기둥과 창은 그대로라서 겹치는 가구는 가까운 빈자리로 옮긴다. */

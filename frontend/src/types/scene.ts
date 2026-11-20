@@ -26,6 +26,10 @@ export type Scene = {
   source: "image-plan" | "auto-layout";
   /** 입구(아래쪽 벽 문) 가운데의 가로 위치(mm). 없으면 가운데. 실측한 값을 넣을 때 쓴다. */
   entryX?: number;
+  /** 입구에서 안쪽 벽을 볼 때 바라보는 방위(북쪽에서 시계 방향, 도). 해의 방향과 주변 건물의 위치가 이 값을 따른다. 없으면 0(북쪽). */
+  facingDeg?: number;
+  /** 창밖에 보이는 주변 건물을 직접 넣은 것. 방 바깥의 상자이고 좌표는 도면 좌표(mm)다. 지도 데이터가 없는 곳에서도 쓴다. */
+  buildings?: { id: string; x: number; y: number; widthMm: number; depthMm: number; heightMm: number }[];
   /** 방 크기나 기둥, 창, 문을 실측값으로 고쳤으면 true. 사진 보정에 맞춘 가이드 이미지는 더 쓸 수 없다. */
   measured?: boolean;
   updatedAt: number;

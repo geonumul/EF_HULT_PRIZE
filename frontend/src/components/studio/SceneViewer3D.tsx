@@ -15,7 +15,10 @@ import { GUIDE_CALIB } from "@/lib/guideCalib";
 import { GuideCamera } from "@/lib/guideRender";
 import { panoPosition } from "@/lib/panoViews";
 import type { PanoSet } from "@/lib/panoViews";
-import { moveItem } from "@/lib/scene";
+import { moveItem, wallOf } from "@/lib/scene";
+import { kstDate, skyColor, sunPosition, sunVector } from "@/lib/sun";
+import { fetchNeighbors } from "@/lib/surroundings";
+import type { Neighbor } from "@/lib/surroundings";
 import { entryZone } from "@/lib/sceneCheck";
 import type { RenderStyleKey } from "@/types/studio";
 import type { Scene, SceneItem } from "@/types/scene";
@@ -40,6 +43,8 @@ type Props = {
   onEye?: (eye: { x: number; y: number; yawDeg: number }) => void;
   /** 부모가 부르면 지금 배치의 3D 모형을 방 안 한 자리에서 네 방향으로 찍어 PNG data URL 네 개를 돌려주는 함수가 여기에 들어간다. */
   captureRef?: MutableRefObject<((position?: [number, number, number]) => string[]) | null>;
+  /** 공간의 위치(위도, 경도). 있으면 그 자리의 해 위치로 햇빛을 내고 주변 건물을 세운다. */
+  site?: { lat: number; lng: number } | null;
   /** 이미지 속 가구가 지금 배치와 맞지 않으면 true. 정하지 않으면 배치를 고쳤는지로 정한다. */
   overlayStale?: boolean;
 };
@@ -48,6 +53,35 @@ const EYE_HEIGHT_MM = 1500;
 /** 벽 두께와 바닥, 천장 슬래브 두께(mm). 방 안쪽 치수에는 들어가지 않는다. */
 const WALL_THICKNESS_MM = 200;
 const SLAB_THICKNESS_MM = 250;
+/** 창은 바닥에서 900~2400mm, 문은 바닥에서 2100mm까지 벽을 뚫는다. */
+const WINDOW_SILL_MM = 900;
+const WINDOW_HEAD_MM = 2400;
+const DOOR_HEAD_MM = 2100;
+
+type Opening = { from: number; to: number; bottom: number; top: number };
+type WallPiece = { from: number; to: number; bottom: number; top: number };
+
+/** 벽(start~end)에서 창과 문 구멍을 뺀 나머지를 직사각형 조각으로 나눈다. */
+function wallPieces(start: number, end: number, height: number, openings: Opening[]): WallPiece[] {
+  const marks = [...new Set([start, end, ...openings.flatMap((o) => [o.from, o.to])].filter((v) => v >= start && v <= end))].sort((a, b) => a - b);
+  const pieces: WallPiece[] = [];
+  for (let i = 0; i < marks.length - 1; i += 1) {
+    const from = marks[i];
+    const to = marks[i + 1];
+    if (to - from < 1) continue;
+    const mid = (from + to) / 2;
+    const cover = openings.filter((o) => o.from <= mid && mid <= o.to);
+    if (cover.length === 0) {
+      pieces.push({ from, to, bottom: 0, top: height });
+      continue;
+    }
+    const lowTop = Math.min(...cover.map((o) => o.bottom));
+    const highBottom = Math.max(...cover.map((o) => o.top));
+    if (lowTop > 0) pieces.push({ from, to, bottom: 0, top: lowTop });
+    if (highBottom < height) pieces.push({ from, to, bottom: highBottom, top: height });
+  }
+  return pieces;
+}
 
 const PALETTES: Record<RenderStyleKey, { floor: string; wall: string; wood: string; chair: string; counter: string; metal: string }> = {
   wood: { floor: "#cfb38a", wall: "#efe6d8", wood: "#b5835a", chair: "#c99a6b", counter: "#8d5f3c", metal: "#7a7a7a" },
@@ -257,7 +291,7 @@ function buildStructure(s: Scene["structures"][number], ceilingMm: number): THRE
       group.add(box(s.widthMm, 180 * (i + 1), depth, mat("#c8c4bc"), cx, 0, s.y + depth * i + depth / 2));
     }
   } else if (s.kind === "window") {
-    group.add(box(30, ceilingMm * 0.7, s.depthMm, mat("#bfe3f5", { transparent: true, opacity: 0.35 }), s.x + 15, 800, cz));
+    // 창은 방 모형을 만들 때 벽에 구멍을 내고 그린다.
   } else if (s.kind === "door") {
     group.add(box(s.widthMm, 2100, 60, mat("#6b5a4c"), cx, 0, s.y + 30));
   } else if (s.kind === "ring") {
@@ -269,19 +303,23 @@ function buildStructure(s: Scene["structures"][number], ceilingMm: number): THRE
   return group;
 }
 
-export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, captureRef, overlayStale, eyeCommand = null, onEye }: Props) {
+export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, captureRef, overlayStale, eyeCommand = null, onEye, site = null }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [hint, setHint] = useState("");
   const [selectedName, setSelectedName] = useState("");
   const [photoOn, setPhotoOn] = useState(true);
+  const [hour, setHour] = useState(14); // 해가 드는 모습을 볼 시각(한국 시간)
+  const [showNeighbors, setShowNeighbors] = useState(true);
+  const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
+  const [neighborsState, setNeighborsState] = useState<"idle" | "loading" | "none">("idle");
   const [far, setFar] = useState(false); // 이미지를 찍은 자리에서 멀리 벗어났는지
   const edited = overlayStale ?? scene.edited === true;
   const photoReady = pano !== null || (photo !== null && GUIDE_CALIB[photo.number] !== undefined);
 
   // 최신 값을 이벤트 처리기에서 읽는다.
-  const latest = useRef({ scene, onChange, photo, pano, photoOn, onEye });
-  latest.current = { scene, onChange, photo, pano, photoOn, onEye };
-  const api = useRef<{ rebuild: () => void; setMode: (mode: ViewMode) => void; exportPanorama: () => void; moveEye: (x: number, y: number) => void } | null>(null);
+  const latest = useRef({ scene, onChange, photo, pano, photoOn, onEye, site, hour, neighbors, showNeighbors });
+  latest.current = { scene, onChange, photo, pano, photoOn, onEye, site, hour, neighbors, showNeighbors };
+  const api = useRef<{ rebuild: () => void; setMode: (mode: ViewMode) => void; exportPanorama: () => void; moveEye: (x: number, y: number) => void; applySun: () => void; rebuildNeighbors: () => void } | null>(null);
 
   // 한 번만 만든다: 렌더러, 카메라, 이벤트
   useEffect(() => {
@@ -297,15 +335,20 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
     renderer.domElement.className = styles.canvas;
 
     const threeScene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, 1, 100, 80000);
+    const camera = new THREE.PerspectiveCamera(50, 1, 100, 400000);
     const content = new THREE.Group();
     threeScene.add(content);
 
-    threeScene.add(new THREE.HemisphereLight("#ffffff", "#b9a98f", 0.9));
-    const sun = new THREE.DirectionalLight("#ffffff", 1.0);
+    const hemi = new THREE.HemisphereLight("#ffffff", "#b9a98f", 0.9);
+    threeScene.add(hemi);
+    const sun = new THREE.DirectionalLight("#fff6e5", 1.0);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 15;
     threeScene.add(sun, sun.target);
+    const neighborRoot = new THREE.Group(); // 주변 건물과 땅. 방 모형과 따로 두어 가구를 옮길 때마다 다시 만들지 않는다.
+    threeScene.add(neighborRoot);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -470,15 +513,59 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       const spanW = room.widthMm + 2 * T;
       // 바닥 슬래브: 윗면이 바닥이다.
       content.add(solid(spanW, S, room.depthMm + 2 * T, [slabSide, slabSide, mat(palette.floor), slabSide, slabSide, slabSide], room.widthMm / 2, -S, room.depthMm / 2));
-      // 안쪽 벽, 왼쪽 벽, 오른쪽 벽
-      content.add(solid(spanW, room.ceilingMm, T, [outer, outer, cap, outer, inner, outer], room.widthMm / 2, 0, -T / 2));
-      content.add(solid(T, room.ceilingMm, room.depthMm, [inner, outer, cap, outer, outer, outer], -T / 2, 0, room.depthMm / 2));
-      content.add(solid(T, room.ceilingMm, room.depthMm, [outer, inner, cap, outer, outer, outer], room.widthMm + T / 2, 0, room.depthMm / 2));
+      // 창과 문 자리는 벽을 뚫는다. 어느 벽의 어디인지는 창과 문의 위치로 정한다.
+      const openingsOn = (wall: "left" | "right" | "back" | "front"): Opening[] =>
+        current.structures.flatMap((st) => {
+          if ((st.kind !== "window" && st.kind !== "door") || wallOf(room, st) !== wall) return [];
+          const along = wall === "left" || wall === "right" ? [st.y, st.y + st.depthMm] : [st.x, st.x + st.widthMm];
+          const top = st.kind === "window" ? WINDOW_HEAD_MM : DOOR_HEAD_MM;
+          return [{ from: along[0], to: along[1], bottom: st.kind === "window" ? WINDOW_SILL_MM : 0, top: Math.min(top, room.ceilingMm - 100) }];
+        });
+      const wallMesh = (piece: WallPiece, faces: THREE.Material[], horizontal: boolean, fixed: number) => {
+        const length = piece.to - piece.from;
+        const mid = (piece.from + piece.to) / 2;
+        const height = piece.top - piece.bottom;
+        const mesh = horizontal ? solid(length, height, T, faces, mid, piece.bottom, fixed) : solid(T, height, length, faces, fixed, piece.bottom, mid);
+        mesh.castShadow = true;
+        return mesh;
+      };
+      for (const piece of wallPieces(-T, room.widthMm + T, room.ceilingMm, openingsOn("back"))) content.add(wallMesh(piece, [outer, outer, cap, outer, inner, outer], true, -T / 2));
+      for (const piece of wallPieces(0, room.depthMm, room.ceilingMm, openingsOn("left"))) content.add(wallMesh(piece, [inner, outer, cap, outer, outer, outer], false, -T / 2));
+      for (const piece of wallPieces(0, room.depthMm, room.ceilingMm, openingsOn("right"))) content.add(wallMesh(piece, [outer, inner, cap, outer, outer, outer], false, room.widthMm + T / 2));
       if (currentMode === "pano") {
         const withFront = projectionKind() !== "photo"; // 사진 카메라는 방 밖에 있을 수 있어서, 이미지를 입힐 때는 앞쪽 벽을 둔다.
         const ceilingFace = mat("#f4f1ec");
-        content.add(solid(spanW, S, room.depthMm + 2 * T, [outer, outer, cap, ceilingFace, outer, outer], room.widthMm / 2, room.ceilingMm, room.depthMm / 2));
-        if (withFront) content.add(solid(spanW, room.ceilingMm, T, [outer, outer, cap, outer, outer, inner], room.widthMm / 2, 0, room.depthMm + T / 2));
+        const ceilingSlab = solid(spanW, S, room.depthMm + 2 * T, [outer, outer, cap, ceilingFace, outer, outer], room.widthMm / 2, room.ceilingMm, room.depthMm / 2);
+        ceilingSlab.castShadow = true;
+        content.add(ceilingSlab);
+        if (withFront) for (const piece of wallPieces(-T, room.widthMm + T, room.ceilingMm, openingsOn("front"))) content.add(wallMesh(piece, [outer, outer, cap, outer, outer, inner], true, room.depthMm + T / 2));
+      }
+
+      // 창: 유리와 틀을 벽 구멍에 끼운다. 문은 구멍만 뚫고 문짝은 구조물 모형이 그린다.
+      for (const st of current.structures) {
+        const wall = st.kind === "window" ? wallOf(room, st) : null;
+        if (!wall) continue;
+        if (wall === "front" && currentMode !== "pano") continue;
+        const horizontal = wall === "back" || wall === "front";
+        const from = horizontal ? st.x : st.y;
+        const to = horizontal ? st.x + st.widthMm : st.y + st.depthMm;
+        const top = Math.min(WINDOW_HEAD_MM, room.ceilingMm - 100);
+        const heightMm = top - WINDOW_SILL_MM;
+        const fixed = wall === "back" ? -T / 2 : wall === "front" ? room.depthMm + T / 2 : wall === "left" ? -T / 2 : room.widthMm + T / 2;
+        const place = (alongMid: number, alongLength: number, yBase: number, thick: number, tall: number, material: THREE.Material) => {
+          const mesh = new THREE.Mesh(new THREE.BoxGeometry(horizontal ? alongLength : thick, tall, horizontal ? thick : alongLength), material);
+          mesh.position.set(horizontal ? alongMid : fixed, yBase + tall / 2, horizontal ? fixed : alongMid);
+          content.add(mesh);
+        };
+        // AI 이미지를 입힐 때는 창 자리도 이미지의 창밖 풍경이 보이도록 불투명하게 둔다.
+        const glass = projectionKind() !== null ? mat("#bfe3f5") : mat("#bfe3f5", { transparent: true, opacity: 0.22 });
+        place((from + to) / 2, to - from, WINDOW_SILL_MM, 16, heightMm, glass);
+        const frame = mat("#2b2d30");
+        place((from + to) / 2, to - from, WINDOW_SILL_MM, 60, 50, frame); // 아래틀
+        place((from + to) / 2, to - from, top - 50, 60, 50, frame); // 윗틀
+        place(from + 25, 50, WINDOW_SILL_MM, 60, heightMm, frame);
+        place(to - 25, 50, WINDOW_SILL_MM, 60, heightMm, frame);
+        if (to - from > 1800) place((from + to) / 2, 40, WINDOW_SILL_MM, 60, heightMm, frame); // 가운데 세로틀
       }
 
       // 입구 앞 비움 자리
@@ -499,14 +586,84 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       }
       setSelected(selectedId && itemRoots.has(selectedId) ? selectedId : null);
 
-      sun.position.set(room.widthMm * 0.8, room.ceilingMm * 3, room.depthMm * 0.2);
-      sun.target.position.set(room.widthMm / 2, 0, room.depthMm / 2);
-      const span = Math.max(room.widthMm, room.depthMm);
-      sun.shadow.camera.left = sun.shadow.camera.bottom = -span;
-      sun.shadow.camera.right = sun.shadow.camera.top = span;
-      sun.shadow.camera.far = span * 8;
-      sun.shadow.camera.updateProjectionMatrix();
+      applySun();
       renderDepth();
+    }
+
+    /** 시각과 공간 위치, 방위로 해를 놓고 하늘 색을 바꾼다. */
+    function applySun() {
+      const { scene: cur, site: place, hour: h } = latest.current;
+      const lat = place?.lat ?? 37.5446;
+      const lng = place?.lng ?? 127.0557;
+      const position = sunPosition(kstDate(new Date(), h), lat, lng);
+      const v = sunVector(position.bearingDeg, position.altitudeDeg, cur.facingDeg ?? 0);
+      const { room } = cur;
+      const span = Math.max(room.widthMm, room.depthMm);
+      const dist = span * 5;
+      sun.position.set(room.widthMm / 2 + v.x * dist, Math.max(300, v.y * dist), room.depthMm / 2 + v.z * dist);
+      sun.target.position.set(room.widthMm / 2, 0, room.depthMm / 2);
+      sun.shadow.camera.left = sun.shadow.camera.bottom = -span * 1.2;
+      sun.shadow.camera.right = sun.shadow.camera.top = span * 1.2;
+      sun.shadow.camera.near = 100;
+      sun.shadow.camera.far = dist * 2.5;
+      sun.shadow.camera.updateProjectionMatrix();
+      const up = Math.max(0, Math.sin((position.altitudeDeg * Math.PI) / 180));
+      sun.intensity = up > 0 ? 0.35 + 1.6 * up : 0;
+      sun.castShadow = up > 0.02;
+      hemi.intensity = 0.45 + 0.45 * up;
+      threeScene.background = new THREE.Color(skyColor(position.altitudeDeg));
+    }
+
+    /** 주변 건물과 땅을 다시 세운다. 건물 윤곽(동쪽, 북쪽 m)을 방 좌표로 바꾸고, 방과 겹치는 건물은 뺀다. */
+    function rebuildNeighbors() {
+      for (const child of [...neighborRoot.children]) {
+        neighborRoot.remove(child);
+        child.traverse((node) => {
+          const mesh = node as THREE.Mesh;
+          mesh.geometry?.dispose();
+          const material = mesh.material;
+          if (Array.isArray(material)) material.forEach((m) => m.dispose());
+          else material?.dispose();
+        });
+      }
+      const { scene: cur, neighbors: list, showNeighbors: on } = latest.current;
+      const own = cur.buildings ?? [];
+      if (!on || (list.length === 0 && own.length === 0)) return;
+      const { room } = cur;
+      const heading = ((cur.facingDeg ?? 0) * Math.PI) / 180;
+      const forward = { e: Math.sin(heading), n: Math.cos(heading) };
+      const right = { e: Math.cos(heading), n: -Math.sin(heading) };
+      const cx = room.widthMm / 2;
+      const cz = room.depthMm / 2;
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(300000, 300000), new THREE.MeshStandardMaterial({ color: "#c9ccc2", roughness: 1 }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.set(cx, -SLAB_THICKNESS_MM - 2, cz);
+      ground.receiveShadow = true;
+      neighborRoot.add(ground);
+      const material = new THREE.MeshStandardMaterial({ color: "#dad6ce", roughness: 0.95 });
+      // 직접 넣은 건물
+      for (const b of own) {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(b.widthMm, b.heightMm, b.depthMm), material);
+        mesh.position.set(b.x + b.widthMm / 2, -SLAB_THICKNESS_MM + b.heightMm / 2, b.y + b.depthMm / 2);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        neighborRoot.add(mesh);
+      }
+      for (const building of list) {
+        const points = building.points.map((p) => ({ x: cx + (p.e * right.e + p.n * right.n) * 1000, z: cz - (p.e * forward.e + p.n * forward.n) * 1000 }));
+        const xs = points.map((p) => p.x);
+        const zs = points.map((p) => p.z);
+        // 방 둘레 1m 안에 걸치는 건물은 방과 겹쳐 보여서 뺀다.
+        if (Math.max(...xs) > -1000 && Math.min(...xs) < room.widthMm + 1000 && Math.max(...zs) > -1000 && Math.min(...zs) < room.depthMm + 1000) continue;
+        const shape = new THREE.Shape(points.map((p) => new THREE.Vector2(p.x, -p.z)));
+        const geometry = new THREE.ExtrudeGeometry(shape, { depth: building.heightM * 1000, bevelEnabled: false });
+        geometry.rotateX(-Math.PI / 2);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.y = -SLAB_THICKNESS_MM;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        neighborRoot.add(mesh);
+      }
     }
 
     function applyMode(next: ViewMode) {
@@ -833,7 +990,8 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       renderer.render(threeScene, camera);
     };
 
-    api.current = { rebuild, setMode: applyMode, exportPanorama, moveEye };
+    api.current = { rebuild, setMode: applyMode, exportPanorama, moveEye, applySun, rebuildNeighbors };
+    rebuildNeighbors();
     if (captureRef) captureRef.current = (position) => captureViews(position ?? panoPosition(latest.current.scene.room), [0, 90, 180, 270], 100, 1024, 768);
     if (process.env.NODE_ENV !== "production") (window as unknown as { __viewer3d?: unknown }).__viewer3d = { captureViews, room: () => latest.current.scene.room,
       items: () => latest.current.scene.items.map((item) => ({ id: item.id, name: item.name, x: item.x, y: item.y, w: item.widthMm, d: item.depthMm, hanging: !!item.hanging })),
@@ -870,6 +1028,12 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
         });
       }
       disposeProjectors();
+      for (const child of [...neighborRoot.children]) {
+        child.traverse((node) => {
+          const mesh = node as THREE.Mesh;
+          mesh.geometry?.dispose();
+        });
+      }
       if (captureRef) captureRef.current = null;
       if (process.env.NODE_ENV !== "production") delete (window as unknown as { __viewer3d?: unknown }).__viewer3d;
       renderer.dispose();
@@ -899,6 +1063,34 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
     api.current?.setMode(mode);
   }, [mode, photo?.url, pano?.id, photoOn]);
 
+  // 시각, 위치, 방위가 바뀌면 해를 다시 놓는다.
+  useEffect(() => {
+    api.current?.applySun();
+  }, [hour, site?.lat, site?.lng, scene.facingDeg]);
+
+  // 공간 위치의 주변 건물을 받는다.
+  useEffect(() => {
+    if (!site || !showNeighbors) {
+      setNeighbors([]);
+      setNeighborsState("idle");
+      return;
+    }
+    let alive = true;
+    setNeighborsState("loading");
+    fetchNeighbors(site.lat, site.lng).then((list) => {
+      if (!alive) return;
+      setNeighbors(list);
+      setNeighborsState(list.length > 0 ? "idle" : "none");
+    });
+    return () => {
+      alive = false;
+    };
+  }, [site?.lat, site?.lng, showNeighbors]);
+
+  useEffect(() => {
+    api.current?.rebuildNeighbors();
+  }, [neighbors, showNeighbors, scene.room.widthMm, scene.room.depthMm, scene.facingDeg, scene.buildings]);
+
   // 도면에서 정한 자리로 옮긴다.
   useEffect(() => {
     if (eyeCommand) api.current?.moveEye(eyeCommand.x, eyeCommand.y);
@@ -909,6 +1101,15 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
     <div className={styles.viewer} onClick={(event) => event.stopPropagation()}>
       <div ref={hostRef} className={styles.host} />
       <div className={styles.bar}>
+        <label className={styles.sun}>
+          <span>해 {String(Math.floor(hour)).padStart(2, "0")}:{hour % 1 ? "30" : "00"}</span>
+          <input type="range" min={6} max={20} step={0.5} value={hour} onChange={(event) => setHour(Number(event.target.value))} aria-label="해가 드는 시각" />
+        </label>
+        {(site || (scene.buildings?.length ?? 0) > 0) && (
+          <button type="button" className={showNeighbors ? `${styles.close} ${styles.closeOn}` : styles.close} aria-pressed={showNeighbors} onClick={() => setShowNeighbors(!showNeighbors)}>
+            {neighborsState === "loading" && showNeighbors ? "주변 건물…" : neighborsState === "none" && showNeighbors ? "주변 건물 없음" : "주변 건물"}
+          </button>
+        )}
         {photoReady && mode === "pano" && (
           <button type="button" className={photoOn ? `${styles.close} ${styles.closeOn}` : styles.close} aria-pressed={photoOn} onClick={() => setPhotoOn((on) => !on)}>
             AI 이미지 입히기
