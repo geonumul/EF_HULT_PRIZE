@@ -84,6 +84,8 @@ export type RenderInput = LayoutInput & {
   spaceNumber: string;
   style: "wood" | "white" | "industrial";
   attempts?: 1 | 2;
+  /** 고객이 고른 분위기 참고 사진(줄인 JPEG의 base64, 최대 2장). 렌더링이 그 분위기를 따른다. */
+  mood?: { images: string[] };
   /** 고친 배치를 사진과 같은 원근으로 그린 가이드 그림(lib/guideRender.ts). 주면 이 배치대로 그린다. */
   guide?: {
     number: string;

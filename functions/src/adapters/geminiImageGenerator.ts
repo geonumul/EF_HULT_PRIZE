@@ -69,6 +69,13 @@ function structureText(kind: ImageGenerationRequest["structureKind"]): string {
   return "One attached image is a rough 3D clay render of this room. It shows the exact camera, perspective, scale and position of every object. Turn it into a photorealistic photo and keep every object at the same place, size and perspective as in the clay render. Do not move or add objects. The dark rectangle on the back wall is a 0.9 m wide, 2.1 m tall door that marks the human scale: keep every piece of furniture proportioned to it (table top about 0.72 m, bar counter about 1.0 m, chair seat about 0.45 m).";
 }
 
+/** 고객이 올린 분위기 사진을 어떻게 쓸지 알려 주는 문장. 마지막에 붙은 이미지들이 그 사진이다. */
+function moodText(request: Pick<ImageGenerationRequest, "moodImages">): string {
+  const count = request.moodImages?.length ?? 0;
+  if (count === 0) return "";
+  return `The last ${count} attached image${count > 1 ? "s are" : " is"} mood reference photo${count > 1 ? "s" : ""} chosen by the customer. Adopt their atmosphere: color palette, materials, finishes, lighting mood and decor style, and apply it to the furniture, walls, floor and lighting of this room. Do not copy their room layout, architecture or objects, and keep the room structure and the furniture positions exactly as specified above.`;
+}
+
 /** 기준 이미지의 구도와 가구는 그대로 두고 스타일만 바꾸는 요청 */
 export function buildRestylePrompt(request: ImageGenerationRequest): string {
   const use = USE_NAMES[request.useType] ?? "a small business";
@@ -98,6 +105,7 @@ export function buildPrompt(request: ImageGenerationRequest): string {
     "Furniture to place, with the real products as references where provided:",
     describeItems(request),
     request.prompt ? `Extra request: ${request.prompt}` : "",
+    moodText(request),
     "Keep the area just inside the entrance clear and keep every aisle at least 0.9 m wide.",
     USE_TRAITS[request.useType] ?? "",
     `Interior photograph taken at eye level about ${CAMERA_HEIGHT_M} m, ${LENS_MM}mm equivalent lens, camera level with vertical lines straight and parallel (two-point perspective), no fisheye or barrel distortion, natural proportions.`,
@@ -142,7 +150,7 @@ export class GeminiImageGenerator implements ImageGenerator {
       });
     }
 
-    for (const image of [request.structureImage, ...(request.referenceImages ?? [])]) {
+    for (const image of [request.structureImage, ...(request.referenceImages ?? []), ...(request.moodImages ?? [])]) {
       if (!image) continue;
       input.push({ type: "image", mime_type: image.contentType, data: Buffer.from(image.bytes).toString("base64") });
     }

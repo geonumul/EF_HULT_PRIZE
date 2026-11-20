@@ -21,7 +21,16 @@ export interface GuideInput {
 export const MAX_GUIDE_BYTES = 3_000_000;
 const ASPECTS = new Set(["3:2", "4:3", "16:9"]);
 
+/** 고객이 올린 분위기 참고 사진. 브라우저에서 줄인 JPEG를 base64로 받는다. */
+export interface MoodInput {
+  images: string[];
+}
+
+export const MAX_MOOD_IMAGES = 2;
+export const MAX_MOOD_BASE64 = 1_500_000;
+
 export interface GenerateInput extends PlanInput {
+  mood?: MoodInput;
   guide?: GuideInput;
   code: string;
   spaceNumber: string;
@@ -78,6 +87,14 @@ export function validateGenerateInput(body: unknown): { input: GenerateInput } |
   for (const item of planned.input.items ?? []) {
     if (item.imagePath !== undefined && (typeof item.imagePath !== "string" || !isAllowedAssetPath(item.imagePath))) return { error: "imagePath가 올바르지 않습니다." };
   }
+  const mood = (body as { mood?: unknown }).mood;
+  let checkedMood: MoodInput | undefined;
+  if (mood !== undefined) {
+    const images = (mood as Partial<MoodInput>).images;
+    if (!Array.isArray(images) || images.length === 0 || images.length > MAX_MOOD_IMAGES) return { error: `mood.images는 1~${MAX_MOOD_IMAGES}장입니다.` };
+    if (images.some((image) => typeof image !== "string" || !/^[A-Za-z0-9+/=]+$/.test(image) || image.length > MAX_MOOD_BASE64)) return { error: "mood.images가 올바르지 않습니다." };
+    checkedMood = { images: images as string[] };
+  }
   const guide = (body as { guide?: unknown }).guide;
   let checkedGuide: GuideInput | undefined;
   if (guide !== undefined) {
@@ -90,7 +107,7 @@ export function validateGenerateInput(body: unknown): { input: GenerateInput } |
     if (placed.some((item) => ![item.x, item.y, item.widthMm, item.depthMm].every(Number.isFinite) || !item.name)) return { error: "guide.placed의 값이 올바르지 않습니다." };
     checkedGuide = { number: g.number, imageBase64: g.imageBase64, aspectRatio: g.aspectRatio, placed };
   }
-  return { input: { ...planned.input, ...(checkedGuide ? { guide: checkedGuide } : {}), code: data.code, spaceNumber: data.spaceNumber, style: data.style, attempts } };
+  return { input: { ...planned.input, ...(checkedMood ? { mood: checkedMood } : {}), ...(checkedGuide ? { guide: checkedGuide } : {}), code: data.code, spaceNumber: data.spaceNumber, style: data.style, attempts } };
 }
 
 /** 참고 이미지로 쓸 상품: 종류마다 하나, 최대 4개 */
@@ -137,6 +154,7 @@ export async function generateRender(input: GenerateInput, deps: GenerateDeps): 
     spacePhoto: photo,
     structureImage: edges,
     structureKind: guide ? "guide" : "edges",
+    ...(input.mood ? { moodImages: input.mood.images.map((data) => ({ bytes: new Uint8Array(Buffer.from(data, "base64")), contentType: "image/jpeg" })) } : {}),
     ...(guide ? { aspectRatio: guide.aspectRatio } : {}),
     referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
   };

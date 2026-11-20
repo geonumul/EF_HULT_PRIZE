@@ -4,6 +4,7 @@
 // 캔버스 안을 가리지 않으려고 버튼을 모두 캔버스 밖으로 뺐다. 평면도는 썸네일이 버튼이고, 누르면 캔버스 위에 편집 창이 열린다.
 import { useMemo, useState } from "react";
 import { formatWon } from "@/lib/format";
+import { MAX_MOOD_REFS, fileToMoodRef } from "@/lib/moodRefs";
 import { placeableProducts, scenePlanResult } from "@/lib/scene";
 import type { Product, UseType } from "@/types";
 import type { Scene } from "@/types/scene";
@@ -29,6 +30,10 @@ type Props = {
   /** 없으면 다시 렌더링 버튼을 숨긴다. */
   onRender?: () => void;
   rendering: boolean;
+  /** 분위기 참고 사진(data URL). 사진 다시 만들기가 이 분위기를 따른다. */
+  moodRefs: string[];
+  onMoodRefs: (next: string[]) => void;
+  /** 색으로 스타일을 고르는 화면 */
   moodHref: string;
   /** 3D와 편집을 쓸 수 없는 화면(상품 먼저, 빈 공간 등)이면 false */
   editable: boolean;
@@ -43,10 +48,28 @@ const VIEWS: { key: StudioView; label: string }[] = [
 export default function StudioToolbar(props: Props) {
   const { view, scene, useType, planOpen, editable } = props;
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [moodOpen, setMoodOpen] = useState(false);
+  const [moodError, setMoodError] = useState("");
   const [message, setMessage] = useState("");
   const products = useMemo(() => placeableProducts(useType), [useType]);
   const plan = useMemo(() => (scene ? scenePlanResult(scene) : null), [scene]);
   const bad = plan ? plan.clearances.filter((c) => !c.ok).length : 0;
+
+  async function addMood(files: Iterable<Blob>) {
+    setMoodError("");
+    try {
+      const room = MAX_MOOD_REFS - props.moodRefs.length;
+      const picked = [...files].filter((file) => file.type.startsWith("image/")).slice(0, Math.max(0, room));
+      if (picked.length === 0) {
+        setMoodError(room <= 0 ? `분위기 사진은 최대 ${MAX_MOOD_REFS}장이에요. 하나를 지우고 올려 주세요.` : "이미지 파일만 올릴 수 있어요.");
+        return;
+      }
+      const refs = await Promise.all(picked.map(fileToMoodRef));
+      props.onMoodRefs([...props.moodRefs, ...refs].slice(0, MAX_MOOD_REFS));
+    } catch (error) {
+      setMoodError(error instanceof Error ? error.message : "이미지를 읽지 못했어요.");
+    }
+  }
 
   function add(product: Product) {
     setMessage(props.onAddProduct(product));
@@ -121,9 +144,61 @@ export default function StudioToolbar(props: Props) {
         </>
       )}
 
-      <a className={styles.ghost} href={props.moodHref}>
-        무드
-      </a>
+      <div className={styles.pickerWrap}>
+        <button type="button" className={moodOpen || props.moodRefs.length > 0 ? `${styles.tool} ${styles.toolOn}` : styles.tool} onClick={() => setMoodOpen(!moodOpen)} aria-expanded={moodOpen}>
+          무드 이미지{props.moodRefs.length > 0 ? ` ${props.moodRefs.length}` : ""}
+        </button>
+        {moodOpen && (
+          <div
+            className={styles.picker}
+            role="dialog"
+            aria-label="무드 이미지"
+            onPaste={(event) => {
+              const files = [...event.clipboardData.files];
+              if (files.length > 0) {
+                event.preventDefault();
+                void addMood(files);
+              }
+            }}
+          >
+            <p className={styles.pickerTitle}>핀터레스트 같은 곳에서 마음에 드는 가게 사진을 저장해 올리거나 붙여넣으세요. "사진 다시 만들기"가 그 분위기(색, 재질, 조명)를 따라요. 방 구조와 가구 위치는 그대로예요.</p>
+            <div className={styles.moodRow}>
+              {props.moodRefs.map((ref, index) => (
+                <figure key={ref.slice(-24) + index} className={styles.moodThumb}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={ref} alt="분위기 참고 사진" />
+                  <button type="button" aria-label="지우기" onClick={() => props.onMoodRefs(props.moodRefs.filter((_, i) => i !== index))}>
+                    ×
+                  </button>
+                </figure>
+              ))}
+              {props.moodRefs.length < MAX_MOOD_REFS && (
+                <label className={styles.moodAdd}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className={styles.moodFile}
+                    onChange={(event) => {
+                      void addMood(event.target.files ? [...event.target.files] : []);
+                      event.target.value = "";
+                    }}
+                  />
+                  + 사진 올리기
+                </label>
+              )}
+            </div>
+            <p className={styles.pickerMeta}>이 창이 열린 상태에서 Ctrl+V로 복사한 이미지를 붙여넣을 수 있어요. 사진은 이 브라우저에만 저장되고, 사진 다시 만들기를 누를 때만 서버로 가요.</p>
+            {moodError && <p className={styles.pickerMessage}>{moodError}</p>}
+            <p className={styles.pickerMeta}>
+              <a href={props.moodHref}>색으로 스타일만 고르기</a>
+            </p>
+            <button type="button" className={styles.pickerClose} onClick={() => setMoodOpen(false)}>
+              닫기
+            </button>
+          </div>
+        )}
+      </div>
 
       <span className={styles.spacer} />
 

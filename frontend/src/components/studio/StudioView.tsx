@@ -23,6 +23,7 @@ import type { LayoutItem, RenderInput, RenderOutput } from "@/lib/api/functions"
 import { drawGuide, guideNumberOf } from "@/lib/guideRender";
 import { panoSetOf } from "@/lib/panoViews";
 import { addProduct } from "@/lib/scene";
+import { base64Of, loadMoodRefs, saveMoodRefs } from "@/lib/moodRefs";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
 import ModeSwitch from "./ModeSwitch";
@@ -93,6 +94,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const [boardProgress, setBoardProgress] = useState<number | null>(null);
   const isMySpace = listing.id.startsWith("my-"); // 사용자가 직접 입력한 공간. 사진이 없어서 배치 편집이 기본이다.
   const [viewer, setViewer] = useState<ViewMode | null>(null); // 3D 둘러보기, 360 보기
+  const [moodRefs, setMoodRefs] = useState<string[]>([]); // 분위기 참고 사진
   const [planOpen, setPlanOpen] = useState(false); // 위쪽 도구 줄에서 여는 평면도 편집 창
   const [editing, setEditing] = useState(isMySpace); // 배치 편집. 켜면 평면도에서 고친 배치로 견적이 바로 계산된다.
 
@@ -109,6 +111,8 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   // 화면을 떠날 때 돌고 있는 타이머와 가짜 진행을 멈춘다.
   const loadingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelProgress = useRef<(() => void) | null>(null);
+  useEffect(() => setMoodRefs(loadMoodRefs()), []);
+
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -376,7 +380,8 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
         guide = undefined; // 가이드를 못 그리면 처음 방식으로 만든다.
       }
     }
-    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey, ...(guide ? { guide } : {}) });
+    const mood = moodRefs.length > 0 ? { images: moodRefs.map(base64Of) } : undefined;
+    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey, ...(guide ? { guide } : {}), ...(mood ? { mood } : {}) });
     if (!mounted.current) return;
     setRendering(false);
     if (token !== renderToken.current) return; // 그 사이 스타일이나 업종이 바뀌었다.
@@ -541,6 +546,11 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
             onReset={sceneEditor.reset}
             onRender={mode === "image" && spaceNumber ? startRender : undefined}
             rendering={rendering}
+            moodRefs={moodRefs}
+            onMoodRefs={(next) => {
+              setMoodRefs(next);
+              saveMoodRefs(next);
+            }}
             moodHref="/mood"
             editable={mode === "image" && !showEmpty}
           />

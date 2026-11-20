@@ -139,3 +139,15 @@ test("가이드 입력 검증: 번호, 비율, 이미지 문자열", () => {
   assert.ok("error" in validateGenerateInput({ ...body, guide: { ...guide, aspectRatio: "1:1" } }));
   assert.ok("error" in validateGenerateInput({ ...body, guide: { ...guide, imageBase64: "../../x" } }));
 });
+
+test("분위기 참고 사진을 받으면 요청에 넣고, 잘못된 값은 거른다", async () => {
+  const mood = { images: ["AQID"] };
+  const checked = validateGenerateInput({ ...body, mood });
+  assert.ok("input" in checked);
+  const seen = { requests: [] as ImageGenerationRequest[], assets: [] as string[] };
+  await generateRender((checked as { input: Parameters<typeof generateRender>[0] }).input, makeDeps([passing], seen));
+  assert.equal(seen.requests[0].moodImages?.length, 1);
+  assert.ok("error" in validateGenerateInput({ ...body, mood: { images: [] } }));
+  assert.ok("error" in validateGenerateInput({ ...body, mood: { images: ["AQID", "AQID", "AQID"] } }));
+  assert.ok("error" in validateGenerateInput({ ...body, mood: { images: ["../x"] } }));
+});
