@@ -132,6 +132,55 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
         className={styles.entryZone}
       />
 
+      {/* 이미지의 시야. 카메라에서 시야 양 끝으로 뻗은 부채꼴을 방 안쪽만 칠한다. */}
+      {plan.camera && (
+        <g>
+          <clipPath id="plan-room-clip">
+            <rect x={ox} y={oy} width={drawW} height={drawH} />
+          </clipPath>
+          <path
+            clipPath="url(#plan-room-clip)"
+            d={`M${ox + px(plan.camera.x)},${oy + px(plan.camera.y)} L${ox + px(plan.camera.x + plan.camera.left[0] * 30000)},${oy + px(plan.camera.y + plan.camera.left[1] * 30000)} L${ox + px(plan.camera.x + plan.camera.right[0] * 30000)},${oy + px(plan.camera.y + plan.camera.right[1] * 30000)} Z`}
+            className={styles.viewCone}
+          />
+          <text x={ox + drawW} y={wallY + 14} className={styles.muted} textAnchor="end">
+            파란 부채꼴은 이미지에 보이는 범위
+          </text>
+        </g>
+      )}
+
+      {/* 사진에서 읽은 구조물 */}
+      {(plan.structures ?? []).map((s, index) => {
+        const x = ox + px(s.x);
+        const y = oy + px(s.y);
+        const w = px(s.widthMm);
+        const h = px(s.depthMm);
+        if (s.kind === "ring") {
+          return (
+            <g key={`s${index}`}>
+              <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} className={styles.ring} />
+              <text x={x + w / 2} y={y + h / 2 + 3} className={styles.structText} textAnchor="middle">
+                {s.label}
+              </text>
+            </g>
+          );
+        }
+        const stairSteps = s.kind === "stairs" ? Array.from({ length: 7 }, (_, i) => y + ((i + 1) * h) / 8) : [];
+        return (
+          <g key={`s${index}`}>
+            <rect x={x} y={y} width={w} height={h} className={s.kind === "column" ? styles.column : s.kind === "stairs" ? styles.stairs : styles.opening} />
+            {stairSteps.map((sy) => (
+              <line key={sy} x1={x} y1={sy} x2={x + w} y2={sy} className={styles.step} />
+            ))}
+            {s.kind !== "column" && (
+              <text x={x + w / 2} y={y + h / 2 + 3} className={styles.structText} textAnchor="middle" transform={s.kind === "window" ? `rotate(-90 ${x + w / 2} ${y + h / 2})` : undefined}>
+                {s.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
       {/* 물건 */}
       {placed.map((item, index) => {
         const x = ox + px(item.x);
@@ -141,6 +190,23 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
         const bad = badIds.has(item.productId);
         if (item.hanging) {
           return <ellipse key={index} cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} className={bad ? `${styles.lamp} ${styles.bad}` : styles.lamp} />;
+        }
+        if (item.round && item.tableDiaMm) {
+          // 둥근 테이블: 원 하나와 지정한 방향의 의자들
+          const cx = x + w / 2;
+          const cy = y + h / 2;
+          const tableR = px(item.tableDiaMm) / 2;
+          const seat = px(380);
+          return (
+            <g key={index}>
+              {(item.chairAngles ?? []).map((deg) => {
+                const rad = (deg * Math.PI) / 180;
+                const dist = tableR + seat * 0.62;
+                return <rect key={deg} x={cx + Math.cos(rad) * dist - seat / 2} y={cy + Math.sin(rad) * dist - seat / 2} width={seat} height={seat} rx={1.5} fill={COLORS.chair} className={styles.box} transform={`rotate(${deg + 90} ${cx + Math.cos(rad) * dist} ${cy + Math.sin(rad) * dist})`} />;
+              })}
+              <circle cx={cx} cy={cy} r={tableR} fill={COLORS.tableChairs} className={bad ? `${styles.box} ${styles.bad}` : styles.box} />
+            </g>
+          );
         }
         const chairs = item.kind === "table" ? item.chairs : 0;
         const topChairs = Math.ceil(chairs / 2);
@@ -158,6 +224,19 @@ export default function LayoutPlan({ plan }: { plan: PlanResult }) {
           </g>
         );
       })}
+
+      {/* 이미지의 번호표와 같은 번호. 조명은 번호가 없다. */}
+      {plan.camera &&
+        placed
+          .filter((item) => !item.hanging)
+          .map((item, index) => (
+            <g key={`n${index}`}>
+              <circle cx={ox + px(item.x + item.widthMm / 2)} cy={oy + px(item.y + item.depthMm / 2)} r={7} className={styles.numBg} />
+              <text x={ox + px(item.x + item.widthMm / 2)} y={oy + px(item.y + item.depthMm / 2) + 3} className={styles.numText} textAnchor="middle">
+                {index + 1}
+              </text>
+            </g>
+          ))}
 
       {/* 벽. 아래 벽은 문 자리를 비운다. */}
       <path d={`M${doorCenter + doorHalf},${wallY} L${ox + drawW},${wallY} L${ox + drawW},${oy} L${ox},${oy} L${ox},${wallY} L${doorCenter - doorHalf},${wallY}`} className={styles.wall} fill="none" />

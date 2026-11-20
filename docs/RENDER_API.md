@@ -79,3 +79,20 @@ attempts?:   1 | 2          // 검수에 실패하면 다시 만드는 최대 �
 - 생성한 이미지는 "AI 생성 예시이며 실제 공간과 다를 수 있음"을 반드시 표시한다.
 - 접근 코드는 사용자가 한 번 입력하면 localStorage에 저장한다(키 이름 `shopportunity-render-code`).
 - 함수가 실패하거나 응답이 없으면 화면은 기존 동작(미리 만든 이미지)으로 돌아간다.
+
+## 시연용 렌더링을 도면에서 만드는 방법
+
+화면의 미리 만든 렌더링 이미지는 도면이 먼저고 이미지가 나중이다. 이미지에서 가구 위치를 읽어 도면을 그리면 원근 때문에 맞지 않아서 순서를 바꿨다. 모두 `functions` 폴더에서 한다.
+
+1. 사진에서 카메라를 구한다. 선분에서 깊이 방향과 가로 방향 소실점을 구하면 초점거리가 나온다. 결과는 `tools/calib/<사진 번호>.json`에 있다(`vp1`, `vp2`, `f`, 카메라 높이 `h`, 도면 좌표 기준점 `anchor`). 사진 08은 사진 속 벽과 바닥의 접합부와 바닥 줄눈 선도 소실점 계산에 썼다.
+2. `python tools/build_plans.py`가 도면 5개를 `tools/plans-src/<사진 번호>-<업종>.json`에 쓴다. 가구는 설계 기준(카운터 앞 1200, 뒤 900, 줄 사이 850, 입구 앞 1200 비움)을 지키도록 직접 놓았다. 기둥과 계단 같은 구조물, 카메라 위치와 시야, 이미지 속 번호 위치(`pins`)도 같이 들어 있다.
+3. `python tools/guide_render.py <사진> tools/calib/<번호>.json tools/plans-src/<키>.json tools/guides/<키>-guide.png --crop-aspect 1.5`로 가이드를 그린다. 사진에서 뽑은 건축 선화 위에, 도면의 가구를 같은 원근의 색 상자로 얹은 그림이다. 사진 08은 3:2(`1.5`), 사진 02는 4:3(`1.3333`)으로 자른다. 자른 사진은 `<키>-guide-photo.jpg`로 같이 저장된다.
+4. `bash tools/make_guided_renders.sh`가 우드톤 기준 이미지를 가이드로 만든다(`--structure-kind guide`, 검수와 재시도 최대 2번). 화이트 미니멀과 인더스트리얼은 기준 이미지를 고쳐서 같은 구도로 만든다. 결과는 `tools/guides/out/<키>-<스타일>/`에 쌓인다. 장당 약 $0.034다.
+5. `python tools/collect_renders.py --raw functions/tools/guides/out --keep 09-cafe-wood 09-cafe-white 09-cafe-industrial`가 결과를 `frontend/public/images/renders`로 옮기고 목록을 새로 쓴다. 이번에 만들지 않은 사진 09의 항목은 `--keep`으로 남긴다.
+6. `node lib/scripts/imagePlans.js`가 `plans-src`의 도면에서 간격과 법령 항목을 다시 재서 `frontend/src/lib/imagePlans.ts`를 만든다.
+
+도면을 바꾸면 3번부터 다시 한다. 이미지는 도면에 맞춰 새로 만들어야 한다.
+
+`pregenerate.js`에는 `--layout <도면.json>`(도면의 방 크기와 가구 위치를 그대로 쓴다), `--structure-kind guide`, `--aspect 3:2`가 있다. 
+
+한계: 사진 속 방은 목록의 면적(89㎡ 안팎)과 같지 않을 수 있어서, 도면의 방 크기는 면적에 맞춰 정했다. 사진 08은 공간이 훨씬 넓고 안쪽 벽이 없다. 그래서 도면의 안쪽 벽은 사진 속 바닥 위에 정한 가상의 선이다. 이미지는 가이드의 상자 자리를 대체로 따르지만 위치가 조금 어긋나거나 가구가 더 그려질 수 있다.

@@ -13,12 +13,14 @@ import styles from "./PlanDialog.module.css";
 type Props = {
   input: LayoutInput;
   preset?: PlanResult | null;
+  /** 지금 보고 있는 렌더링 이미지. 도면에 번호가 있으면 같은 번호를 이미지 위에 겹쳐 보여 준다. */
+  imageUrl?: string | null;
   onClose: () => void;
 };
 
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "done"; plan: PlanResult };
 
-export default function PlanDialog({ input, preset, onClose }: Props) {
+export default function PlanDialog({ input, preset, imageUrl, onClose }: Props) {
   const [state, setState] = useState<State>(preset ? { status: "done", plan: preset } : { status: "loading" });
   const [tries, setTries] = useState(0);
 
@@ -56,6 +58,20 @@ export default function PlanDialog({ input, preset, onClose }: Props) {
       {state.status === "done" && (
         <div className={styles.content}>
           <div className={styles.plan}>
+            {imageUrl && state.plan.pins && (
+              <figure className={styles.photo}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrl} alt="렌더링 이미지와 도면 번호" className={styles.photoImage} />
+                {state.plan.pins.map((pin, index) =>
+                  pin ? (
+                    <span key={index} className={styles.pin} style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>
+                      {index + 1}
+                    </span>
+                  ) : null,
+                )}
+                <figcaption className={styles.caption}>이미지의 번호는 아래 도면의 같은 번호와 같은 가구입니다.</figcaption>
+              </figure>
+            )}
             <LayoutPlan plan={state.plan} />
           </div>
           <div className={styles.checks}>

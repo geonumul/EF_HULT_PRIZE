@@ -1,0 +1,252 @@
+{
+ "key": "02-popup",
+ "useType": "popup",
+ "room": {
+  "widthMm": 8000,
+  "depthMm": 11200,
+  "ceilingMm": 3000
+ },
+ "placed": [
+  {
+   "productId": "counter",
+   "name": "계산대",
+   "category": "counter",
+   "kind": "fixture",
+   "widthMm": 1300,
+   "depthMm": 1900,
+   "chairs": 0,
+   "x": 500,
+   "y": 3700
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1300,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 300,
+   "y": 100
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1300,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 1700,
+   "y": 100
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1300,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 4800,
+   "y": 100
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1300,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 6200,
+   "y": 100
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 400,
+   "depthMm": 1800,
+   "chairs": 0,
+   "x": 7500,
+   "y": 2400
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 800,
+   "chairs": 0,
+   "x": 2800,
+   "y": 1700
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 800,
+   "chairs": 0,
+   "x": 4700,
+   "y": 2400
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 800,
+   "chairs": 0,
+   "x": 3100,
+   "y": 3800
+  },
+  {
+   "productId": "table",
+   "name": "큰 전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1600,
+   "depthMm": 800,
+   "chairs": 0,
+   "x": 5200,
+   "y": 4400
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 1800,
+   "y": 1800,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 3600,
+   "y": 1500,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 5400,
+   "y": 1500,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 6300,
+   "y": 3500,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 2600,
+   "y": 3300,
+   "hanging": true
+  }
+ ],
+ "structures": [
+  {
+   "kind": "window",
+   "label": "창",
+   "x": 0,
+   "y": 0,
+   "widthMm": 200,
+   "depthMm": 6600
+  },
+  {
+   "kind": "door",
+   "label": "문",
+   "x": 3614,
+   "y": 0,
+   "widthMm": 900,
+   "depthMm": 200
+  },
+  {
+   "kind": "ring",
+   "label": "천장 구조물",
+   "x": 721,
+   "y": 1186,
+   "widthMm": 2800,
+   "depthMm": 2800
+  }
+ ],
+ "camera": {
+  "x": 2170,
+  "y": 9013,
+  "left": [
+   -0.6853,
+   -0.7282
+  ],
+  "right": [
+   0.471,
+   -0.8821
+  ]
+ },
+ "pins": [
+  {
+   "x": 43.2,
+   "y": 55.0
+  },
+  {
+   "x": 49.5,
+   "y": 53.1
+  },
+  {
+   "x": 60.8,
+   "y": 53.2
+  },
+  {
+   "x": 87.5,
+   "y": 53.6
+  },
+  null,
+  null,
+  {
+   "x": 73.9,
+   "y": 55.2
+  },
+  {
+   "x": 99.7,
+   "y": 56.6
+  },
+  {
+   "x": 85.3,
+   "y": 59.1
+  },
+  null
+ ]
+}

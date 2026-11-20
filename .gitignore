@@ -44,3 +44,5 @@ secrets/
 backend/data/
 functions/renders-raw/
 functions/renders-raw-v2/
+functions/tools/guides/
+functions/tools/plans/

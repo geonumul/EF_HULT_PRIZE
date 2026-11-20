@@ -9,6 +9,46 @@
   min-width: 0;
 }
 
+.photo {
+  position: relative;
+  margin: 0 0 12px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.photoImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pin {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #e5484d;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 6px 10px;
+  background: rgba(25, 31, 40, 0.6);
+  font-size: 11px;
+  color: #fff;
+}
+
 .checks {
   flex: 1 1 0;
   min-width: 0;

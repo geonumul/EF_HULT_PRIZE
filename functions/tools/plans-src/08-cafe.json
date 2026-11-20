@@ -1,0 +1,282 @@
+{
+ "key": "08-cafe",
+ "useType": "cafe",
+ "room": {
+  "widthMm": 8970,
+  "depthMm": 9945,
+  "ceilingMm": 3000
+ },
+ "placed": [
+  {
+   "productId": "counter",
+   "name": "바 카운터",
+   "category": "counter",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 600,
+   "chairs": 0,
+   "x": 1700,
+   "y": 1300
+  },
+  {
+   "productId": "fixture",
+   "name": "디저트 쇼케이스",
+   "category": "fixture",
+   "kind": "fixture",
+   "widthMm": 900,
+   "depthMm": 600,
+   "chairs": 0,
+   "x": 4200,
+   "y": 1300
+  },
+  {
+   "productId": "table",
+   "name": "원형 테이블",
+   "category": "table",
+   "kind": "table",
+   "widthMm": 1600,
+   "depthMm": 1600,
+   "chairs": 3,
+   "x": 1700,
+   "y": 3100,
+   "round": true,
+   "tableDiaMm": 700,
+   "chairAngles": [
+    180,
+    0,
+    270
+   ]
+  },
+  {
+   "productId": "table",
+   "name": "원형 테이블",
+   "category": "table",
+   "kind": "table",
+   "widthMm": 1600,
+   "depthMm": 1600,
+   "chairs": 2,
+   "x": 1700,
+   "y": 5550,
+   "round": true,
+   "tableDiaMm": 700,
+   "chairAngles": [
+    180,
+    0
+   ]
+  },
+  {
+   "productId": "table",
+   "name": "원형 테이블",
+   "category": "table",
+   "kind": "table",
+   "widthMm": 1600,
+   "depthMm": 1600,
+   "chairs": 3,
+   "x": 3600,
+   "y": 5550,
+   "round": true,
+   "tableDiaMm": 700,
+   "chairAngles": [
+    180,
+    0,
+    270
+   ]
+  },
+  {
+   "productId": "table",
+   "name": "원형 테이블",
+   "category": "table",
+   "kind": "table",
+   "widthMm": 1600,
+   "depthMm": 1600,
+   "chairs": 2,
+   "x": 5500,
+   "y": 1300,
+   "round": true,
+   "tableDiaMm": 700,
+   "chairAngles": [
+    180,
+    0
+   ]
+  },
+  {
+   "productId": "table",
+   "name": "원형 테이블",
+   "category": "table",
+   "kind": "table",
+   "widthMm": 1600,
+   "depthMm": 1600,
+   "chairs": 3,
+   "x": 5500,
+   "y": 3750,
+   "round": true,
+   "tableDiaMm": 700,
+   "chairAngles": [
+    180,
+    0,
+    270
+   ]
+  },
+  {
+   "productId": "table",
+   "name": "원형 테이블",
+   "category": "table",
+   "kind": "table",
+   "widthMm": 1600,
+   "depthMm": 1600,
+   "chairs": 2,
+   "x": 5500,
+   "y": 6200,
+   "round": true,
+   "tableDiaMm": 700,
+   "chairAngles": [
+    180,
+    0
+   ]
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 2000,
+   "y": 1450,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 2900,
+   "y": 1450,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 3800,
+   "y": 1450,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 4700,
+   "y": 1450,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 2350,
+   "y": 3750,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 6050,
+   "y": 4300,
+   "hanging": true
+  }
+ ],
+ "structures": [
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 1018,
+   "y": 3227,
+   "widthMm": 500,
+   "depthMm": 500
+  },
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 3087,
+   "y": 8455,
+   "widthMm": 500,
+   "depthMm": 500
+  },
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 8070,
+   "y": 2442,
+   "widthMm": 500,
+   "depthMm": 500
+  }
+ ],
+ "camera": {
+  "x": 1729,
+  "y": 13894,
+  "left": [
+   -0.3305,
+   -0.9438
+  ],
+  "right": [
+   0.6028,
+   -0.7979
+  ]
+ },
+ "pins": [
+  {
+   "x": 44.4,
+   "y": 58.5
+  },
+  {
+   "x": 57.3,
+   "y": 60.6
+  },
+  {
+   "x": 42.7,
+   "y": 62.3
+  },
+  {
+   "x": 45.0,
+   "y": 65.0
+  },
+  {
+   "x": 67.5,
+   "y": 64.5
+  },
+  {
+   "x": 70.3,
+   "y": 60.7
+  },
+  {
+   "x": 78.8,
+   "y": 62.3
+  },
+  {
+   "x": 92.8,
+   "y": 65.0
+  }
+ ]
+}

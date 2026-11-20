@@ -1,0 +1,162 @@
+{
+ "key": "02-pilates",
+ "useType": "pilates",
+ "room": {
+  "widthMm": 8000,
+  "depthMm": 11200,
+  "ceilingMm": 3000
+ },
+ "placed": [
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 600,
+   "y": 900
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4600,
+   "y": 900
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 600,
+   "y": 2500
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4600,
+   "y": 2500
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 600,
+   "y": 4100
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4600,
+   "y": 4100
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 600,
+   "y": 5700
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4600,
+   "y": 5700
+  }
+ ],
+ "structures": [
+  {
+   "kind": "window",
+   "label": "창",
+   "x": 0,
+   "y": 0,
+   "widthMm": 200,
+   "depthMm": 6600
+  },
+  {
+   "kind": "door",
+   "label": "문",
+   "x": 3614,
+   "y": 0,
+   "widthMm": 900,
+   "depthMm": 200
+  },
+  {
+   "kind": "ring",
+   "label": "천장 구조물",
+   "x": 721,
+   "y": 1186,
+   "widthMm": 2800,
+   "depthMm": 2800
+  }
+ ],
+ "camera": {
+  "x": 2170,
+  "y": 9013,
+  "left": [
+   -0.6853,
+   -0.7282
+  ],
+  "right": [
+   0.471,
+   -0.8821
+  ]
+ },
+ "pins": [
+  {
+   "x": 55.9,
+   "y": 53.9
+  },
+  {
+   "x": 94.8,
+   "y": 54.6
+  },
+  {
+   "x": 55.1,
+   "y": 55.8
+  },
+  null,
+  {
+   "x": 53.6,
+   "y": 58.9
+  },
+  null,
+  {
+   "x": 50.5,
+   "y": 65.4
+  },
+  null
+ ]
+}

@@ -105,3 +105,60 @@
   font-size: 11px;
   fill: var(--gray-700);
 }
+
+/* 사진에서 읽은 구조물 */
+.column {
+  fill: var(--gray-500);
+  stroke: var(--gray-700);
+  stroke-width: 1;
+}
+
+.stairs {
+  fill: rgba(25, 31, 40, 0.06);
+  stroke: var(--gray-500);
+  stroke-width: 1;
+}
+
+.step {
+  stroke: var(--gray-400);
+  stroke-width: 0.8;
+}
+
+.opening {
+  fill: rgba(120, 170, 220, 0.25);
+  stroke: #6b9bd1;
+  stroke-width: 1;
+}
+
+.ring {
+  fill: none;
+  stroke: var(--gray-500);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
+
+.structText {
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--gray-700);
+}
+
+/* 이미지의 시야와 번호표 */
+.viewCone {
+  fill: rgba(49, 130, 246, 0.12);
+  stroke: rgba(49, 130, 246, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
+
+.numBg {
+  fill: #e5484d;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.numText {
+  font-size: 9px;
+  font-weight: 700;
+  fill: #fff;
+}

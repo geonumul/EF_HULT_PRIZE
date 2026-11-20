@@ -15,6 +15,7 @@ import { findProduct } from "@/mocks/products";
 import { findRender } from "@/mocks/renders";
 import { RENDER_STYLES } from "@/mocks/studio";
 import { generatedRenderUrl } from "@/lib/generatedRenders";
+import { IMAGE_PLANS } from "@/lib/imagePlans";
 import { generateRender, roomFromArea } from "@/lib/api/functions";
 import type { LayoutItem, RenderOutput } from "@/lib/api/functions";
 import StudioShell from "./StudioShell";
@@ -335,7 +336,7 @@ export default function StudioView({ listing, initialUse }: Props) {
 
   const dialogs = (
     <>
-      {dialog === "plan" && <PlanDialog input={layoutInput} preset={generatedActive ? generated?.plan : null} onClose={() => setDialog(null)} />}
+      {dialog === "plan" && <PlanDialog input={layoutInput} imageUrl={generatedUrl} preset={generatedActive ? generated?.plan : generatedUrl && spaceNumber ? (IMAGE_PLANS[`${spaceNumber}-${useType}`] ?? null) : null} onClose={() => setDialog(null)} />}
       {dialog === "code" && (
         <CodeDialog
           message={codeMessage}

@@ -54,6 +54,15 @@ export function describeItems(request: Pick<ImageGenerationRequest, "room" | "pl
 
 /** 구조 가이드 이미지를 어떻게 쓸지 알려 주는 문장 */
 function structureText(kind: ImageGenerationRequest["structureKind"]): string {
+  if (kind === "guide") {
+    return [
+      "One attached image is a guide drawing made from the photo, seen from the same camera. The thin black lines are the existing room architecture (walls, columns, beams, stairs, windows, ceiling): keep every one of them at exactly the same position and size as in the photo, with the same camera position, framing and field of view. Do not zoom out or show more of the room than the photo shows.",
+      "The solid colored boxes in the drawing mark exactly where each piece of furniture must stand, with the same size and perspective. Replace every box with a real, photorealistic piece of furniture of that footprint and height, and draw no colored box in the final photo:",
+      "- brown box = service bar counter; blue box = pastry display case; orange flat disc = the top of a round cafe table (about 0.7 m diameter, 0.72 m high, with a slim pedestal leg underneath); green boxes = chairs placed around the table they touch (seat height 0.45 m, backrest facing away from the table); purple boxes = low display tables; dark blue boxes = shelving units; red boxes = pilates reformer machines; yellow small boxes high up = pendant lamps hanging from the ceiling; grey tall boxes = existing concrete columns (keep them as concrete columns).",
+      "The marker colors only label what each box is: never reproduce them. Use natural materials for all furniture (oak wood, concrete, steel, fabric, glass) and keep the walls, floor and ceiling in the colors of the original photo.",
+      "Place exactly the furniture shown, no extra furniture and none missing, and do not move any of it.",
+    ].join(" ");
+  }
   if (kind === "edges") {
     return "One attached image is a line drawing of the existing room architecture. Every wall, window, door, column, beam, duct and ceiling structure in your photo must be at exactly the same position and size as the lines in that drawing, seen from the same camera. Keep exactly the same camera position, framing and field of view as the original photo and do not zoom out or show more of the room than the photo shows. Do not move, add or remove any architectural element. Only add furniture, equipment, decor and lighting fixtures inside the room.";
   }
@@ -146,7 +155,7 @@ export class GeminiImageGenerator implements ImageGenerator {
         body: JSON.stringify({
           model: this.model,
           input,
-          ...(withFormat ? { response_format: { type: "image", aspect_ratio: ASPECT_RATIO } } : {}),
+          ...(withFormat ? { response_format: { type: "image", aspect_ratio: request.aspectRatio ?? ASPECT_RATIO } } : {}),
         }),
       });
     let response = await send(true);

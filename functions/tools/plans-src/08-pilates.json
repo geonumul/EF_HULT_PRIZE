@@ -1,0 +1,186 @@
+{
+ "key": "08-pilates",
+ "useType": "pilates",
+ "room": {
+  "widthMm": 8970,
+  "depthMm": 9945,
+  "ceilingMm": 3000
+ },
+ "placed": [
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 1800,
+   "y": 1800
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4900,
+   "y": 1800
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 1800,
+   "y": 3400
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4900,
+   "y": 3400
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 1800,
+   "y": 5000
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4900,
+   "y": 5000
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 1800,
+   "y": 6600
+  },
+  {
+   "productId": "reformer",
+   "name": "필라테스 리포머",
+   "category": "reformer",
+   "kind": "fixture",
+   "widthMm": 2400,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4900,
+   "y": 6600
+  },
+  {
+   "productId": "fixture",
+   "name": "요가 매트 거치대",
+   "category": "fixture",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 600,
+   "y": 8400
+  }
+ ],
+ "structures": [
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 1018,
+   "y": 3227,
+   "widthMm": 500,
+   "depthMm": 500
+  },
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 3087,
+   "y": 8455,
+   "widthMm": 500,
+   "depthMm": 500
+  },
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 8070,
+   "y": 2442,
+   "widthMm": 500,
+   "depthMm": 500
+  }
+ ],
+ "camera": {
+  "x": 1729,
+  "y": 13894,
+  "left": [
+   -0.3305,
+   -0.9438
+  ],
+  "right": [
+   0.6028,
+   -0.7979
+  ]
+ },
+ "pins": [
+  {
+   "x": 45.6,
+   "y": 61.0
+  },
+  {
+   "x": 69.0,
+   "y": 60.7
+  },
+  {
+   "x": 47.2,
+   "y": 62.1
+  },
+  {
+   "x": 74.0,
+   "y": 61.7
+  },
+  {
+   "x": 49.3,
+   "y": 63.6
+  },
+  {
+   "x": 80.7,
+   "y": 63.1
+  },
+  {
+   "x": 52.4,
+   "y": 65.8
+  },
+  {
+   "x": 90.2,
+   "y": 65.0
+  },
+  {
+   "x": 28.5,
+   "y": 70.2
+  }
+ ]
+}

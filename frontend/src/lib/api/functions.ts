@@ -34,6 +34,11 @@ export type PlacedItem = {
   heightMm?: number;
   chairs: number;
   hanging?: boolean;
+  /** 둥근 테이블이면 true. widthMm, depthMm은 의자 자리를 포함한 바닥 면적이고, 테이블 지름은 tableDiaMm이다. */
+  round?: boolean;
+  tableDiaMm?: number;
+  /** 의자가 놓인 방향(도). 0은 오른쪽, 90은 입구 쪽, 180은 왼쪽, 270은 안쪽 벽 쪽 */
+  chairAngles?: number[];
 };
 
 export type Violation = {
@@ -46,7 +51,24 @@ export type PlanNote = { level: "error" | "check"; text: string; source: string 
 
 export type Clearance = { id: string; label: string; valueMm: number; requiredMm: number; ok: boolean };
 
+/** 사진에서 읽은 고정 구조물. 가구를 놓을 수 없는 자리다. */
+export type PlanStructure = {
+  kind: "column" | "stairs" | "window" | "door" | "ring";
+  label: string;
+  x: number;
+  y: number;
+  widthMm: number;
+  depthMm: number;
+};
+
+/** 사진을 찍은 카메라의 위치(mm)와 시야 양 끝 방향(단위 벡터). 도면에서 이미지가 보여 주는 범위를 그린다. */
+export type PlanCamera = { x: number; y: number; left: [number, number]; right: [number, number] };
+
 export type PlanResult = {
+  structures?: PlanStructure[];
+  camera?: PlanCamera;
+  /** 도면 번호가 이미지의 어디에 보이는지(이미지 크기에 대한 %). 화면 밖이면 null. 번호는 조명을 뺀 placed 순서다. */
+  pins?: ({ x: number; y: number } | null)[];
   room: Room;
   useType: string;
   placed: PlacedItem[];

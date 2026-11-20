@@ -1,0 +1,318 @@
+{
+ "key": "08-popup",
+ "useType": "popup",
+ "room": {
+  "widthMm": 8970,
+  "depthMm": 9945,
+  "ceilingMm": 3000
+ },
+ "placed": [
+  {
+   "productId": "counter",
+   "name": "계산대",
+   "category": "counter",
+   "kind": "fixture",
+   "widthMm": 800,
+   "depthMm": 2200,
+   "chairs": 0,
+   "x": 600,
+   "y": 6800
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 1700,
+   "y": 500
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 3300,
+   "y": 500
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1500,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 4900,
+   "y": 500
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 1200,
+   "depthMm": 400,
+   "chairs": 0,
+   "x": 6500,
+   "y": 500
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 400,
+   "depthMm": 1300,
+   "chairs": 0,
+   "x": 150,
+   "y": 4400
+  },
+  {
+   "productId": "shelf",
+   "name": "벽 선반",
+   "category": "shelf",
+   "kind": "fixture",
+   "widthMm": 400,
+   "depthMm": 1200,
+   "chairs": 0,
+   "x": 8300,
+   "y": 3600
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1200,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 1900,
+   "y": 2300
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1200,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 3800,
+   "y": 2800
+  },
+  {
+   "productId": "table",
+   "name": "큰 전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 2000,
+   "depthMm": 900,
+   "chairs": 0,
+   "x": 5800,
+   "y": 2200
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1200,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 2400,
+   "y": 4600
+  },
+  {
+   "productId": "table",
+   "name": "전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 1200,
+   "depthMm": 700,
+   "chairs": 0,
+   "x": 4600,
+   "y": 4400
+  },
+  {
+   "productId": "table",
+   "name": "큰 전시 테이블",
+   "category": "table",
+   "kind": "fixture",
+   "widthMm": 2000,
+   "depthMm": 900,
+   "chairs": 0,
+   "x": 5800,
+   "y": 5800
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 2400,
+   "y": 1700,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 4300,
+   "y": 1700,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 6300,
+   "y": 1700,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 3000,
+   "y": 3900,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 5200,
+   "y": 3800,
+   "hanging": true
+  },
+  {
+   "productId": "lamp",
+   "name": "조명",
+   "category": "lamp",
+   "kind": "fixture",
+   "widthMm": 300,
+   "depthMm": 300,
+   "chairs": 0,
+   "x": 6800,
+   "y": 5000,
+   "hanging": true
+  }
+ ],
+ "structures": [
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 1018,
+   "y": 3227,
+   "widthMm": 500,
+   "depthMm": 500
+  },
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 3087,
+   "y": 8455,
+   "widthMm": 500,
+   "depthMm": 500
+  },
+  {
+   "kind": "column",
+   "label": "기둥",
+   "x": 8070,
+   "y": 2442,
+   "widthMm": 500,
+   "depthMm": 500
+  }
+ ],
+ "camera": {
+  "x": 1729,
+  "y": 13894,
+  "left": [
+   -0.3305,
+   -0.9438
+  ],
+  "right": [
+   0.6028,
+   -0.7979
+  ]
+ },
+ "pins": [
+  {
+   "x": 23.6,
+   "y": 63.6
+  },
+  {
+   "x": 40.6,
+   "y": 60.3
+  },
+  {
+   "x": 51.8,
+   "y": 60.2
+  },
+  {
+   "x": 62.5,
+   "y": 60.0
+  },
+  {
+   "x": 72.0,
+   "y": 59.9
+  },
+  {
+   "x": 20.2,
+   "y": 63.8
+  },
+  {
+   "x": 95.6,
+   "y": 61.7
+  },
+  {
+   "x": 41.9,
+   "y": 61.4
+  },
+  {
+   "x": 58.3,
+   "y": 61.5
+  },
+  {
+   "x": 75.6,
+   "y": 60.9
+  },
+  {
+   "x": 48.7,
+   "y": 63.2
+  },
+  {
+   "x": 69.6,
+   "y": 62.6
+  },
+  {
+   "x": 92.8,
+   "y": 63.9
+  }
+ ]
+}

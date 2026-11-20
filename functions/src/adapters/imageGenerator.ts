@@ -15,8 +15,10 @@ export interface ImageGenerationRequest {
   spacePhoto?: { bytes: Uint8Array; contentType: string };
   /** 우리가 계산한 좌표로 그린 구조 그림(점토 렌더링). 공간의 원근, 크기, 물건 위치를 정확히 따르게 하는 가이드다. */
   structureImage?: { bytes: Uint8Array; contentType: string };
-  /** structureImage의 종류. clay는 우리가 그린 3D 상자 그림, edges는 공간 사진에서 뽑은 건축 요소 선화다. 기본은 clay. */
-  structureKind?: "clay" | "edges";
+  /** structureImage의 종류. clay는 우리가 그린 3D 상자 그림, edges는 공간 사진에서 뽑은 건축 요소 선화, guide는 그 선화 위에 도면의 가구를 사진과 같은 원근의 색 상자로 얹은 그림이다(tools/guide_render.py). 기본은 clay. */
+  structureKind?: "clay" | "edges" | "guide";
+  /** 결과 이미지의 가로 세로 비율(예: "3:2"). 공간 사진의 비율에 맞추면 구조 가이드와 겹친다. 기본은 16:9. */
+  aspectRatio?: string;
   /** 상품 사진. 이름과 함께 주면 그 상품의 생김새를 따라 그리게 한다. */
   referenceImages?: Array<{ label: string; bytes: Uint8Array; contentType: string }>;
   /** restyle이면 spacePhoto는 이미 꾸며진 기준 이미지다. 구도와 가구는 그대로 두고 재료와 색만 prompt의 스타일로 바꾼다. */

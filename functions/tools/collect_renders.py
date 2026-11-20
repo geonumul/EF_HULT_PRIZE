@@ -9,11 +9,13 @@ from pathlib import Path
 from PIL import Image
 
 parser = argparse.ArgumentParser(description="생성한 렌더링을 화면용 폴더로 옮기고 사용할 목록을 만든다.")
+parser.add_argument("--raw", default="functions/renders-raw-v2", help="생성 결과 폴더(저장소 루트 기준). 가이드로 만든 것은 functions/tools/guides/out")
+parser.add_argument("--keep", nargs="*", default=[], help="이번에 다시 만들지 않았지만 목록에 남길 항목. 예: 09-cafe-wood")
 parser.add_argument("--exclude", nargs="*", default=[], help="목록에서 뺄 공간-업종. 예: 02-cafe")
 args = parser.parse_args()
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "functions" / "renders-raw-v2"
+RAW = ROOT / args.raw
 OUT = ROOT / "frontend" / "public" / "images" / "renders"
 MANIFEST = ROOT / "frontend" / "src" / "lib" / "generatedRenders.manifest.ts"
 OUT.mkdir(parents=True, exist_ok=True)
@@ -38,6 +40,7 @@ for number, entries in sorted(found.items()):
             usable.append(f"{number}-{entry}")
     print(f"space-{number}: {len(entries)}장")
 
+usable += [name for name in args.keep if name not in usable]
 body = ",\n".join(f'  "{name}"' for name in usable)
 MANIFEST.write_text(
     "// 사전 생성한 렌더링 목록. functions/tools/collect_renders.py가 만든다. 직접 고치지 않는다.\n"
