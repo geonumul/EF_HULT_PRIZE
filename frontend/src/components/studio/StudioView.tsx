@@ -39,6 +39,7 @@ import RenderProgress from "./RenderProgress";
 type Props = {
   listing: Listing;
   initialUse: UseType;
+  initialStyle?: RenderStyleKey;
 };
 
 /** 태그 하나에 사용자가 바꾼 내용. 수량과 견적 포함 여부 */
@@ -72,12 +73,12 @@ function saveCode(code: string) {
   }
 }
 
-export default function StudioView({ listing, initialUse }: Props) {
+export default function StudioView({ listing, initialUse, initialStyle }: Props) {
   const board = useRenderBoard();
 
   const [useType, setUseType] = useState<UseType>(initialUse);
   const [showEmpty, setShowEmpty] = useState(false);
-  const [styleKey, setStyleKey] = useState<RenderStyleKey>("wood");
+  const [styleKey, setStyleKey] = useState<RenderStyleKey>(initialStyle ?? "wood");
   const [mode, setMode] = useState<StudioMode>("image");
   const [loadingLabel, setLoadingLabel] = useState("");
   const [activeTagN, setActiveTagN] = useState<number | null>(null);

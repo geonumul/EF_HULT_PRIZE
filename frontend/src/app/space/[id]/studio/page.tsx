@@ -4,11 +4,11 @@ import StudioLoader from "@/components/studio/StudioLoader";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ use?: string }>;
+  searchParams: Promise<{ use?: string; style?: string }>;
 };
 
 export default async function StudioPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { use } = await searchParams;
-  return <StudioLoader id={id} use={use} />;
+  const { use, style } = await searchParams;
+  return <StudioLoader id={id} use={use} style={style} />;
 }

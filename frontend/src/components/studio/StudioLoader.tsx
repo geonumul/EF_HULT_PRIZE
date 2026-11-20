@@ -4,13 +4,17 @@
 import SpaceMessage from "@/components/common/SpaceMessage";
 import { useSpace } from "@/lib/spaces";
 import type { UseType } from "@/types";
+import type { RenderStyleKey } from "@/types/studio";
 import StudioView from "./StudioView";
 
-export default function StudioLoader({ id, use }: { id: string; use?: string }) {
+const STYLE_KEYS: RenderStyleKey[] = ["wood", "white", "industrial"];
+
+export default function StudioLoader({ id, use, style }: { id: string; use?: string; style?: string }) {
   const { listing, status } = useSpace(id);
   if (!listing) return <SpaceMessage status={status} />;
 
   const uses = Object.keys(listing.costs) as UseType[];
   const initialUse = uses.find((candidate) => candidate === use) ?? uses[0];
-  return <StudioView listing={listing} initialUse={initialUse} />;
+  const initialStyle = STYLE_KEYS.find((key) => key === style);
+  return <StudioView listing={listing} initialUse={initialUse} initialStyle={initialStyle} />;
 }
