@@ -10,9 +10,16 @@
 }
 
 .canvasArea {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-width: 0;
-  padding: 16px 24px;
+  padding: 12px 24px 16px;
+}
+
+.canvasFill {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .panel {
@@ -35,6 +42,12 @@
   .canvasArea {
     flex: none;
     padding: 12px 16px;
+  }
+
+  .canvasFill {
+    flex: none;
+    height: 70vw;
+    min-height: 320px;
   }
 
   .panel {

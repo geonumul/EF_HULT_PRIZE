@@ -4,7 +4,11 @@ import type { PlacedItem, PlanCamera, PlanResult, PlanStructure } from "@/lib/ap
 import type { UseType } from "@/types";
 
 /** 도면의 가구 하나. id는 드래그와 텍스트 수정이 가리키는 이름표다. */
-export type SceneItem = PlacedItem & { id: string };
+export type SceneItem = PlacedItem & {
+  id: string;
+  /** 상품 카탈로그에서 직접 고른 가구면 그 상품 id. 견적이 이 id를 읽는다. */
+  catalogId?: string;
+};
 
 export type Scene = {
   version: 1;

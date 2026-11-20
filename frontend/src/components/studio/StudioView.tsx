@@ -4,7 +4,7 @@
 // 상태는 모두 여기 모아 두고, 그리기는 작은 컴포넌트에 맡긴다.
 // 렌더링 방식이 "이미지 먼저"면 mocks/renders.ts의 렌더링을, "상품 먼저"면 렌더링 보드로 만든 결과를 보여 준다.
 import { useEffect, useRef, useState } from "react";
-import type { Listing, RenderResult, UseType } from "@/types";
+import type { Listing, Product, RenderResult, UseType } from "@/types";
 import type { RenderStyleKey, StudioMode } from "@/types/studio";
 import { buildQuote } from "@/lib/quote";
 import { sceneToRender } from "@/lib/scene";
@@ -22,6 +22,7 @@ import { generateRender, roomFromArea } from "@/lib/api/functions";
 import type { LayoutItem, RenderInput, RenderOutput } from "@/lib/api/functions";
 import { drawGuide, guideNumberOf } from "@/lib/guideRender";
 import { panoSetOf } from "@/lib/panoViews";
+import { addProduct } from "@/lib/scene";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
 import ModeSwitch from "./ModeSwitch";
@@ -30,7 +31,8 @@ import StyleBar from "./StyleBar";
 import TagPopover from "./TagPopover";
 import QuotePanel from "./QuotePanel";
 import BoardPanel from "./BoardPanel";
-import CanvasActions from "./CanvasActions";
+import StudioToolbar from "./StudioToolbar";
+import type { StudioView as ViewKey } from "./StudioToolbar";
 import PlanDialog from "./PlanDialog";
 import PlanEditor from "./PlanEditor";
 import SceneViewer3D from "./SceneViewer3D";
@@ -91,6 +93,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const [boardProgress, setBoardProgress] = useState<number | null>(null);
   const isMySpace = listing.id.startsWith("my-"); // 사용자가 직접 입력한 공간. 사진이 없어서 배치 편집이 기본이다.
   const [viewer, setViewer] = useState<ViewMode | null>(null); // 3D 둘러보기, 360 보기
+  const [planOpen, setPlanOpen] = useState(false); // 위쪽 도구 줄에서 여는 평면도 편집 창
   const [editing, setEditing] = useState(isMySpace); // 배치 편집. 켜면 평면도에서 고친 배치로 견적이 바로 계산된다.
 
   // AI로 새로 만든 렌더링. 스타일이나 업종을 바꾸면 버린다.
@@ -323,14 +326,30 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const viewerPhotoUrl = generatedActive && generated ? generated.imageDataUrl : generatedUrl;
   const viewerPhoto = viewerPhotoNumber && viewerPhotoUrl ? { url: viewerPhotoUrl, number: viewerPhotoNumber } : null;
 
-  // 3D를 열면 배치 편집도 같이 켠다. 3D와 평면도, 견적이 같은 Scene을 읽는다.
-  function open3D() {
-    if (viewer) {
+  // 보기 전환. 3D와 360을 열면 배치 편집도 같이 켠다(3D, 평면도, 견적이 같은 Scene을 읽는다).
+  function changeView(next: ViewKey) {
+    if (next === "photo") {
       setViewer(null);
       return;
     }
     setEditing(true);
-    setViewer("orbit");
+    setViewer(next);
+  }
+
+  function togglePlan() {
+    setEditing(true);
+    setPlanOpen(!planOpen);
+  }
+
+  /** 상품 카탈로그에서 고른 상품을 도면에 놓는다. 견적은 같은 Scene에서 다시 계산된다. */
+  function addProductToScene(product: Product): string {
+    setEditing(true);
+    const scene = sceneEditor.scene;
+    if (!scene || scene.useType !== useType) return "배치를 불러오는 중이에요. 잠시 뒤에 다시 눌러 주세요.";
+    const result = addProduct(scene, product);
+    if (!result.ok) return `${product.name}을(를) 놓을 자리가 없어요. 설계 기준을 지키면서 들어갈 빈자리가 없습니다.`;
+    sceneEditor.change(result.scene);
+    return `${product.name} 1개를 놓았어요. 견적에 더했어요.`;
   }
 
   // ---- AI로 새로 렌더링 ----
@@ -420,17 +439,6 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       onBackgroundClick={() => setActiveTagN(null)}
       leftBadge={leftBadge}
       extraBadges={extraBadges}
-      actions={
-        <CanvasActions
-          onOpenPlan={() => setDialog("plan")}
-          onToggleEdit={mode === "image" && !isBoardStage && !showEmpty ? () => setEditing(!editing) : undefined}
-          editing={editing}
-          onOpen3D={mode === "image" && !isBoardStage && !showEmpty ? open3D : undefined}
-          viewing3D={viewer !== null}
-          onRender={mode === "image" && !isBoardStage && spaceNumber ? startRender : undefined}
-          rendering={rendering}
-        />
-      }
       rightBadge={rightBadge}
       rightBadgeWarn={mode === "products" && !showEmpty && !isBoardStage && warnCount > 0}
       loading={loading}
@@ -452,10 +460,19 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       )}
       {rendering && <RenderProgress />}
       {viewer && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
-        <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} photo={viewerPhoto} pano={panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)} />
+        <SceneViewer3D
+          scene={sceneEditor.scene}
+          styleKey={styleKey}
+          mode={viewer}
+          onChange={sceneEditor.change}
+          photo={viewerPhoto}
+          pano={panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)}
+          sideImageUrl={viewerPhotoUrl ?? imageUrl}
+          sideImageStale={sceneEditor.scene.edited === true && !(generatedActive && renderedAt === sceneEditor.scene.updatedAt)}
+        />
       )}
-      {editing && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
-        <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} viewing3D={viewer !== null} />
+      {planOpen && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
+        <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} onClose={() => setPlanOpen(false)} />
       )}
 
       {dialogs}
@@ -508,6 +525,27 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
         />
       }
       canvas={canvas}
+      toolbar={
+        isBoardStage ? undefined : (
+          <StudioToolbar
+            view={viewer ?? "photo"}
+            onView={changeView}
+            scene={sceneEditor.scene && sceneEditor.scene.useType === useType ? sceneEditor.scene : null}
+            useType={useType}
+            planOpen={planOpen}
+            onTogglePlan={togglePlan}
+            onOpenSheet={() => setDialog("plan")}
+            onAddProduct={addProductToScene}
+            canUndo={sceneEditor.canUndo}
+            onUndo={sceneEditor.undo}
+            onReset={sceneEditor.reset}
+            onRender={mode === "image" && spaceNumber ? startRender : undefined}
+            rendering={rendering}
+            moodHref="/mood"
+            editable={mode === "image" && !showEmpty}
+          />
+        )
+      }
       panel={panel}
     />
   );

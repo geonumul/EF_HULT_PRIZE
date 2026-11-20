@@ -1,0 +1,246 @@
+/* 캔버스 위쪽 도구 한 줄 */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 0 12px;
+}
+
+.segment {
+  display: flex;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--gray-100);
+}
+
+.seg {
+  min-height: 32px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-600);
+  cursor: pointer;
+}
+
+.segOn {
+  background: var(--gray-900);
+  color: #fff;
+}
+
+.tool,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-0);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-800, var(--gray-700));
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--gray-600);
+}
+
+.ghost:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.toolOn {
+  border-color: var(--gray-900);
+}
+
+.thumb {
+  display: block;
+  width: 44px;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--gray-50);
+}
+
+.thumb svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.thumbEmpty {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.chipOk,
+.chipBad {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chipOk {
+  background: rgba(0, 179, 104, 0.12);
+  color: #00875a;
+}
+
+.chipBad {
+  background: rgba(229, 72, 77, 0.12);
+  color: #d13438;
+}
+
+.spacer {
+  flex: 1 1 0;
+}
+
+.primary {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-500);
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* 상품 추가 목록 */
+.pickerWrap {
+  position: relative;
+}
+
+.picker {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-0);
+  box-shadow: 0 10px 28px rgba(25, 31, 40, 0.2);
+}
+
+.pickerTitle {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--gray-600);
+}
+
+.pickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pickerItem:hover {
+  background: var(--gray-50);
+}
+
+.pickerItem img {
+  flex: none;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.pickerText {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pickerName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.pickerMeta {
+  font-size: 11px;
+  color: var(--gray-600);
+}
+
+.pickerAdd {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 179, 104, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  color: #00875a;
+}
+
+.pickerMessage {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--gray-700);
+}
+
+.pickerClose {
+  margin-top: 8px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  color: var(--gray-600);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .picker {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: auto;
+  }
+}

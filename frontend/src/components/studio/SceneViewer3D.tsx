@@ -24,13 +24,17 @@ type Props = {
   scene: Scene;
   styleKey: RenderStyleKey;
   mode: ViewMode;
-  onModeChange: (mode: ViewMode) => void;
+  onModeChange?: (mode: ViewMode) => void;
   onChange: (next: Scene) => void;
-  onClose: () => void;
+  onClose?: () => void;
   /** AI가 만든 렌더링 이미지와 그 공간의 사진 번호. 있으면 사진을 찍은 자리에서 이 이미지를 모형 위에 입힌다. */
   photo?: { url: string; number: string } | null;
   /** 방 안 한 자리에서 사방을 찍은 AI 이미지 묶음. 있으면 사진 한 장보다 우선한다. */
   pano?: PanoSet | null;
+  /** 3D 바깥 보기에서 나란히 보여 줄 AI 이미지 */
+  sideImageUrl?: string | null;
+  /** 이미지가 처음 배치 그대로인지 */
+  sideImageStale?: boolean;
 };
 
 const EYE_HEIGHT_MM = 1500;
@@ -165,6 +169,17 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
 
   const w = item.widthMm;
   const d = item.depthMm;
+  if (item.category === "chair") {
+    // 낱개 의자와 바 스툴. 스툴은 좌면이 카운터 상면보다 250~300 낮다(건축 치수 사전 p.19).
+    const stool = item.name.includes("스툴");
+    const seat = stool ? DIM.counter.barHeightMm - 300 : DIM.chair.seatHeightMm;
+    const sw = Math.min(w, DIM.chair.seatWidthMm);
+    const sd = Math.min(d, DIM.chair.seatDepthMm);
+    group.add(box(sw, DIM.chair.seatThicknessMm, sd, chair, 0, seat - DIM.chair.seatThicknessMm, 0));
+    if (!stool) group.add(box(sw, DIM.chair.backHeightMm - seat, 40, chair, 0, seat, sd / 2 - 20));
+    for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) group.add(box(30, seat - DIM.chair.seatThicknessMm, 30, mat(palette.metal), (lx * (sw - 50)) / 2, 0, (lz * (sd - 50)) / 2));
+    return group;
+  }
   if (item.category === "counter") {
     // 바 카운터 1100, 계산대 950 (건축 치수 사전 p.19)
     const height = item.name.includes("계산") ? DIM.counter.cashierHeightMm : DIM.counter.barHeightMm;
@@ -190,7 +205,7 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
     group.add(box(w, caseBody, d, mat(palette.counter)));
     group.add(box(w - 40, 400, d - 40, mat("#cfe8f3", { transparent: true, opacity: 0.45 }), 0, caseBody, 0));
   } else {
-    group.add(box(w, 800, d, wood));
+    group.add(box(w, item.heightMm ?? 800, d, wood));
   }
   return group;
 }
@@ -221,7 +236,7 @@ function buildStructure(s: Scene["structures"][number], ceilingMm: number): THRE
   return group;
 }
 
-export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onChange, onClose, photo = null, pano = null }: Props) {
+export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, sideImageUrl = null, sideImageStale = false }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [hint, setHint] = useState("");
   const [selectedName, setSelectedName] = useState("");
@@ -241,6 +256,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0xe9e5dd);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     host.appendChild(renderer.domElement);
@@ -816,16 +832,15 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
 
   return (
     <div className={styles.viewer} onClick={(event) => event.stopPropagation()}>
-      <div ref={hostRef} className={styles.host} />
+      {sideImageUrl && mode === "orbit" && (
+        <figure className={styles.side}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={sideImageUrl} alt="AI 렌더링 이미지" />
+          <figcaption>{sideImageStale ? "AI 이미지 · 처음 배치" : "AI 이미지"}</figcaption>
+        </figure>
+      )}
+      <div ref={hostRef} className={sideImageUrl && mode === "orbit" ? `${styles.host} ${styles.hostSplit}` : styles.host} />
       <div className={styles.bar}>
-        <div className={styles.modes} role="tablist" aria-label="3D 보기 방식">
-          <button type="button" role="tab" aria-selected={mode === "orbit"} className={mode === "orbit" ? `${styles.mode} ${styles.modeActive}` : styles.mode} onClick={() => onModeChange("orbit")}>
-            3D 둘러보기
-          </button>
-          <button type="button" role="tab" aria-selected={mode === "pano"} className={mode === "pano" ? `${styles.mode} ${styles.modeActive}` : styles.mode} onClick={() => onModeChange("pano")}>
-            360 보기
-          </button>
-        </div>
         {photoReady && mode === "pano" && (
           <button type="button" className={photoOn ? `${styles.close} ${styles.closeOn}` : styles.close} aria-pressed={photoOn} onClick={() => setPhotoOn((on) => !on)}>
             AI 이미지 입히기
@@ -833,9 +848,6 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
         )}
         <button type="button" className={styles.close} onClick={() => api.current?.exportPanorama()}>
           360 이미지 저장
-        </button>
-        <button type="button" className={styles.close} onClick={onClose}>
-          닫기
         </button>
       </div>
       <p className={styles.hint}>

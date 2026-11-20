@@ -6,15 +6,20 @@ import styles from "./StudioShell.module.css";
 type Props = {
   subHeader: ReactNode;
   canvas: ReactNode;
+  /** 캔버스 위에 한 줄로 놓는 도구들 */
+  toolbar?: ReactNode;
   panel: ReactNode;
 };
 
-export default function StudioShell({ subHeader, canvas, panel }: Props) {
+export default function StudioShell({ subHeader, canvas, toolbar, panel }: Props) {
   return (
     <div className={styles.page}>
       {subHeader}
       <div className={styles.body}>
-        <div className={styles.canvasArea}>{canvas}</div>
+        <div className={styles.canvasArea}>
+          {toolbar}
+          <div className={styles.canvasFill}>{canvas}</div>
+        </div>
         <aside className={styles.panel}>{panel}</aside>
       </div>
     </div>

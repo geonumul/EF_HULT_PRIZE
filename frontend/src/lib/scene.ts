@@ -4,7 +4,8 @@ import { IMAGE_PLANS } from "@/lib/imagePlans";
 import { checkScene, entryZone, overlaps } from "@/lib/sceneCheck";
 import { planLayout, roomFromArea } from "@/lib/api/functions";
 import type { PlanResult } from "@/lib/api/functions";
-import type { Listing, RenderResult, RenderTag, UseType } from "@/types";
+import { PRODUCTS } from "@/mocks/products";
+import type { Listing, Product, RenderResult, RenderTag, UseType } from "@/types";
 import type { Scene, SceneItem } from "@/types/scene";
 
 // ---- 가구 종류 ----
@@ -271,6 +272,84 @@ export function addItem(scene: Scene, kind: Kind): { scene: Scene; ok: boolean; 
   return { scene: touch(scene, [...scene.items, item]), ok: true, item };
 }
 
+/** 평면도 그림(LayoutPlan)이 읽는 모양. 지금 배치와 설계 점검 결과를 담는다. */
+export function scenePlanResult(scene: Scene): PlanResult {
+  return {
+    room: scene.room,
+    useType: scene.useType,
+    placed: scene.items,
+    unplaced: [],
+    violations: [],
+    notes: [],
+    entryZone: entryZone(scene.room),
+    clearances: checkScene(scene).clearances,
+    structures: scene.structures,
+  };
+}
+
+// ---- 상품 추가 ----
+
+/** 도면에 놓을 수 있는 상품. 에스프레소 머신은 카운터마다 하나, 벽거울은 필라테스에서 자동으로 세므로 고르지 않는다. */
+const NOT_PLACEABLE = new Set(["espresso-machine", "mirror-wall"]);
+
+/** 상품 id로 가구 종류를 정한다. 종류가 있으면 그 종류의 기본 모양을 쓰고, 없으면 상품 치수 그대로 놓는다. */
+const KIND_OF_PRODUCT: Record<string, Kind> = {
+  "table-2p": "table",
+  "counter-bar": "counter",
+  "lamp-pendant": "lamp",
+  "fridge-showcase": "showcase",
+  "shelf-display": "shelf",
+  reformer: "reformer",
+};
+
+/** 업종마다 먼저 보여 줄 상품 */
+const FIRST_BY_USE: Record<UseType, string[]> = {
+  cafe: ["table-2p", "chair-oak", "counter-bar", "fridge-showcase", "lamp-pendant", "stool-bar"],
+  popup: ["shelf-display", "table-2p", "counter-bar", "lamp-pendant"],
+  pilates: ["reformer", "locker-steel", "shelf-display", "lamp-pendant"],
+} as Record<UseType, string[]>;
+
+/** 상품 추가 목록. 이 업종에 어울리는 것을 앞에 둔다. */
+export function placeableProducts(useType: UseType): Product[] {
+  const first = FIRST_BY_USE[useType] ?? [];
+  const list = PRODUCTS.filter((product) => !NOT_PLACEABLE.has(product.id));
+  return [...list].sort((a, b) => {
+    const ia = first.indexOf(a.id);
+    const ib = first.indexOf(b.id);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
+}
+
+/** 상품 하나를 도면에 놓는다. 설계 기준을 지키는 빈자리가 없으면 ok가 false다. */
+export function addProduct(scene: Scene, product: Product): { scene: Scene; ok: boolean; item?: SceneItem } {
+  const kind = KIND_OF_PRODUCT[product.id];
+  let proto: SceneItem;
+  if (kind) {
+    proto = { ...makeItem(kind, scene.useType), name: product.name };
+  } else {
+    proto = {
+      id: newId(),
+      productId: product.id,
+      name: product.name,
+      category: product.category,
+      kind: product.category === "chair" ? "chair" : "fixture",
+      widthMm: product.widthMm,
+      depthMm: product.depthMm,
+      heightMm: product.heightMm,
+      chairs: 0,
+      chairProductId: null,
+      x: 0,
+      y: 0,
+    } as SceneItem;
+  }
+  proto = { ...proto, catalogId: product.id };
+  const anchor = kind ? anchorFor(scene, kind) : { x: scene.room.widthMm / 2, y: scene.room.depthMm / 2 };
+  const spot = findSpot(scene, proto, anchor);
+  if (!spot) return { scene, ok: false };
+  const item = { ...proto, x: spot.x, y: spot.y };
+  return { scene: touch(scene, [...scene.items, item]), ok: true, item };
+}
+
 /** 종류 하나의 개수를 count로 맞춘다. 더할 때 자리가 모자라면 놓은 만큼만 더하고 모자란 수를 돌려준다. */
 export function setCount(scene: Scene, kind: Kind, count: number): { scene: Scene; missing: number } {
   let current = scene;
@@ -323,7 +402,7 @@ export function quantitiesOf(scene: Scene): Record<string, number> {
     if (n > 0) qty[id] = (qty[id] ?? 0) + n;
   };
   for (const item of scene.items) {
-    const id = catalogIdOf(item);
+    const id = item.catalogId ?? catalogIdOf(item);
     if (id) add(id, 1);
     if (item.chairs > 0) add("chair-oak", item.chairs);
   }
