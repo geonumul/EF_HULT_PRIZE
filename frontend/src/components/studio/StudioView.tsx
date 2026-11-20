@@ -34,6 +34,8 @@ import TagPopover from "./TagPopover";
 import QuotePanel from "./QuotePanel";
 import BoardPanel from "./BoardPanel";
 import PanelTabs from "./PanelTabs";
+import LayoutPanel from "./LayoutPanel";
+import MoodPanel from "./MoodPanel";
 import SpaceMeasure from "./SpaceMeasure";
 import type { PanelTab } from "./PanelTabs";
 import TotalBar from "./TotalBar";
@@ -99,13 +101,15 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const [boardProgress, setBoardProgress] = useState<number | null>(null);
   const isMySpace = listing.id.startsWith("my-"); // 사용자가 직접 입력한 공간. 사진이 없어서 배치 편집이 기본이다.
   const [viewer, setViewer] = useState<ViewMode | null>(null); // 3D 둘러보기, 360 보기
-  const captureRef = useRef<(() => string[]) | null>(null); // 3D 뷰어가 모형을 네 방향으로 찍는 함수
+  const captureRef = useRef<((position?: [number, number, number]) => string[]) | null>(null);
+  const [eye, setEye] = useState<{ x: number; y: number; yawDeg: number } | null>(null); // 360 보기에서 서 있는 자리
+  const [eyeCommand, setEyeCommand] = useState<{ x: number; y: number; nonce: number } | null>(null); // 3D 뷰어가 모형을 네 방향으로 찍는 함수
   const pendingAction = useRef<"render" | "pano">("render"); // 접근 코드를 받은 뒤 할 일
   const [livePano, setLivePano] = useState<{ set: PanoSet; at: number; key: string } | null>(null); // 방금 만든 사방 이미지
   const [panoBusy, setPanoBusy] = useState<number | null>(null);
   const [note, setNote] = useState(""); // 사진 다시 만들기에 덧붙일 요청
   const [moodRefs, setMoodRefs] = useState<string[]>([]); // 분위기 참고 사진
-  const [panelTab, setPanelTab] = useState<PanelTab>("quote"); // 오른쪽 패널: 견적 또는 평면도 편집
+  const [panelTab, setPanelTab] = useState<PanelTab>("quote"); // 오른쪽 패널: 견적, 배치, 공간, 무드
   const [editing, setEditing] = useState(isMySpace); // 배치 편집. 켜면 평면도에서 고친 배치로 견적이 바로 계산된다.
 
   // AI로 새로 만든 렌더링. 스타일이나 업종을 바꾸면 버린다.
@@ -359,6 +363,13 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const layoutRound = useRef(0);
 
   /** 같은 가구로 다른 배치안을 만든다. 누를 때마다 좌우 뒤집기와 줄 정렬이 번갈아 나온다. */
+  /** 평면도에서 카메라 표시를 끌면 그 자리에서 360으로 본다. */
+  function moveEyeTo(x: number, y: number) {
+    setEditing(true);
+    if (viewer !== "pano") setViewer("pano");
+    setEyeCommand({ x, y, nonce: Date.now() + Math.random() });
+  }
+
   function rearrange(): string {
     const scene = sceneEditor.scene;
     if (!scene || scene.useType !== useType) return "배치를 불러오는 중이에요. 잠시 뒤에 다시 눌러 주세요.";
@@ -368,10 +379,6 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     return result.message;
   }
 
-  function togglePlan() {
-    setEditing(true);
-    setPanelTab(panelTab === "plan" ? "quote" : "plan");
-  }
 
   /** 상품 카탈로그에서 고른 상품을 도면에 놓는다. 견적은 같은 Scene에서 다시 계산된다. */
   function addProductToScene(product: Product): string {
@@ -437,7 +444,9 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       setRenderNotice("3D 또는 360 보기를 연 상태에서 눌러 주세요.");
       return;
     }
-    const models = capture();
+    // 평면도에서 자리를 잡았으면 그 자리에서, 아니면 기본 자리에서 모형을 찍는다.
+    const position: [number, number, number] | undefined = eye ? [eye.x, 1500, eye.y] : undefined;
+    const models = capture(position);
     const urls: string[] = [];
     let previous: { data: string; mime: "image/png" | "image/jpeg" } | undefined;
     setRenderNotice("");
@@ -475,7 +484,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     const base = panoSetOf(viewerPhotoNumber ?? "00", useType, styleKey, scene.room);
     const set: PanoSet = {
       id: `live-${scene.updatedAt}`,
-      position: base?.position ?? [Math.round(scene.room.widthMm * 0.55), 1500, Math.round(scene.room.depthMm * 0.72)],
+      position: position ?? base?.position ?? [Math.round(scene.room.widthMm * 0.55), 1500, Math.round(scene.room.depthMm * 0.72)],
       hfovDeg: 100,
       aspect: 4 / 3,
       views: [0, 90, 180, 270].map((yaw, i) => ({ yaw, url: urls[i] })),
@@ -538,6 +547,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       activeTagN={activeTagN}
       onTagClick={(n) => setActiveTagN(n === activeTagN ? null : n)}
       onBackgroundClick={() => setActiveTagN(null)}
+      hideBadges={viewer !== null}
       leftBadge={leftBadge}
       extraBadges={extraBadges}
       rightBadge={rightBadge}
@@ -569,13 +579,13 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
           photo={sceneEditor.scene.measured ? null : viewerPhoto}
           pano={livePanoNow?.set ?? (sceneEditor.scene.measured ? null : panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null))}
           captureRef={captureRef}
+          eyeCommand={eyeCommand}
+          onEye={setEye}
           overlayStale={sceneEditor.scene.edited === true && livePanoNow?.at !== sceneEditor.scene.updatedAt}
-          sideImageUrl={viewerPhotoUrl ?? imageUrl}
-          sideImageStale={sceneEditor.scene.edited === true && !(generatedActive && renderedAt === sceneEditor.scene.updatedAt)}
         />
       )}
       {dialogs}
-      {!isBoardStage && (
+      {!isBoardStage && viewer !== "orbit" && (
         <StyleBar
           imageUrl={`/images/render-${useType}.jpg`}
           styleImageUrl={(key) => (mode === "image" ? generatedRenderUrl(listing.thumbnail, useType, key) : null)}
@@ -630,10 +640,33 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
         ) : (
           <>
             {sceneEditor.scene && sceneReady ? (
-              panelTab === "plan" ? (
-                <PlanEditor embedded scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />
-              ) : (
+              panelTab === "layout" ? (
+                <LayoutPanel
+                  scene={sceneEditor.scene}
+                  useType={useType}
+                  canUndo={sceneEditor.canUndo}
+                  onChange={sceneEditor.change}
+                  onUndo={sceneEditor.undo}
+                  onReset={sceneEditor.reset}
+                  onRearrange={rearrange}
+                  onAddProduct={addProductToScene}
+                  onOpenSheet={() => setDialog("plan")}
+                  eye={eye}
+                  onEyeMove={moveEyeTo}
+                />
+              ) : panelTab === "space" ? (
                 <SpaceMeasure scene={sceneEditor.scene} onChange={sceneEditor.change} />
+              ) : (
+                <MoodPanel
+                  moodRefs={moodRefs}
+                  onMoodRefs={(next) => {
+                    setMoodRefs(next);
+                    saveMoodRefs(next);
+                  }}
+                  note={note}
+                  onNote={setNote}
+                  moodHref="/mood"
+                />
               )
             ) : (
               <p style={{ padding: 20, fontSize: 13, color: "var(--gray-600)" }}>{sceneEditor.status === "failed" ? "배치를 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요." : "배치를 불러오는 중이에요."}</p>
@@ -661,28 +694,11 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
           <StudioToolbar
             view={viewer ?? "photo"}
             onView={changeView}
-            scene={sceneEditor.scene && sceneEditor.scene.useType === useType ? sceneEditor.scene : null}
-            useType={useType}
-            planOpen={panelTab === "plan"}
-            onTogglePlan={togglePlan}
-            onOpenSheet={() => setDialog("plan")}
-            onAddProduct={addProductToScene}
-            canUndo={sceneEditor.canUndo}
-            onUndo={sceneEditor.undo}
-            onReset={sceneEditor.reset}
-            onRearrange={rearrange}
             onPanoRender={mode === "image" && spaceNumber ? startPanoRender : undefined}
             panoBusy={panoBusy}
             onRender={mode === "image" && spaceNumber ? startRender : undefined}
             rendering={rendering}
-            note={note}
-            onNote={setNote}
-            moodRefs={moodRefs}
-            onMoodRefs={(next) => {
-              setMoodRefs(next);
-              saveMoodRefs(next);
-            }}
-            moodHref="/mood"
+            hasMood={moodRefs.length > 0 || note.trim().length > 0}
             editable={mode === "image" && !showEmpty}
           />
         )

@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import styles from "./PanelTabs.module.css";
 
-export type PanelTab = "quote" | "plan" | "space";
+export type PanelTab = "quote" | "layout" | "space" | "mood";
 
 type Props = {
   value: PanelTab;
@@ -14,8 +14,9 @@ type Props = {
 
 const TABS: { key: PanelTab; label: string }[] = [
   { key: "quote", label: "견적" },
-  { key: "plan", label: "평면도 편집" },
-  { key: "space", label: "공간 실측" },
+  { key: "layout", label: "배치" },
+  { key: "space", label: "공간" },
+  { key: "mood", label: "무드" },
 ];
 
 export default function PanelTabs({ value, onChange, children }: Props) {

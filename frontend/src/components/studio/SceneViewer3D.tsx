@@ -34,17 +34,20 @@ type Props = {
   photo?: { url: string; number: string } | null;
   /** 방 안 한 자리에서 사방을 찍은 AI 이미지 묶음. 있으면 사진 한 장보다 우선한다. */
   pano?: PanoSet | null;
+  /** 360 보기에서 서 있을 자리를 바꾸라는 명령(도면 좌표 mm). nonce가 바뀔 때마다 한 번 옮긴다. */
+  eyeCommand?: { x: number; y: number; nonce: number } | null;
+  /** 서 있는 자리와 바라보는 방향이 바뀌면 알린다(도면 좌표 mm, 방향은 도). */
+  onEye?: (eye: { x: number; y: number; yawDeg: number }) => void;
   /** 부모가 부르면 지금 배치의 3D 모형을 방 안 한 자리에서 네 방향으로 찍어 PNG data URL 네 개를 돌려주는 함수가 여기에 들어간다. */
-  captureRef?: MutableRefObject<(() => string[]) | null>;
+  captureRef?: MutableRefObject<((position?: [number, number, number]) => string[]) | null>;
   /** 이미지 속 가구가 지금 배치와 맞지 않으면 true. 정하지 않으면 배치를 고쳤는지로 정한다. */
   overlayStale?: boolean;
-  /** 3D 바깥 보기에서 나란히 보여 줄 AI 이미지 */
-  sideImageUrl?: string | null;
-  /** 이미지가 처음 배치 그대로인지 */
-  sideImageStale?: boolean;
 };
 
 const EYE_HEIGHT_MM = 1500;
+/** 벽 두께와 바닥, 천장 슬래브 두께(mm). 방 안쪽 치수에는 들어가지 않는다. */
+const WALL_THICKNESS_MM = 200;
+const SLAB_THICKNESS_MM = 250;
 
 const PALETTES: Record<RenderStyleKey, { floor: string; wall: string; wood: string; chair: string; counter: string; metal: string }> = {
   wood: { floor: "#cfb38a", wall: "#efe6d8", wood: "#b5835a", chair: "#c99a6b", counter: "#8d5f3c", metal: "#7a7a7a" },
@@ -266,18 +269,19 @@ function buildStructure(s: Scene["structures"][number], ceilingMm: number): THRE
   return group;
 }
 
-export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, sideImageUrl = null, sideImageStale = false, captureRef, overlayStale }: Props) {
+export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, captureRef, overlayStale, eyeCommand = null, onEye }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [hint, setHint] = useState("");
   const [selectedName, setSelectedName] = useState("");
   const [photoOn, setPhotoOn] = useState(true);
+  const [far, setFar] = useState(false); // 이미지를 찍은 자리에서 멀리 벗어났는지
   const edited = overlayStale ?? scene.edited === true;
   const photoReady = pano !== null || (photo !== null && GUIDE_CALIB[photo.number] !== undefined);
 
   // 최신 값을 이벤트 처리기에서 읽는다.
-  const latest = useRef({ scene, onChange, photo, pano, photoOn });
-  latest.current = { scene, onChange, photo, pano, photoOn };
-  const api = useRef<{ rebuild: () => void; setMode: (mode: ViewMode) => void; exportPanorama: () => void } | null>(null);
+  const latest = useRef({ scene, onChange, photo, pano, photoOn, onEye });
+  latest.current = { scene, onChange, photo, pano, photoOn, onEye };
+  const api = useRef<{ rebuild: () => void; setMode: (mode: ViewMode) => void; exportPanorama: () => void; moveEye: (x: number, y: number) => void } | null>(null);
 
   // 한 번만 만든다: 렌더러, 카메라, 이벤트
   useEffect(() => {
@@ -325,9 +329,10 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
     let projectorKey = "";
     let startPose: { position: THREE.Vector3; yaw: number; pitch: number; fov: number } | null = null;
     let capturing = false; // 시점 사진을 찍는 동안에는 AI 이미지를 입히지 않는다.
+    let farFromImage = false; // 사방 이미지를 찍은 자리에서 1.5m 넘게 벗어나면 이미지를 끈다(시차 때문에 늘어나 보인다).
 
     function projectionKind(): "pano" | "photo" | null {
-      if (capturing || currentMode !== "pano" || !latest.current.photoOn) return null;
+      if (capturing || farFromImage || currentMode !== "pano" || !latest.current.photoOn) return null;
       const { pano: set, photo: current } = latest.current;
       if (set) return "pano";
       return current !== null && GUIDE_CALIB[current.number] !== undefined ? "photo" : null;
@@ -448,31 +453,32 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       }
       itemRoots.clear();
 
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.widthMm, room.depthMm), mat(palette.floor));
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.set(room.widthMm / 2, 0, room.depthMm / 2);
-      floor.receiveShadow = true;
-      content.add(floor);
-
-      const wallMaterial = mat(palette.wall, { side: THREE.DoubleSide });
-      const back = new THREE.Mesh(new THREE.PlaneGeometry(room.widthMm, room.ceilingMm), wallMaterial);
-      back.position.set(room.widthMm / 2, room.ceilingMm / 2, 0);
-      const left = new THREE.Mesh(new THREE.PlaneGeometry(room.depthMm, room.ceilingMm), wallMaterial);
-      left.rotation.y = Math.PI / 2;
-      left.position.set(0, room.ceilingMm / 2, room.depthMm / 2);
-      const right = left.clone();
-      right.position.set(room.widthMm, room.ceilingMm / 2, room.depthMm / 2);
-      back.receiveShadow = left.receiveShadow = right.receiveShadow = true;
-      content.add(back, left, right);
+      // 바닥, 벽, 천장에는 두께를 준다. 방 안쪽 치수는 그대로이고 바깥쪽으로 두꺼워진다.
+      // 안쪽 면은 방의 마감색, 윗면(단면)과 바깥은 콘크리트 색이라 두께가 보인다.
+      const T = WALL_THICKNESS_MM;
+      const S = SLAB_THICKNESS_MM;
+      const inner = mat(palette.wall);
+      const cap = mat("#e2ded6");
+      const outer = mat("#c4bfb6");
+      const slabSide = mat("#b4afa6");
+      const solid = (w: number, h: number, d: number, faces: THREE.Material[], x: number, y: number, z: number) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), faces); // 면 순서: +x, -x, +y, -y, +z, -z
+        mesh.position.set(x, y + h / 2, z);
+        mesh.receiveShadow = true;
+        return mesh;
+      };
+      const spanW = room.widthMm + 2 * T;
+      // 바닥 슬래브: 윗면이 바닥이다.
+      content.add(solid(spanW, S, room.depthMm + 2 * T, [slabSide, slabSide, mat(palette.floor), slabSide, slabSide, slabSide], room.widthMm / 2, -S, room.depthMm / 2));
+      // 안쪽 벽, 왼쪽 벽, 오른쪽 벽
+      content.add(solid(spanW, room.ceilingMm, T, [outer, outer, cap, outer, inner, outer], room.widthMm / 2, 0, -T / 2));
+      content.add(solid(T, room.ceilingMm, room.depthMm, [inner, outer, cap, outer, outer, outer], -T / 2, 0, room.depthMm / 2));
+      content.add(solid(T, room.ceilingMm, room.depthMm, [outer, inner, cap, outer, outer, outer], room.widthMm + T / 2, 0, room.depthMm / 2));
       if (currentMode === "pano") {
         const withFront = projectionKind() !== "photo"; // 사진 카메라는 방 밖에 있을 수 있어서, 이미지를 입힐 때는 앞쪽 벽을 둔다.
-        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.widthMm, room.depthMm), mat("#f4f1ec", { side: THREE.DoubleSide }));
-        ceiling.rotation.x = Math.PI / 2;
-        ceiling.position.set(room.widthMm / 2, room.ceilingMm, room.depthMm / 2);
-        const front = new THREE.Mesh(new THREE.PlaneGeometry(room.widthMm, room.ceilingMm), wallMaterial);
-        front.position.set(room.widthMm / 2, room.ceilingMm / 2, room.depthMm);
-        content.add(ceiling);
-        if (withFront) content.add(front);
+        const ceilingFace = mat("#f4f1ec");
+        content.add(solid(spanW, S, room.depthMm + 2 * T, [outer, outer, cap, ceilingFace, outer, outer], room.widthMm / 2, room.ceilingMm, room.depthMm / 2));
+        if (withFront) content.add(solid(spanW, room.ceilingMm, T, [outer, outer, cap, outer, outer, inner], room.widthMm / 2, 0, room.depthMm + T / 2));
       }
 
       // 입구 앞 비움 자리
@@ -517,6 +523,8 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
         setHint("끌면 돌려 보고, 가구를 끌면 옮겨요.");
       } else {
         controls.enabled = false;
+        farFromImage = false; // 새로 들어올 때와 이미지 묶음이 바뀔 때는 그 이미지의 자리에서 시작한다.
+        setFar(false);
         setupProjectors();
         if (startPose) {
           // 이미지를 만든 자리에서 시작한다. 이 자리에서는 AI 이미지가 그대로 보인다.
@@ -539,6 +547,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       }
       camera.updateProjectionMatrix();
       rebuild();
+      if (next === "pano") reportEye();
     }
 
 
@@ -658,6 +667,25 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       return out;
     }
 
+    /** 서 있는 자리와 방향을 부모에게 알린다. 평면도의 카메라 표시가 이 값을 따른다. */
+    function reportEye() {
+      const set = latest.current.pano;
+      const nowFar = !!set && Math.hypot(eye.x - set.position[0], eye.z - set.position[2]) > 1500;
+      if (nowFar !== farFromImage) {
+        farFromImage = nowFar;
+        setFar(nowFar);
+        setupProjectors();
+      }
+      latest.current.onEye?.({ x: Math.round(eye.x), y: Math.round(eye.z), yawDeg: Math.round((yaw * 180) / Math.PI) });
+    }
+
+    /** 도면 좌표로 받은 자리로 옮긴다. 방 안으로만 둔다. */
+    function moveEye(x: number, y: number) {
+      const { room } = latest.current.scene;
+      eye.set(Math.min(Math.max(x, 300), room.widthMm - 300), EYE_HEIGHT_MM, Math.min(Math.max(y, 300), room.depthMm - 300));
+      reportEye();
+    }
+
     function updatePanoCamera() {
       camera.position.copy(eye);
       const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
@@ -732,6 +760,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
 
     function onUp(event: PointerEvent) {
       if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+      if (panoDragging) reportEye();
       panoDragging = false;
       if (currentMode === "orbit") controls.enabled = true;
       if (drag) {
@@ -749,6 +778,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       if (!point) return;
       const { room } = latest.current.scene;
       eye.set(Math.min(Math.max(point.x, 300), room.widthMm - 300), EYE_HEIGHT_MM, Math.min(Math.max(point.z, 300), room.depthMm - 300));
+      reportEye();
     }
 
     function onWheel(event: WheelEvent) {
@@ -773,6 +803,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       const { room } = latest.current.scene;
       eye.x = Math.min(Math.max(eye.x + move.x * step, 300), room.widthMm - 300);
       eye.z = Math.min(Math.max(eye.z + move.z * step, 300), room.depthMm - 300);
+      reportEye();
     }
 
     function resize() {
@@ -802,8 +833,8 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       renderer.render(threeScene, camera);
     };
 
-    api.current = { rebuild, setMode: applyMode, exportPanorama };
-    if (captureRef) captureRef.current = () => captureViews(panoPosition(latest.current.scene.room), [0, 90, 180, 270], 100, 1024, 768);
+    api.current = { rebuild, setMode: applyMode, exportPanorama, moveEye };
+    if (captureRef) captureRef.current = (position) => captureViews(position ?? panoPosition(latest.current.scene.room), [0, 90, 180, 270], 100, 1024, 768);
     if (process.env.NODE_ENV !== "production") (window as unknown as { __viewer3d?: unknown }).__viewer3d = { captureViews, room: () => latest.current.scene.room,
       items: () => latest.current.scene.items.map((item) => ({ id: item.id, name: item.name, x: item.x, y: item.y, w: item.widthMm, d: item.depthMm, hanging: !!item.hanging })),
       screenOf: (id: string) => {
@@ -866,18 +897,17 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
 
   useEffect(() => {
     api.current?.setMode(mode);
-  }, [mode, photo?.url, pano, photoOn]);
+  }, [mode, photo?.url, pano?.id, photoOn]);
+
+  // 도면에서 정한 자리로 옮긴다.
+  useEffect(() => {
+    if (eyeCommand) api.current?.moveEye(eyeCommand.x, eyeCommand.y);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eyeCommand?.nonce]);
 
   return (
     <div className={styles.viewer} onClick={(event) => event.stopPropagation()}>
-      {sideImageUrl && mode === "orbit" && (
-        <figure className={styles.side}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={sideImageUrl} alt="AI 렌더링 이미지" />
-          <figcaption>{sideImageStale ? "AI 이미지 · 처음 배치" : "AI 이미지"}</figcaption>
-        </figure>
-      )}
-      <div ref={hostRef} className={sideImageUrl && mode === "orbit" ? `${styles.host} ${styles.hostSplit}` : styles.host} />
+      <div ref={hostRef} className={styles.host} />
       <div className={styles.bar}>
         {photoReady && mode === "pano" && (
           <button type="button" className={photoOn ? `${styles.close} ${styles.closeOn}` : styles.close} aria-pressed={photoOn} onClick={() => setPhotoOn((on) => !on)}>
@@ -890,11 +920,9 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
       </div>
       <p className={styles.hint}>
         {selectedName ? `선택: ${selectedName}. ` : ""}
-        {hint}
+        {far && mode === "pano" ? "이 자리에는 AI 이미지가 없어서 모형만 보여요. 360 다시 만들기를 누르면 이 자리에서 만들어요." : photoReady && edited && !photoOn ? "배치를 고쳐서 AI 이미지를 껐어요. 360 다시 만들기를 누르면 새 배치로 입혀요." : hint}
       </p>
-      <p className={styles.note}>
-        {photoReady && edited && !photoOn ? "배치를 고쳐서 AI 이미지를 껐어요. 이미지 속 가구는 처음 자리 그대로라서 새 배치에는 맞지 않아요." : photoReady && photoOn && mode === "pano" ? (pano ? "AI 이미지를 한 자리에서 사방으로 찍어 모형 위에 입혔어요. 자리를 옮기면 어긋나요." : "AI 렌더링 이미지를 사진 찍은 자리에서 모형 위에 입혔어요. 자리를 옮기면 어긋나요.") : "크기와 위치를 맞춘 모형이에요. 사진 같은 이미지는 AI 렌더링이 만들어요."}
-      </p>
+
     </div>
   );
 }

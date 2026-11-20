@@ -169,6 +169,10 @@
   color: #d13438;
 }
 
+.hidden {
+  display: none;
+}
+
 .selection,
 .addRow,
 .footer {

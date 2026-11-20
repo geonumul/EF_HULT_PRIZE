@@ -2,6 +2,7 @@
 
 // 렌더링 이미지와 그 위의 번호 태그. Figma RenderCanvas 24:282.
 // 태그를 누르는 동작과 팝오버는 부모가 정한다. 여기서는 그리기만 한다.
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { RenderTag } from "@/types";
 import styles from "./RenderCanvas.module.css";
@@ -14,6 +15,8 @@ type Props = {
   onTagClick: (n: number) => void;
   onBackgroundClick?: () => void;
   leftBadge: string;
+  /** 3D를 볼 때처럼 화면이 작아질 때 위쪽 배지를 모두 숨긴다. */
+  hideBadges?: boolean;
   /** 왼쪽 위 배지 아래에 쌓는 근거 표시와 검수 결과 */
   extraBadges?: { text: string; tone?: "ok" | "bad" }[];
   rightBadge: string;
@@ -30,6 +33,10 @@ type Props = {
 
 export default function RenderCanvas(props: Props) {
   const { imageUrl, imageFilter, tags, activeTagN, onTagClick, loading, checks } = props;
+  const [infoOpen, setInfoOpen] = useState(false);
+  const extras = props.extraBadges ?? [];
+  const important = extras.filter((badge) => badge.tone); // 검수 결과, 경고
+  const plain = extras.filter((badge) => !badge.tone); // 근거 표시. 접어 둔다.
   const rightBadgeClass = props.rightBadgeWarn
     ? `${styles.badge} ${styles.badgeRight} ${styles.badgeWarn}`
     : `${styles.badge} ${styles.badgeRight}`;
@@ -39,21 +46,37 @@ export default function RenderCanvas(props: Props) {
       <img className={styles.image} src={imageUrl} alt="AI 렌더링 이미지" style={{ filter: imageFilter }} />
 
       <div className={styles.top}>
-        <div className={styles.leftStack}>
+        <div className={styles.leftStack} style={props.hideBadges ? { display: "none" } : undefined}>
           <div className={`${styles.badge} ${styles.badgeLeft}`}>
             <img src="/images/studio/icon-sparkle.svg" alt="" width={12} height={12} />
             {props.leftBadge}
           </div>
-          {props.extraBadges?.map((badge) => (
-            <div
-              key={badge.text}
-              className={`${styles.badge} ${styles.badgeLeft} ${badge.tone === "bad" ? styles.extraBad : badge.tone === "ok" ? styles.extraOk : styles.extra}`}
-            >
+          {important.map((badge) => (
+            <div key={badge.text} className={`${styles.badge} ${styles.badgeLeft} ${badge.tone === "bad" ? styles.extraBad : styles.extraOk}`}>
               {badge.text}
             </div>
           ))}
+          {plain.length > 0 && (
+            <button
+              type="button"
+              className={`${styles.badge} ${styles.badgeLeft} ${styles.infoButton}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                setInfoOpen(!infoOpen);
+              }}
+              aria-expanded={infoOpen}
+            >
+              ⓘ 안내 {plain.length}
+            </button>
+          )}
+          {infoOpen &&
+            plain.map((badge) => (
+              <div key={badge.text} className={`${styles.badge} ${styles.badgeLeft} ${styles.extra}`}>
+                {badge.text}
+              </div>
+            ))}
         </div>
-        <div className={styles.rightStack}>
+        <div className={styles.rightStack} style={props.hideBadges ? { display: "none" } : undefined}>
           <div className={rightBadgeClass}>
             <img src={props.rightBadgeWarn ? "/images/studio/icon-warn.svg" : "/images/studio/icon-ok.svg"} alt="" width={14} height={14} />
             {props.rightBadge}

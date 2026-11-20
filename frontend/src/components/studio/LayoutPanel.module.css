@@ -1,0 +1,138 @@
+.root {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px 8px;
+}
+
+.action {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-0);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+
+.actionOn {
+  border-color: var(--gray-900);
+  color: var(--gray-900);
+}
+
+.action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.link {
+  margin-left: auto;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hintLine {
+  margin: 0 20px 4px;
+  font-size: 12px;
+  color: var(--gray-600);
+}
+
+.message {
+  margin: 0 20px 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  font-size: 12px;
+  color: var(--gray-700);
+}
+
+.picker {
+  margin: 0 20px 8px;
+  padding: 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+}
+
+.pickerTitle {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--gray-600);
+}
+
+.pickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pickerItem:hover {
+  background: var(--gray-50);
+}
+
+.pickerItem img {
+  flex: none;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.pickerText {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pickerName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.pickerMeta {
+  font-size: 11px;
+  color: var(--gray-600);
+}
+
+.pickerAdd {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 179, 104, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  color: #00875a;
+}

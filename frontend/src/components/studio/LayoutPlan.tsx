@@ -108,6 +108,12 @@ export type PlanInteraction = {
   badIndexes: Set<number>;
   onPointerDown: (index: number, event: ReactPointerEvent<SVGGElement>) => void;
   onBackgroundPointerDown: () => void;
+  /** 360 보기에서 서 있는 자리와 방향(도면 좌표 mm, 방향은 도). 있으면 카메라 표시를 그린다. */
+  eye?: { x: number; y: number; yawDeg: number } | null;
+  /** 카메라 표시를 끌 때 */
+  onEyePointerDown?: (event: ReactPointerEvent<SVGGElement>) => void;
+  /** 기둥, 창, 문, 계단을 끌어 옮길 때 */
+  onStructurePointerDown?: (index: number, event: ReactPointerEvent<SVGGElement>) => void;
   svgRef: RefObject<SVGSVGElement | null>;
   /** 화면 좌표를 mm로 바꿀 때 쓰는 값. 그릴 때마다 채워진다. */
   geometryRef: MutableRefObject<{ ox: number; oy: number; scale: number }>;
@@ -181,8 +187,9 @@ export default function LayoutPlan({ plan, interactive, compact }: { plan: PlanR
           );
         }
         const stairSteps = s.kind === "stairs" ? Array.from({ length: 7 }, (_, i) => y + ((i + 1) * h) / 8) : [];
+        const moveStructure = interactive?.onStructurePointerDown;
         return (
-          <g key={`s${index}`}>
+          <g key={`s${index}`} onPointerDown={moveStructure ? (event) => moveStructure(index, event) : undefined} className={moveStructure ? styles.draggable : undefined}>
             <rect x={x} y={y} width={w} height={h} className={s.kind === "column" ? styles.column : s.kind === "stairs" ? styles.stairs : styles.opening} />
             {stairSteps.map((sy) => (
               <line key={sy} x1={x} y1={sy} x2={x + w} y2={sy} className={styles.step} />
@@ -195,6 +202,20 @@ export default function LayoutPlan({ plan, interactive, compact }: { plan: PlanR
           </g>
         );
       })}
+
+      {/* 360 보기의 시점. 끌면 그 자리에서 360으로 본다. */}
+      {interactive?.eye && (
+        <g
+          transform={`translate(${ox + px(interactive.eye.x)} ${oy + px(interactive.eye.y)}) rotate(${interactive.eye.yawDeg})`}
+          onPointerDown={interactive.onEyePointerDown}
+          className={styles.draggable}
+          aria-label="360 시점"
+        >
+          <path d="M0 0 L-24 -34 A42 42 0 0 1 24 -34 Z" fill="rgba(49,130,246,0.22)" />
+          <circle r={8} fill="#3182f6" stroke="#fff" strokeWidth={2} />
+          <circle r={14} fill="transparent" />
+        </g>
+      )}
 
       {/* 물건 */}
       {placed.map((item, index) => {

@@ -5,7 +5,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { PlanResult } from "@/lib/api/functions";
-import { KINDS_BY_USE, KIND_LABELS, addItem, chairVariants, moveItem, removeItem, rotateItem, swapChairs, swapProduct, variantsOf } from "@/lib/scene";
+import { KINDS_BY_USE, KIND_LABELS, addItem, chairVariants, moveItem, removeItem, rotateItem, setStructure, swapChairs, swapProduct, variantsOf } from "@/lib/scene";
 import { checkScene, entryZone } from "@/lib/sceneCheck";
 import { applyText } from "@/lib/sceneText";
 import type { Scene } from "@/types/scene";
@@ -20,13 +20,17 @@ type Props = {
   onChange: (next: Scene) => void;
   onUndo: () => void;
   onReset: () => void;
+  /** 360 보기에서 서 있는 자리. 있으면 평면도에 카메라 표시가 나온다. */
+  eye?: { x: number; y: number; yawDeg: number } | null;
+  /** 카메라 표시를 끌면 그 자리에서 360으로 본다. */
+  onEyeMove?: (x: number, y: number) => void;
   /** 오른쪽 패널 안에 놓는 모양이면 true. 떠 있는 창 스타일을 쓰지 않는다. */
   embedded?: boolean;
 };
 
 const EXAMPLES = ["테이블 2개 더 놔줘", "의자 하나 빼줘", "카운터를 입구 쪽으로"];
 
-export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, embedded = false }: Props) {
+export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, embedded = false, eye = null, onEyeMove }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Scene | null>(null); // 끄는 동안의 임시 배치
   const [message, setMessage] = useState("");
@@ -106,10 +110,63 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, 
     window.addEventListener("pointercancel", up);
   }
 
+  /** 기둥, 창, 문, 계단을 끌어 옮긴다. 놓은 자리가 가구와 겹치면 가구가 비켜난다. */
+  function startStructureDrag(index: number, event: ReactPointerEvent<SVGGElement>) {
+    const structure = latest.current.structures[index];
+    const start = toMm(event.clientX, event.clientY);
+    if (!structure || !start) return;
+    event.stopPropagation();
+    setSelectedId(null);
+    setMessage(`${structure.label}을(를) 끌어 옮기는 중이에요. 정확한 위치는 "공간" 탭에서 숫자로 고쳐요.`);
+    const offsetX = start.x - structure.x;
+    const offsetY = start.y - structure.y;
+    const move = (e: PointerEvent) => {
+      const point = toMm(e.clientX, e.clientY);
+      if (!point) return;
+      const next = setStructure(latest.current, index, { x: Math.round((point.x - offsetX) / 50) * 50, y: Math.round((point.y - offsetY) / 50) * 50 });
+      draftRef.current = next;
+      setDraft(next);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      const finished = draftRef.current;
+      draftRef.current = null;
+      setDraft(null);
+      if (finished) onChange(finished);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  }
+
+  /** 카메라 표시를 끌어 360 시점을 옮긴다. */
+  function startEyeDrag(event: ReactPointerEvent<SVGGElement>) {
+    if (!onEyeMove) return;
+    event.stopPropagation();
+    setSelectedId(null);
+    const move = (e: PointerEvent) => {
+      const point = toMm(e.clientX, e.clientY);
+      if (point) onEyeMove(point.x, point.y);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  }
+
   const interaction: PlanInteraction = {
+    eye: onEyeMove ? (eye ?? { x: shown.room.widthMm * 0.55, y: shown.room.depthMm * 0.72, yawDeg: 0 }) : null,
+    onEyePointerDown: onEyeMove ? startEyeDrag : undefined,
     selectedIndex: selectedId ? shown.items.findIndex((item) => item.id === selectedId) : null,
     badIndexes,
     onPointerDown: startDrag,
+    onStructurePointerDown: embedded ? startStructureDrag : undefined,
     onBackgroundPointerDown: () => setSelectedId(null),
     svgRef,
     geometryRef,
@@ -241,7 +298,7 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, 
             )}
           </div>
 
-          <div className={styles.addRow}>
+          <div className={embedded ? styles.hidden : styles.addRow}>
             {kinds.map((kind) => (
               <button key={kind} type="button" className={styles.small} onClick={() => add(kind)}>
                 {KIND_LABELS[kind]} 더하기
