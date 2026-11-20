@@ -87,7 +87,24 @@ export function buildRestylePrompt(request: ImageGenerationRequest): string {
   ].join("\n");
 }
 
+/** 360 사방 이미지 중 한 방향. 모형 그림이 구도를 정하고, 스타일 참고와 앞 방향이 재질과 조명을 이어 준다. */
+export function buildViewPrompt(request: ImageGenerationRequest): string {
+  const use = USE_NAMES[request.useType] ?? "a small business";
+  const hasPrevious = (request.referenceImages?.length ?? 0) > 1;
+  return [
+    `Photorealistic interior photograph of ${use}. Several photos are taken from the same standing point while turning around, so all of them must share the same room, materials, color palette, lighting and time of day.`,
+    "The FIRST attached image is a rough 3D model render of the view to photograph. It fixes the camera, perspective, scale and the position and size of every wall, column, door, window, light and piece of furniture: keep all of them exactly where they are, add nothing and remove nothing.",
+    "The SECOND attached image is a reference photo of the same room. Copy its materials, finishes, furniture design, concrete columns, floor, lighting mood and color palette.",
+    hasPrevious ? "The THIRD attached image is the previous view of this same room, already finished. Keep its materials and lighting identical." : "",
+    "Where the model render shows a plain wall, draw a believable wall of the same material as the reference. Replace the flat colors of the model render with real materials. No people, no text, no watermark.",
+    moodText(request),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function buildPrompt(request: ImageGenerationRequest): string {
+  if (request.structureKind === "view") return buildViewPrompt(request);
   if (request.mode === "restyle") return buildRestylePrompt(request);
   const use = USE_NAMES[request.useType] ?? "a small business";
   const room = request.room;

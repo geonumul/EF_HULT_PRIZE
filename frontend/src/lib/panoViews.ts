@@ -6,6 +6,8 @@ import type { Room } from "@/lib/api/functions";
 import type { RenderStyleKey } from "@/types/studio";
 
 export type PanoSet = {
+  /** 같은 묶음인지 알아보는 이름. 이름이 같으면 이미지를 다시 읽지 않는다. */
+  id: string;
   /** 서 있는 자리(모형 좌표, mm). 도면 x, 눈높이, 도면 y */
   position: [number, number, number];
   hfovDeg: number;
@@ -28,6 +30,7 @@ export function panoSetOf(spaceNumber: string | null, use: UseType, style: Rende
   const key = `${spaceNumber}-${use}-${style}`;
   if (!spaceNumber || !room || !PANO_KEYS.includes(key)) return null;
   return {
+    id: key,
     position: panoPosition(room),
     hfovDeg: 100,
     aspect: 4 / 3,

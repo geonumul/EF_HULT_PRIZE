@@ -8,6 +8,8 @@ export type SceneItem = PlacedItem & {
   id: string;
   /** 상품 카탈로그에서 직접 고른 가구면 그 상품 id. 견적이 이 id를 읽는다. */
   catalogId?: string;
+  /** 둥근 테이블에 딸린 의자의 상품 id. 없으면 기본 의자. */
+  chairCatalogId?: string;
 };
 
 export type Scene = {

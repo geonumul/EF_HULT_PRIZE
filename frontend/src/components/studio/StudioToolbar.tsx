@@ -2,7 +2,7 @@
 
 // 캔버스 위쪽 한 줄. 보기 전환(사진, 3D, 360), 평면도, 배치도·설계 점검, 상품 추가, 되돌리기, 다시 렌더링을 모은다.
 // 캔버스 안을 가리지 않으려고 버튼을 모두 캔버스 밖으로 뺐다. 평면도는 썸네일이 버튼이고, 누르면 캔버스 위에 편집 창이 열린다.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatWon } from "@/lib/format";
 import { MAX_MOOD_REFS, fileToMoodRef } from "@/lib/moodRefs";
 import { placeableProducts, scenePlanResult } from "@/lib/scene";
@@ -27,9 +27,18 @@ type Props = {
   canUndo: boolean;
   onUndo: () => void;
   onReset: () => void;
+  /** 같은 가구로 다른 배치안을 만든다. */
+  onRearrange: () => string;
   /** 없으면 다시 렌더링 버튼을 숨긴다. */
   onRender?: () => void;
   rendering: boolean;
+  /** 3D, 360 보기에서 지금 배치로 사방 이미지를 다시 만든다. 없으면 버튼을 숨긴다. */
+  onPanoRender?: () => void;
+  /** 사방 이미지를 만드는 중이면 끝낸 방향 수(0~4), 아니면 null */
+  panoBusy: number | null;
+  /** 사진 다시 만들기에 덧붙이는 요청 문장. 예: 조명을 더 따뜻하게 */
+  note: string;
+  onNote: (note: string) => void;
   /** 분위기 참고 사진(data URL). 사진 다시 만들기가 이 분위기를 따른다. */
   moodRefs: string[];
   onMoodRefs: (next: string[]) => void;
@@ -70,6 +79,13 @@ export default function StudioToolbar(props: Props) {
       setMoodError(error instanceof Error ? error.message : "이미지를 읽지 못했어요.");
     }
   }
+
+  // 알림 문장은 몇 초 뒤에 사라진다.
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(""), 6000);
+    return () => clearTimeout(timer);
+  }, [message]);
 
   function add(product: Product) {
     setMessage(props.onAddProduct(product));
@@ -138,6 +154,9 @@ export default function StudioToolbar(props: Props) {
           <button type="button" className={styles.ghost} onClick={props.onUndo} disabled={!props.canUndo}>
             되돌리기
           </button>
+          <button type="button" className={styles.ghost} onClick={() => setMessage(props.onRearrange())} disabled={!scene}>
+            다른 배치안
+          </button>
           <button type="button" className={styles.ghost} onClick={props.onReset} disabled={!scene}>
             처음으로
           </button>
@@ -146,7 +165,7 @@ export default function StudioToolbar(props: Props) {
 
       <div className={styles.pickerWrap}>
         <button type="button" className={moodOpen || props.moodRefs.length > 0 ? `${styles.tool} ${styles.toolOn}` : styles.tool} onClick={() => setMoodOpen(!moodOpen)} aria-expanded={moodOpen}>
-          무드 이미지{props.moodRefs.length > 0 ? ` ${props.moodRefs.length}` : ""}
+          무드·요청{props.moodRefs.length > 0 || props.note ? " ●" : ""}
         </button>
         {moodOpen && (
           <div
@@ -190,6 +209,10 @@ export default function StudioToolbar(props: Props) {
             </div>
             <p className={styles.pickerMeta}>이 창이 열린 상태에서 Ctrl+V로 복사한 이미지를 붙여넣을 수 있어요. 사진은 이 브라우저에만 저장되고, 사진 다시 만들기를 누를 때만 서버로 가요.</p>
             {moodError && <p className={styles.pickerMessage}>{moodError}</p>}
+            <label className={styles.noteLabel}>
+              <span>사진에 덧붙일 요청 (선택)</span>
+              <input value={props.note} maxLength={200} onChange={(event) => props.onNote(event.target.value)} placeholder="예: 조명을 더 따뜻하게, 벽은 흰색으로" />
+            </label>
             <p className={styles.pickerMeta}>
               <a href={props.moodHref}>색으로 스타일만 고르기</a>
             </p>
@@ -201,6 +224,18 @@ export default function StudioToolbar(props: Props) {
       </div>
 
       <span className={styles.spacer} />
+
+      {message && !pickerOpen && (
+        <span className={styles.toast} role="status">
+          {message}
+        </span>
+      )}
+
+      {props.onPanoRender && view !== "photo" && (
+        <button type="button" className={styles.tool} onClick={props.onPanoRender} disabled={props.panoBusy !== null}>
+          {props.panoBusy !== null ? `360 만드는 중 ${props.panoBusy}/4` : "360 다시 만들기"}
+        </button>
+      )}
 
       {props.onRender && (
         <button type="button" className={styles.primary} onClick={props.onRender} disabled={props.rendering}>

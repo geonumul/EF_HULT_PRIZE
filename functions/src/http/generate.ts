@@ -29,7 +29,22 @@ export interface MoodInput {
 export const MAX_MOOD_IMAGES = 2;
 export const MAX_MOOD_BASE64 = 1_500_000;
 
+/** 360 사방 이미지 중 한 방향을 만든다. 브라우저가 현재 배치의 3D 모형을 그 방향에서 찍은 그림을 보낸다. */
+export interface PanoViewInput {
+  /** 모형 그림 PNG(base64) */
+  modelImage: string;
+  /** 같은 방의 스타일 참고 이미지(사이트 안 경로) */
+  referencePath: string;
+  /** 앞서 만든 방향의 결과 */
+  previous?: { data: string; mime: "image/png" | "image/jpeg" };
+}
+
+export const MAX_NOTE = 200;
+
 export interface GenerateInput extends PlanInput {
+  /** 렌더링에 덧붙이는 요청 문장 */
+  note?: string;
+  view?: PanoViewInput;
   mood?: MoodInput;
   guide?: GuideInput;
   code: string;
@@ -87,6 +102,24 @@ export function validateGenerateInput(body: unknown): { input: GenerateInput } |
   for (const item of planned.input.items ?? []) {
     if (item.imagePath !== undefined && (typeof item.imagePath !== "string" || !isAllowedAssetPath(item.imagePath))) return { error: "imagePath가 올바르지 않습니다." };
   }
+  const rawNote = (body as { note?: unknown }).note;
+  if (rawNote !== undefined && (typeof rawNote !== "string" || rawNote.length > MAX_NOTE)) return { error: `note는 ${MAX_NOTE}자 이하 문장입니다.` };
+  const note = typeof rawNote === "string" ? rawNote.replace(/\s+/g, " ").trim() : "";
+  const rawView = (body as { view?: unknown }).view;
+  let checkedView: PanoViewInput | undefined;
+  if (rawView !== undefined) {
+    const v = rawView as Partial<PanoViewInput> & { previous?: { data?: unknown; mime?: unknown } };
+    const base64 = /^[A-Za-z0-9+/=]+$/;
+    if (typeof v.modelImage !== "string" || !base64.test(v.modelImage) || v.modelImage.length > MAX_GUIDE_BYTES * 1.4) return { error: "view.modelImage가 올바르지 않습니다." };
+    if (typeof v.referencePath !== "string" || !isAllowedAssetPath(v.referencePath)) return { error: "view.referencePath가 올바르지 않습니다." };
+    let previous: PanoViewInput["previous"];
+    if (v.previous !== undefined) {
+      const p = v.previous;
+      if (typeof p.data !== "string" || !base64.test(p.data) || p.data.length > MAX_GUIDE_BYTES * 1.4 || (p.mime !== "image/png" && p.mime !== "image/jpeg")) return { error: "view.previous가 올바르지 않습니다." };
+      previous = { data: p.data, mime: p.mime };
+    }
+    checkedView = { modelImage: v.modelImage, referencePath: v.referencePath, ...(previous ? { previous } : {}) };
+  }
   const mood = (body as { mood?: unknown }).mood;
   let checkedMood: MoodInput | undefined;
   if (mood !== undefined) {
@@ -107,7 +140,7 @@ export function validateGenerateInput(body: unknown): { input: GenerateInput } |
     if (placed.some((item) => ![item.x, item.y, item.widthMm, item.depthMm].every(Number.isFinite) || !item.name)) return { error: "guide.placed의 값이 올바르지 않습니다." };
     checkedGuide = { number: g.number, imageBase64: g.imageBase64, aspectRatio: g.aspectRatio, placed };
   }
-  return { input: { ...planned.input, ...(checkedMood ? { mood: checkedMood } : {}), ...(checkedGuide ? { guide: checkedGuide } : {}), code: data.code, spaceNumber: data.spaceNumber, style: data.style, attempts } };
+  return { input: { ...planned.input, ...(note ? { note } : {}), ...(checkedView ? { view: checkedView } : {}), ...(checkedMood ? { mood: checkedMood } : {}), ...(checkedGuide ? { guide: checkedGuide } : {}), code: data.code, spaceNumber: data.spaceNumber, style: data.style, attempts } };
 }
 
 /** 참고 이미지로 쓸 상품: 종류마다 하나, 최대 4개 */
@@ -123,7 +156,36 @@ function pickReferences(items: PlanItem[]): PlanItem[] {
   return picked;
 }
 
+/** 360 사방 이미지의 한 방향. 공간 사진 대신 모형 그림과 스타일 참고로 만들고, 상품 태그와 기준 검수는 하지 않는다. */
+async function generateView(input: GenerateInput, view: PanoViewInput, deps: GenerateDeps): Promise<GenerateResponse> {
+  const plan = computePlan(input);
+  const reference = await deps.fetchAsset(view.referencePath);
+  const referenceImages: NonNullable<ImageGenerationRequest["referenceImages"]> = [{ label: "style reference", ...reference }];
+  if (view.previous) referenceImages.push({ label: "previous view", bytes: new Uint8Array(Buffer.from(view.previous.data, "base64")), contentType: view.previous.mime });
+  const request: ImageGenerationRequest = {
+    prompt: STYLE_PROMPTS[input.style],
+    useType: input.useType,
+    room: input.room,
+    placed: [],
+    referenceImageUrls: [],
+    structureImage: { bytes: new Uint8Array(Buffer.from(view.modelImage, "base64")), contentType: "image/png" },
+    structureKind: "view",
+    aspectRatio: "4:3",
+    referenceImages,
+    ...(input.mood ? { moodImages: input.mood.images.map((data) => ({ bytes: new Uint8Array(Buffer.from(data, "base64")), contentType: "image/jpeg" })) } : {}),
+  };
+  const image = await deps.generator.generate(request);
+  return {
+    imageDataUrl: `data:${image.contentType};base64,${Buffer.from(image.bytes).toString("base64")}`,
+    tags: [],
+    plan,
+    critique: { passed: true, score: 0, total: 0, failed: [] },
+    attempts: 1,
+  };
+}
+
 export async function generateRender(input: GenerateInput, deps: GenerateDeps): Promise<GenerateResponse> {
+  if (input.view) return generateView(input, input.view, deps);
   const plan = computePlan(input);
   const guide = input.guide;
   const [photo, edges] = guide
@@ -146,7 +208,7 @@ export async function generateRender(input: GenerateInput, deps: GenerateDeps): 
   }
 
   const request: ImageGenerationRequest = {
-    prompt: STYLE_PROMPTS[input.style],
+    prompt: input.note ? `${STYLE_PROMPTS[input.style]}. Customer request: ${input.note}` : STYLE_PROMPTS[input.style],
     useType: input.useType,
     room: input.room,
     placed: guide ? (guide.placed as unknown as ImageGenerationRequest["placed"]) : plan.placed.filter((item) => !item.hanging || item.category === "lamp"),

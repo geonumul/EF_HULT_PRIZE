@@ -84,6 +84,10 @@ export type RenderInput = LayoutInput & {
   spaceNumber: string;
   style: "wood" | "white" | "industrial";
   attempts?: 1 | 2;
+  /** 360 사방 이미지의 한 방향. 지금 배치의 3D 모형 그림(PNG base64)과 같은 방의 스타일 참고 이미지 경로, 앞서 만든 방향의 결과를 보낸다. */
+  view?: { modelImage: string; referencePath: string; previous?: { data: string; mime: "image/png" | "image/jpeg" } };
+  /** 렌더링에 덧붙이는 요청 문장(최대 200자). 예: 조명을 더 따뜻하게 */
+  note?: string;
   /** 고객이 고른 분위기 참고 사진(줄인 JPEG의 base64, 최대 2장). 렌더링이 그 분위기를 따른다. */
   mood?: { images: string[] };
   /** 고친 배치를 사진과 같은 원근으로 그린 가이드 그림(lib/guideRender.ts). 주면 이 배치대로 그린다. */

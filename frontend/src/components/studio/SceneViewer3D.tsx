@@ -6,11 +6,14 @@
 // 3D는 Scene만 읽는다. 가구를 옮기면 onChange로 Scene을 고치고, 평면도와 견적이 같은 Scene을 읽어 같이 바뀐다.
 // 사진 같은 질감은 AI 렌더링 이미지가 맡고, 여기는 크기와 위치가 정확한 모형이다.
 import { useEffect, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { DIM, pendantBottomMm } from "@/lib/dimensions";
+import { findProduct } from "@/mocks/products";
 import { GUIDE_CALIB } from "@/lib/guideCalib";
 import { GuideCamera } from "@/lib/guideRender";
+import { panoPosition } from "@/lib/panoViews";
 import type { PanoSet } from "@/lib/panoViews";
 import { moveItem } from "@/lib/scene";
 import { entryZone } from "@/lib/sceneCheck";
@@ -31,6 +34,10 @@ type Props = {
   photo?: { url: string; number: string } | null;
   /** 방 안 한 자리에서 사방을 찍은 AI 이미지 묶음. 있으면 사진 한 장보다 우선한다. */
   pano?: PanoSet | null;
+  /** 부모가 부르면 지금 배치의 3D 모형을 방 안 한 자리에서 네 방향으로 찍어 PNG data URL 네 개를 돌려주는 함수가 여기에 들어간다. */
+  captureRef?: MutableRefObject<(() => string[]) | null>;
+  /** 이미지 속 가구가 지금 배치와 맞지 않으면 true. 정하지 않으면 배치를 고쳤는지로 정한다. */
+  overlayStale?: boolean;
   /** 3D 바깥 보기에서 나란히 보여 줄 AI 이미지 */
   sideImageUrl?: string | null;
   /** 이미지가 처음 배치 그대로인지 */
@@ -123,10 +130,19 @@ function box(w: number, h: number, d: number, material: THREE.Material, x = 0, y
   return mesh;
 }
 
-/** 가구 하나의 모형. 원점은 바닥 면적의 가운데이고 y는 바닥이다. */
+/** 의자 종류(look)에 따른 좌면과 다리 재질 */
+function chairMaterials(look: string, palette: (typeof PALETTES)[RenderStyleKey]): { seat: THREE.Material; frame: THREE.Material } {
+  if (look === "cushion") return { seat: mat("#8c9c8a"), frame: mat(palette.chair) };
+  if (look === "metal") return { seat: mat("#2f3235", { metalness: 0.5, roughness: 0.45 }), frame: mat("#2f3235", { metalness: 0.5, roughness: 0.45 }) };
+  if (look === "lounge") return { seat: mat("#b4906b"), frame: mat(palette.metal) };
+  return { seat: mat(palette.chair), frame: mat(palette.chair) };
+}
+
+/** 가구 하나의 모형. 원점은 바닥 면적의 가운데이고 y는 바닥이다. 상품을 골랐으면 그 상품의 look에 따라 색과 재질이 달라진다. */
 function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], ceilingMm: number): THREE.Group {
   const group = new THREE.Group();
-  const wood = mat(palette.wood);
+  const look = (item.catalogId ? findProduct(item.catalogId)?.look : undefined) ?? "";
+  const wood = look === "metal" ? mat("#6b6f74", { metalness: 0.4, roughness: 0.5 }) : mat(palette.wood);
   const chair = mat(palette.chair);
 
   if (item.hanging) {
@@ -134,15 +150,25 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
     const bottom = Math.min(pendantBottomMm(), ceilingMm - 400);
     const drop = ceilingMm - bottom - 220;
     const wire = box(8, drop, 8, mat(palette.metal), 0, ceilingMm - drop, 0);
-    const shade = new THREE.Mesh(new THREE.ConeGeometry(190, 220, 24, 1, true), mat("#f4d98a", { emissive: "#f4c84a", emissiveIntensity: 0.6, side: THREE.DoubleSide }));
-    shade.position.set(0, bottom + 110, 0);
+    let shade: THREE.Mesh;
+    if (look === "rattan") {
+      shade = new THREE.Mesh(new THREE.SphereGeometry(175, 20, 16), mat("#c49a63", { roughness: 0.95 }));
+      shade.position.set(0, bottom + 175, 0);
+    } else if (look === "dome") {
+      shade = new THREE.Mesh(new THREE.SphereGeometry(160, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat("#232323", { emissive: "#f4d98a", emissiveIntensity: 0.15, side: THREE.DoubleSide, metalness: 0.4 }));
+      shade.position.set(0, bottom + 110, 0);
+    } else {
+      shade = new THREE.Mesh(new THREE.ConeGeometry(190, 220, 24, 1, true), mat("#f4d98a", { emissive: "#f4c84a", emissiveIntensity: 0.6, side: THREE.DoubleSide }));
+      shade.position.set(0, bottom + 110, 0);
+    }
     group.add(wire, shade);
     return group;
   }
 
   if (item.round && item.tableDiaMm) {
     const radius = item.tableDiaMm / 2;
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, DIM.table.topThicknessMm, 36), wood);
+    const topMaterial = look === "steel" ? mat("#3a3d40", { metalness: 0.5, roughness: 0.4 }) : look === "marble" ? mat("#e6e2dc", { roughness: 0.3 }) : wood;
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, DIM.table.topThicknessMm, 36), topMaterial);
     top.position.y = DIM.table.heightMm - DIM.table.topThicknessMm / 2;
     top.castShadow = true;
     top.receiveShadow = true;
@@ -156,9 +182,10 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
       const rad = (deg * Math.PI) / 180;
       const chairGroup = new THREE.Group();
       const { seatWidthMm: sw, seatDepthMm: sd, seatHeightMm: sh, seatThicknessMm: st, backHeightMm: bh } = DIM.chair;
-      chairGroup.add(box(sw, st, sd, chair, 0, sh - st, 0));
-      chairGroup.add(box(sw, bh - sh, 40, chair, 0, sh, sd / 2 - 20)); // 등받이는 테이블 반대쪽
-      for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) chairGroup.add(box(30, sh - st, 30, chair, (lx * (sw - 50)) / 2, 0, (lz * (sd - 50)) / 2));
+      const mats = chairMaterials(findProduct(item.chairCatalogId ?? "chair-oak")?.look ?? "wood", palette);
+      chairGroup.add(box(sw, st, sd, mats.seat, 0, sh - st, 0));
+      chairGroup.add(box(sw, bh - sh, 40, mats.seat, 0, sh, sd / 2 - 20)); // 등받이는 테이블 반대쪽
+      for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) chairGroup.add(box(30, sh - st, 30, mats.frame, (lx * (sw - 50)) / 2, 0, (lz * (sd - 50)) / 2));
       const dist = radius + 260;
       chairGroup.position.set(Math.cos(rad) * dist, 0, Math.sin(rad) * dist);
       chairGroup.rotation.y = -rad + Math.PI / 2; // 등받이(+z 쪽)가 바깥을 보게 돌린다.
@@ -175,17 +202,19 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
     const seat = stool ? DIM.counter.barHeightMm - 300 : DIM.chair.seatHeightMm;
     const sw = Math.min(w, DIM.chair.seatWidthMm);
     const sd = Math.min(d, DIM.chair.seatDepthMm);
-    group.add(box(sw, DIM.chair.seatThicknessMm, sd, chair, 0, seat - DIM.chair.seatThicknessMm, 0));
-    if (!stool) group.add(box(sw, DIM.chair.backHeightMm - seat, 40, chair, 0, seat, sd / 2 - 20));
-    for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) group.add(box(30, seat - DIM.chair.seatThicknessMm, 30, mat(palette.metal), (lx * (sw - 50)) / 2, 0, (lz * (sd - 50)) / 2));
+    const mats = chairMaterials(look || "wood", palette);
+    group.add(box(sw, DIM.chair.seatThicknessMm, sd, mats.seat, 0, seat - DIM.chair.seatThicknessMm, 0));
+    if (!stool) group.add(box(sw, DIM.chair.backHeightMm - seat, 40, mats.seat, 0, seat, sd / 2 - 20));
+    for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) group.add(box(30, seat - DIM.chair.seatThicknessMm, 30, mats.frame, (lx * (sw - 50)) / 2, 0, (lz * (sd - 50)) / 2));
     return group;
   }
   if (item.category === "counter") {
     // 바 카운터 1100, 계산대 950 (건축 치수 사전 p.19)
     const height = item.name.includes("계산") ? DIM.counter.cashierHeightMm : DIM.counter.barHeightMm;
     const body = height - DIM.counter.topThicknessMm;
-    group.add(box(w, body, d, mat(palette.counter)));
-    group.add(box(w + DIM.counter.topOverhangMm * 2, DIM.counter.topThicknessMm, d + DIM.counter.topOverhangMm * 2, wood, 0, body, 0));
+    const concrete = look === "concrete";
+    group.add(box(w, body, d, mat(concrete ? "#8a8a86" : palette.counter)));
+    group.add(box(w + DIM.counter.topOverhangMm * 2, DIM.counter.topThicknessMm, d + DIM.counter.topOverhangMm * 2, concrete ? mat("#6f6f6b") : wood, 0, body, 0));
   } else if (item.category === "shelf") {
     const top = DIM.shelf.heightMm;
     group.add(box(w, top, 30, wood, 0, 0, -d / 2 + 15));
@@ -198,7 +227,8 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
     group.add(box(80, 700, d, mat(palette.metal), -w / 2 + 60, 0, 0));
   } else if (item.category === "table") {
     const legHeight = DIM.table.displayHeightMm - DIM.table.topThicknessMm;
-    group.add(box(w, DIM.table.topThicknessMm, d, wood, 0, legHeight, 0));
+    const topMaterial = look === "steel" ? mat("#3a3d40", { metalness: 0.5, roughness: 0.4 }) : look === "marble" ? mat("#e6e2dc", { roughness: 0.3 }) : wood;
+    group.add(box(w, DIM.table.topThicknessMm, d, topMaterial, 0, legHeight, 0));
     for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) group.add(box(50, legHeight, 50, wood, (lx * (w - 100)) / 2, 0, (lz * (d - 100)) / 2));
   } else if (item.name.includes("쇼케이스")) {
     const caseBody = DIM.showcase.heightMm - 400;
@@ -236,12 +266,12 @@ function buildStructure(s: Scene["structures"][number], ceilingMm: number): THRE
   return group;
 }
 
-export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, sideImageUrl = null, sideImageStale = false }: Props) {
+export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo = null, pano = null, sideImageUrl = null, sideImageStale = false, captureRef, overlayStale }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [hint, setHint] = useState("");
   const [selectedName, setSelectedName] = useState("");
   const [photoOn, setPhotoOn] = useState(true);
-  const edited = scene.edited === true;
+  const edited = overlayStale ?? scene.edited === true;
   const photoReady = pano !== null || (photo !== null && GUIDE_CALIB[photo.number] !== undefined);
 
   // 최신 값을 이벤트 처리기에서 읽는다.
@@ -350,7 +380,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
     function setupProjectors() {
       const kind = projectionKind();
       const { pano: set, photo: current } = latest.current;
-      const key = kind === "pano" && set ? `pano:${set.views.map((v) => v.url).join("|")}` : kind === "photo" && current ? `photo:${current.url}:${current.number}` : "";
+      const key = kind === "pano" && set ? `pano:${set.id}` : kind === "photo" && current ? `photo:${current.url}:${current.number}` : "";
       if (key !== "" && key === projectorKey) {
         renderDepth();
         return;
@@ -773,6 +803,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
     };
 
     api.current = { rebuild, setMode: applyMode, exportPanorama };
+    if (captureRef) captureRef.current = () => captureViews(panoPosition(latest.current.scene.room), [0, 90, 180, 270], 100, 1024, 768);
     if (process.env.NODE_ENV !== "production") (window as unknown as { __viewer3d?: unknown }).__viewer3d = { captureViews, room: () => latest.current.scene.room,
       items: () => latest.current.scene.items.map((item) => ({ id: item.id, name: item.name, x: item.x, y: item.y, w: item.widthMm, d: item.depthMm, hanging: !!item.hanging })),
       screenOf: (id: string) => {
@@ -808,6 +839,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
         });
       }
       disposeProjectors();
+      if (captureRef) captureRef.current = null;
       if (process.env.NODE_ENV !== "production") delete (window as unknown as { __viewer3d?: unknown }).__viewer3d;
       renderer.dispose();
       host.removeChild(renderer.domElement);
@@ -818,8 +850,14 @@ export default function SceneViewer3D({ scene, styleKey, mode, onChange, photo =
   }, []);
 
   // 가구를 옮기면 이미지 속 가구는 옛 자리에 남는다. 그래서 고치는 순간 AI 이미지를 끄고 모형만 보여 준다.
+  const firstStale = useRef(true);
   useEffect(() => {
-    if (edited) setPhotoOn(false);
+    if (firstStale.current) {
+      firstStale.current = false;
+      if (edited) setPhotoOn(false);
+      return;
+    }
+    setPhotoOn(!edited);
   }, [edited]);
 
   useEffect(() => {

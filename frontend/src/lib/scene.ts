@@ -287,18 +287,135 @@ export function scenePlanResult(scene: Scene): PlanResult {
   };
 }
 
+// ---- 다른 배치안 ----
+
+/** 가구를 좌우로 뒤집는다. 기둥과 창은 그대로라서 겹치는 가구는 가까운 빈자리로 옮긴다. */
+function mirrorItems(scene: Scene): Scene {
+  let current = scene;
+  for (const original of scene.items) {
+    if (original.hanging) continue;
+    const item = current.items.find((other) => other.id === original.id);
+    if (!item) continue;
+    const spot = placeNear({ ...current, items: current.items.filter((other) => other.id !== item.id) }, item, scene.room.widthMm - item.x - item.widthMm, item.y);
+    current = { ...current, items: current.items.map((other) => (other.id === item.id ? { ...other, x: spot.x, y: spot.y, chairAngles: other.chairAngles?.map((deg) => (180 - deg + 360) % 360) } : other)) };
+  }
+  return touch(scene, current.items);
+}
+
+/** 테이블을 카운터 앞에서 입구 앞까지 줄과 칸으로 다시 놓는다. 자리가 없는 테이블은 원래 자리를 유지한다. */
+function gridTables(scene: Scene): Scene {
+  const tables = scene.items.filter((item) => kindOf(item) === "table" && !item.hanging);
+  if (tables.length === 0) return scene;
+  const { room } = scene;
+  const fixedBottoms = scene.items.filter((item) => (item.category === "counter" || kindOf(item) === "showcase") && !item.hanging).map((item) => item.y + item.depthMm);
+  const top = (fixedBottoms.length > 0 ? Math.max(...fixedBottoms) + 1200 : 1500);
+  const bottom = room.depthMm - 2600;
+  const left = 600;
+  const right = room.widthMm - 600;
+  const cellW = tables[0].widthMm + 300;
+  const cols = Math.max(1, Math.floor((right - left) / cellW));
+  const rows = Math.max(1, Math.ceil(tables.length / cols));
+  let current: Scene = { ...scene, items: scene.items.filter((item) => !tables.some((table) => table.id === item.id)) };
+  tables.forEach((table, index) => {
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    const inRow = Math.min(cols, tables.length - row * cols);
+    const anchor = { x: left + ((col + 0.5) * (right - left)) / inRow, y: top + ((row + 0.5) * Math.max(1, bottom - top)) / rows };
+    const spot = findSpot(current, table, anchor) ?? (blockedAt(current, table, { x: table.x, y: table.y }) ? null : { x: table.x, y: table.y });
+    if (spot) current = { ...current, items: [...current.items, { ...table, x: spot.x, y: spot.y }] };
+  });
+  // 못 놓은 테이블이 있으면 이전 배치를 그대로 둔다.
+  const placedCount = current.items.filter((item) => kindOf(item) === "table").length;
+  return placedCount === tables.length ? touch(scene, current.items) : scene;
+}
+
+/** 같은 가구로 다른 배치안을 만든다. round가 짝수면 좌우 뒤집기, 홀수면 줄과 칸 정렬이다. */
+export function rearrangeLayout(scene: Scene, round: number): { scene: Scene; message: string } {
+  if (round % 2 === 0) return { scene: mirrorItems(scene), message: "가구를 좌우로 뒤집은 배치안이에요." };
+  const next = gridTables(scene);
+  if (next === scene) return { scene: mirrorItems(scene), message: "줄 정렬 자리가 모자라 좌우로 뒤집은 배치안으로 바꿨어요." };
+  return { scene: next, message: "테이블을 줄과 칸으로 다시 정렬한 배치안이에요." };
+}
+
+// ---- 종류 교체 ----
+
+/** 이 가구가 어느 묶음에 속하는지. 같은 묶음의 상품끼리 서로 바꿀 수 있다. */
+export function familyOf(item: SceneItem): string | null {
+  const fromProduct = item.catalogId ? PRODUCTS.find((product) => product.id === item.catalogId)?.family : undefined;
+  if (fromProduct) return fromProduct;
+  if (item.category === "chair") return item.name.includes("스툴") ? "stool" : "chair";
+  const kind = kindOf(item);
+  if (kind === "table") return "table";
+  if (kind === "counter") return "counter";
+  if (kind === "lamp") return "lamp";
+  if (kind === "shelf") return "shelf";
+  if (kind === "showcase") return "showcase";
+  if (kind === "reformer") return "reformer";
+  return null;
+}
+
+/** 이 가구를 바꿀 수 있는 상품들 */
+export function variantsOf(item: SceneItem): Product[] {
+  const family = familyOf(item);
+  return family ? PRODUCTS.filter((product) => product.family === family) : [];
+}
+
+/** 둥근 테이블에 딸린 의자로 고를 수 있는 상품들 */
+export function chairVariants(): Product[] {
+  return PRODUCTS.filter((product) => product.family === "chair");
+}
+
+/** 상품의 이름, 치수, 높이를 가구에 입힌다. 둥근 테이블은 지름만 바뀌고 바닥 면적은 지름에 의자 자리(위아래 450mm)를 더한다. */
+function shapeFor(item: SceneItem, product: Product): SceneItem {
+  if (item.round && item.tableDiaMm) {
+    const dia = Math.min(product.widthMm, product.depthMm);
+    const footprint = dia + (item.chairs > 0 ? 900 : 100);
+    return { ...item, name: product.name, catalogId: product.id, tableDiaMm: dia, widthMm: footprint, depthMm: footprint, heightMm: product.heightMm };
+  }
+  if (item.hanging) return { ...item, name: product.name, catalogId: product.id };
+  return { ...item, name: product.name, catalogId: product.id, widthMm: product.widthMm, depthMm: product.depthMm, heightMm: product.heightMm };
+}
+
+/** 가구 하나를 같은 묶음의 다른 상품으로 바꾼다. 크기가 달라지면 그 자리에서 다시 맞추고, 들어갈 자리가 없으면 바꾸지 않는다. */
+export function swapProduct(scene: Scene, id: string, product: Product): { scene: Scene; ok: boolean; message: string } {
+  const item = scene.items.find((other) => other.id === id);
+  if (!item) return { scene, ok: false, message: "바꿀 가구를 찾지 못했어요." };
+  const cx = item.x + item.widthMm / 2;
+  const cy = item.y + item.depthMm / 2;
+  const next = shapeFor(item, product);
+  const resized = next.widthMm !== item.widthMm || next.depthMm !== item.depthMm;
+  const centered = { ...next, x: Math.round(cx - next.widthMm / 2), y: Math.round(cy - next.depthMm / 2) };
+  const inside = centered.x >= 0 && centered.y >= 0 && centered.x + centered.widthMm <= scene.room.widthMm && centered.y + centered.depthMm <= scene.room.depthMm;
+  let placed: SceneItem | null = null;
+  if (!resized) placed = { ...next };
+  else if (inside && !blockedAt(scene, centered, { x: centered.x, y: centered.y })) placed = centered;
+  else {
+    const spot = placeNear(scene, centered, centered.x, centered.y);
+    const moved = { ...centered, x: spot.x, y: spot.y };
+    if (!blockedAt(scene, moved, spot) && moved.x >= 0 && moved.y >= 0 && moved.x + moved.widthMm <= scene.room.widthMm && moved.y + moved.depthMm <= scene.room.depthMm) placed = moved;
+  }
+  if (!placed) return { scene, ok: false, message: `${product.name}은(는) 크기가 커서 이 자리에 들어가지 않아요.` };
+  const result = placed;
+  return { scene: touch(scene, scene.items.map((other) => (other.id === id ? result : other))), ok: true, message: `${product.name}(으)로 바꿨어요.` };
+}
+
+/** 둥근 테이블에 딸린 의자 종류를 바꾼다. */
+export function swapChairs(scene: Scene, id: string, product: Product): Scene {
+  return touch(scene, scene.items.map((item) => (item.id === id ? { ...item, chairCatalogId: product.id } : item)));
+}
+
 // ---- 상품 추가 ----
 
 /** 도면에 놓을 수 있는 상품. 에스프레소 머신은 카운터마다 하나, 벽거울은 필라테스에서 자동으로 세므로 고르지 않는다. */
 const NOT_PLACEABLE = new Set(["espresso-machine", "mirror-wall"]);
 
 /** 상품 id로 가구 종류를 정한다. 종류가 있으면 그 종류의 기본 모양을 쓰고, 없으면 상품 치수 그대로 놓는다. */
-const KIND_OF_PRODUCT: Record<string, Kind> = {
-  "table-2p": "table",
-  "counter-bar": "counter",
-  "lamp-pendant": "lamp",
-  "fridge-showcase": "showcase",
-  "shelf-display": "shelf",
+const KIND_OF_FAMILY: Record<string, Kind> = {
+  table: "table",
+  counter: "counter",
+  lamp: "lamp",
+  showcase: "showcase",
+  shelf: "shelf",
   reformer: "reformer",
 };
 
@@ -322,10 +439,10 @@ export function placeableProducts(useType: UseType): Product[] {
 
 /** 상품 하나를 도면에 놓는다. 설계 기준을 지키는 빈자리가 없으면 ok가 false다. */
 export function addProduct(scene: Scene, product: Product): { scene: Scene; ok: boolean; item?: SceneItem } {
-  const kind = KIND_OF_PRODUCT[product.id];
+  const kind = product.family ? KIND_OF_FAMILY[product.family] : undefined;
   let proto: SceneItem;
   if (kind) {
-    proto = { ...makeItem(kind, scene.useType), name: product.name };
+    proto = shapeFor(makeItem(kind, scene.useType), product);
   } else {
     proto = {
       id: newId(),
@@ -404,7 +521,7 @@ export function quantitiesOf(scene: Scene): Record<string, number> {
   for (const item of scene.items) {
     const id = item.catalogId ?? catalogIdOf(item);
     if (id) add(id, 1);
-    if (item.chairs > 0) add("chair-oak", item.chairs);
+    if (item.chairs > 0) add(item.chairCatalogId ?? "chair-oak", item.chairs);
   }
   if (scene.useType === "cafe" && qty["counter-bar"]) add("espresso-machine", qty["counter-bar"]);
   if (scene.useType === "pilates") add("mirror-wall", 4); // 벽에 붙이는 거울은 도면 바닥에 없어서 기본 4개로 둔다.

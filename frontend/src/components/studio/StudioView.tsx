@@ -22,7 +22,8 @@ import { generateRender, roomFromArea } from "@/lib/api/functions";
 import type { LayoutItem, RenderInput, RenderOutput } from "@/lib/api/functions";
 import { drawGuide, guideNumberOf } from "@/lib/guideRender";
 import { panoSetOf } from "@/lib/panoViews";
-import { addProduct } from "@/lib/scene";
+import type { PanoSet } from "@/lib/panoViews";
+import { addProduct, rearrangeLayout } from "@/lib/scene";
 import { base64Of, loadMoodRefs, saveMoodRefs } from "@/lib/moodRefs";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
@@ -32,6 +33,9 @@ import StyleBar from "./StyleBar";
 import TagPopover from "./TagPopover";
 import QuotePanel from "./QuotePanel";
 import BoardPanel from "./BoardPanel";
+import PanelTabs from "./PanelTabs";
+import type { PanelTab } from "./PanelTabs";
+import TotalBar from "./TotalBar";
 import StudioToolbar from "./StudioToolbar";
 import type { StudioView as ViewKey } from "./StudioToolbar";
 import PlanDialog from "./PlanDialog";
@@ -94,8 +98,13 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   const [boardProgress, setBoardProgress] = useState<number | null>(null);
   const isMySpace = listing.id.startsWith("my-"); // 사용자가 직접 입력한 공간. 사진이 없어서 배치 편집이 기본이다.
   const [viewer, setViewer] = useState<ViewMode | null>(null); // 3D 둘러보기, 360 보기
+  const captureRef = useRef<(() => string[]) | null>(null); // 3D 뷰어가 모형을 네 방향으로 찍는 함수
+  const pendingAction = useRef<"render" | "pano">("render"); // 접근 코드를 받은 뒤 할 일
+  const [livePano, setLivePano] = useState<{ set: PanoSet; at: number; key: string } | null>(null); // 방금 만든 사방 이미지
+  const [panoBusy, setPanoBusy] = useState<number | null>(null);
+  const [note, setNote] = useState(""); // 사진 다시 만들기에 덧붙일 요청
   const [moodRefs, setMoodRefs] = useState<string[]>([]); // 분위기 참고 사진
-  const [planOpen, setPlanOpen] = useState(false); // 위쪽 도구 줄에서 여는 평면도 편집 창
+  const [panelTab, setPanelTab] = useState<PanelTab>("quote"); // 오른쪽 패널: 견적 또는 평면도 편집
   const [editing, setEditing] = useState(isMySpace); // 배치 편집. 켜면 평면도에서 고친 배치로 견적이 바로 계산된다.
 
   // AI로 새로 만든 렌더링. 스타일이나 업종을 바꾸면 버린다.
@@ -325,6 +334,9 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   };
   const spaceNumber = listing.thumbnail.match(/\/images\/spaces\/space-(\d\d)\.jpg$/)?.[1];
 
+  // 방금 만든 사방 이미지는 같은 업종과 스타일일 때만 쓴다.
+  const livePanoNow = livePano && livePano.key === `${useType}-${styleKey}` ? livePano : null;
+
   // 3D 뷰어가 모형 위에 입힐 AI 이미지. 사진 보정값이 있는 공간만 쓴다.
   const viewerPhotoNumber = guideNumberOf(listing.thumbnail);
   const viewerPhotoUrl = generatedActive && generated ? generated.imageDataUrl : generatedUrl;
@@ -340,9 +352,21 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     setViewer(next);
   }
 
+  const layoutRound = useRef(0);
+
+  /** 같은 가구로 다른 배치안을 만든다. 누를 때마다 좌우 뒤집기와 줄 정렬이 번갈아 나온다. */
+  function rearrange(): string {
+    const scene = sceneEditor.scene;
+    if (!scene || scene.useType !== useType) return "배치를 불러오는 중이에요. 잠시 뒤에 다시 눌러 주세요.";
+    const result = rearrangeLayout(scene, layoutRound.current);
+    layoutRound.current += 1;
+    sceneEditor.change(result.scene);
+    return result.message;
+  }
+
   function togglePlan() {
     setEditing(true);
-    setPlanOpen(!planOpen);
+    setPanelTab(panelTab === "plan" ? "quote" : "plan");
   }
 
   /** 상품 카탈로그에서 고른 상품을 도면에 놓는다. 견적은 같은 Scene에서 다시 계산된다. */
@@ -381,7 +405,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       }
     }
     const mood = moodRefs.length > 0 ? { images: moodRefs.map(base64Of) } : undefined;
-    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey, ...(guide ? { guide } : {}), ...(mood ? { mood } : {}) });
+    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey, ...(guide ? { guide } : {}), ...(mood ? { mood } : {}), ...(note.trim() ? { note: note.trim().slice(0, 200) } : {}) });
     if (!mounted.current) return;
     setRendering(false);
     if (token !== renderToken.current) return; // 그 사이 스타일이나 업종이 바뀌었다.
@@ -400,8 +424,75 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     }
   }
 
+  /** 지금 배치의 3D 모형을 네 방향으로 찍어 방향마다 사진 같은 이미지를 만들고, 360 보기에 입힌다. 앞 방향의 결과를 다음 방향의 참고로 넣는다. */
+  async function runPanoRender(code: string) {
+    const scene = sceneEditor.scene;
+    const capture = captureRef.current;
+    const reference = generatedRenderUrl(listing.thumbnail, useType, styleKey);
+    if (!scene || !capture || !spaceNumber || !reference || panoBusy !== null) {
+      setRenderNotice("3D 또는 360 보기를 연 상태에서 눌러 주세요.");
+      return;
+    }
+    const models = capture();
+    const urls: string[] = [];
+    let previous: { data: string; mime: "image/png" | "image/jpeg" } | undefined;
+    setRenderNotice("");
+    setPanoBusy(0);
+    const mood = moodRefs.length > 0 ? { images: moodRefs.map(base64Of) } : undefined;
+    for (let index = 0; index < models.length; index += 1) {
+      const result = await generateRender({
+        ...layoutInput,
+        code,
+        spaceNumber,
+        style: styleKey,
+        view: { modelImage: models[index].replace(/^data:image\/png;base64,/, ""), referencePath: reference, ...(previous ? { previous } : {}) },
+        ...(mood ? { mood } : {}),
+      });
+      if (!mounted.current) return;
+      if (!result.ok) {
+        setPanoBusy(null);
+        if (result.status === 401) {
+          saveCode("");
+          setCodeMessage("접근 코드가 맞지 않아요. 다시 입력해 주세요.");
+          pendingAction.current = "pano";
+          setDialog("code");
+        } else {
+          setRenderNotice(`${index + 1}번째 방향에서 멈췄어요. ${RENDER_ERRORS[result.status] ?? RENDER_ERRORS[500]}`);
+        }
+        return;
+      }
+      saveCode(code);
+      urls.push(result.data.imageDataUrl);
+      const match = result.data.imageDataUrl.match(/^data:(image\/(?:png|jpeg));base64,(.+)$/);
+      previous = match ? { mime: match[1] as "image/png" | "image/jpeg", data: match[2] } : undefined;
+      setPanoBusy(index + 1);
+    }
+    setPanoBusy(null);
+    const base = panoSetOf(viewerPhotoNumber ?? "00", useType, styleKey, scene.room);
+    const set: PanoSet = {
+      id: `live-${scene.updatedAt}`,
+      position: base?.position ?? [Math.round(scene.room.widthMm * 0.55), 1500, Math.round(scene.room.depthMm * 0.72)],
+      hfovDeg: 100,
+      aspect: 4 / 3,
+      views: [0, 90, 180, 270].map((yaw, i) => ({ yaw, url: urls[i] })),
+    };
+    setLivePano({ set, at: scene.updatedAt, key: `${useType}-${styleKey}` });
+  }
+
+  function startPanoRender() {
+    const code = readSavedCode();
+    pendingAction.current = "pano";
+    if (code) {
+      runPanoRender(code);
+    } else {
+      setCodeMessage("");
+      setDialog("code");
+    }
+  }
+
   function startRender() {
     const code = readSavedCode();
+    pendingAction.current = "render";
     if (code) {
       runRender(code);
     } else {
@@ -426,7 +517,8 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
           onClose={() => setDialog(null)}
           onSubmit={(code) => {
             setDialog(null);
-            runRender(code);
+            if (pendingAction.current === "pano") runPanoRender(code);
+            else runRender(code);
           }}
         />
       )}
@@ -471,15 +563,13 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
           mode={viewer}
           onChange={sceneEditor.change}
           photo={viewerPhoto}
-          pano={panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)}
+          pano={livePanoNow?.set ?? panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)}
+          captureRef={captureRef}
+          overlayStale={sceneEditor.scene.edited === true && livePanoNow?.at !== sceneEditor.scene.updatedAt}
           sideImageUrl={viewerPhotoUrl ?? imageUrl}
           sideImageStale={sceneEditor.scene.edited === true && !(generatedActive && renderedAt === sceneEditor.scene.updatedAt)}
         />
       )}
-      {planOpen && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
-        <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} onClose={() => setPlanOpen(false)} />
-      )}
-
       {dialogs}
       {!isBoardStage && (
         <StyleBar
@@ -519,6 +609,34 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     );
   }
 
+  // 견적 패널 위에 탭을 얹는다. 평면도 탭에서도 아래 합계가 보여서, 가구를 옮기면 금액이 바뀌는 것을 바로 본다.
+  if (!isBoardStage && quoteRender && quote && panel) {
+    const quotePanel = panel;
+    const sceneReady = sceneEditor.scene !== null && sceneEditor.scene.useType === useType;
+    panel = (
+      <PanelTabs
+        value={panelTab}
+        onChange={(tab) => {
+          if (tab === "plan") setEditing(true);
+          setPanelTab(tab);
+        }}
+      >
+        {panelTab === "quote" ? (
+          quotePanel
+        ) : (
+          <>
+            {sceneEditor.scene && sceneReady ? (
+              <PlanEditor embedded scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />
+            ) : (
+              <p style={{ padding: 20, fontSize: 13, color: "var(--gray-600)" }}>{sceneEditor.status === "failed" ? "배치를 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요." : "배치를 불러오는 중이에요."}</p>
+            )}
+            <TotalBar quote={quote} baseTotal={baseTotal} confirmHref={confirmHref} saveKey={quoteRender.id} disabled={showEmpty} />
+          </>
+        )}
+      </PanelTabs>
+    );
+  }
+
   return (
     <StudioShell
       subHeader={
@@ -537,15 +655,20 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
             onView={changeView}
             scene={sceneEditor.scene && sceneEditor.scene.useType === useType ? sceneEditor.scene : null}
             useType={useType}
-            planOpen={planOpen}
+            planOpen={panelTab === "plan"}
             onTogglePlan={togglePlan}
             onOpenSheet={() => setDialog("plan")}
             onAddProduct={addProductToScene}
             canUndo={sceneEditor.canUndo}
             onUndo={sceneEditor.undo}
             onReset={sceneEditor.reset}
+            onRearrange={rearrange}
+            onPanoRender={mode === "image" && spaceNumber ? startPanoRender : undefined}
+            panoBusy={panoBusy}
             onRender={mode === "image" && spaceNumber ? startRender : undefined}
             rendering={rendering}
+            note={note}
+            onNote={setNote}
             moodRefs={moodRefs}
             onMoodRefs={(next) => {
               setMoodRefs(next);

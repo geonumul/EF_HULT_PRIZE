@@ -5,7 +5,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { PlanResult } from "@/lib/api/functions";
-import { KINDS_BY_USE, KIND_LABELS, addItem, moveItem, removeItem, rotateItem } from "@/lib/scene";
+import { KINDS_BY_USE, KIND_LABELS, addItem, chairVariants, moveItem, removeItem, rotateItem, swapChairs, swapProduct, variantsOf } from "@/lib/scene";
 import { checkScene, entryZone } from "@/lib/sceneCheck";
 import { applyText } from "@/lib/sceneText";
 import type { Scene } from "@/types/scene";
@@ -20,13 +20,13 @@ type Props = {
   onChange: (next: Scene) => void;
   onUndo: () => void;
   onReset: () => void;
-  /** 위쪽 도구 줄의 "평면도"로 열고 닫는 팝업이라, 닫기는 부모가 정한다. */
-  onClose: () => void;
+  /** 오른쪽 패널 안에 놓는 모양이면 true. 떠 있는 창 스타일을 쓰지 않는다. */
+  embedded?: boolean;
 };
 
 const EXAMPLES = ["테이블 2개 더 놔줘", "의자 하나 빼줘", "카운터를 입구 쪽으로"];
 
-export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, onClose }: Props) {
+export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, embedded = false }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Scene | null>(null); // 끄는 동안의 임시 배치
   const [message, setMessage] = useState("");
@@ -58,6 +58,7 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, 
   );
 
   const selectedItem = shown.items.find((item) => item.id === selectedId) ?? null;
+  const variants = selectedItem ? variantsOf(selectedItem) : [];
   const badIndexes = useMemo(() => new Set(shown.items.flatMap((item, index) => (check.badIds.has(item.id) ? [index] : []))), [shown, check]);
 
   /** 화면 좌표를 도면 mm로 바꾼다. */
@@ -143,13 +144,10 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, 
   );
 
   return (
-    <section className={styles.panel} onClick={(event) => event.stopPropagation()} aria-label="배치 편집">
+    <section className={embedded ? `${styles.panel} ${styles.embedded}` : styles.panel} onClick={(event) => event.stopPropagation()} aria-label="배치 편집">
       <div className={styles.head}>
-        <span className={styles.title}>평면도 편집</span>
+        <span className={styles.title}>배치 편집</span>
         {chip}
-        <button type="button" className={styles.toggle} onClick={onClose}>
-          닫기
-        </button>
       </div>
 
       {(
@@ -195,6 +193,48 @@ export default function PlanEditor({ scene, canUndo, onChange, onUndo, onReset, 
                 >
                   삭제
                 </button>
+                {variants.length > 1 && (
+                  <label className={styles.swap}>
+                    <span>종류</span>
+                    <select
+                      value={selectedItem.catalogId ?? ""}
+                      onChange={(event) => {
+                        const product = variants.find((candidate) => candidate.id === event.target.value);
+                        if (!product) return;
+                        const result = swapProduct(scene, selectedItem.id, product);
+                        setMessage(result.message);
+                        if (result.ok) onChange(result.scene);
+                      }}
+                    >
+                      {!selectedItem.catalogId && <option value="">기본</option>}
+                      {variants.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {selectedItem.round && selectedItem.chairs > 0 && (
+                  <label className={styles.swap}>
+                    <span>의자</span>
+                    <select
+                      value={selectedItem.chairCatalogId ?? "chair-oak"}
+                      onChange={(event) => {
+                        const product = chairVariants().find((candidate) => candidate.id === event.target.value);
+                        if (!product) return;
+                        onChange(swapChairs(scene, selectedItem.id, product));
+                        setMessage(`의자를 ${product.name}(으)로 바꿨어요.`);
+                      }}
+                    >
+                      {chairVariants().map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </>
             ) : (
               <span className={styles.hint}>평면도의 가구를 끌어서 옮기세요.</span>

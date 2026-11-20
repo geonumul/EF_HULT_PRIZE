@@ -58,6 +58,10 @@ export type Product = {
   usedPrice?: number; // 원. 중고가 있으면
   imageUrl: string;
   links: ProductLink[]; // 최저가 순
+  /** 같은 용도의 상품 묶음. 같은 family끼리는 서로 바꿀 수 있다. chair, stool, table, counter, lamp, shelf, showcase, reformer */
+  family?: string;
+  /** 3D 모양의 종류. 색과 재질이 달라진다. */
+  look?: string;
 };
 
 /** 렌더링 이미지 위에 붙는 상품 태그 */

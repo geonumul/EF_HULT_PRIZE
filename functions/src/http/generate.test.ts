@@ -151,3 +151,28 @@ test("분위기 참고 사진을 받으면 요청에 넣고, 잘못된 값은 �
   assert.ok("error" in validateGenerateInput({ ...body, mood: { images: ["AQID", "AQID", "AQID"] } }));
   assert.ok("error" in validateGenerateInput({ ...body, mood: { images: ["../x"] } }));
 });
+
+test("덧붙이는 요청 문장을 프롬프트에 넣고, 너무 길면 거른다", async () => {
+  const checked = validateGenerateInput({ ...body, note: "조명을   더 따뜻하게" });
+  assert.ok("input" in checked);
+  const seen = { requests: [] as ImageGenerationRequest[], assets: [] as string[] };
+  await generateRender((checked as { input: Parameters<typeof generateRender>[0] }).input, makeDeps([passing], seen));
+  assert.ok(seen.requests[0].prompt.includes("Customer request: 조명을 더 따뜻하게"));
+  assert.ok("error" in validateGenerateInput({ ...body, note: "가".repeat(201) }));
+});
+
+test("360 사방 이미지의 한 방향: 모형 그림과 스타일 참고, 앞 방향으로 요청을 만든다", async () => {
+  const view = { modelImage: "AQID", referencePath: "/images/renders/space-08-cafe-wood.jpg", previous: { data: "AQID", mime: "image/jpeg" } };
+  const checked = validateGenerateInput({ ...body, spaceNumber: "08", view });
+  assert.ok("input" in checked);
+  const seen = { requests: [] as ImageGenerationRequest[], assets: [] as string[] };
+  const result = await generateRender((checked as { input: Parameters<typeof generateRender>[0] }).input, makeDeps([passing], seen));
+  assert.equal(seen.requests[0].structureKind, "view");
+  assert.equal(seen.requests[0].referenceImages?.length, 2);
+  assert.equal(seen.requests[0].aspectRatio, "4:3");
+  assert.ok(seen.assets.includes("/images/renders/space-08-cafe-wood.jpg"));
+  assert.equal(result.tags.length, 0);
+  assert.ok("error" in validateGenerateInput({ ...body, view: { ...view, referencePath: "/etc/passwd" } }));
+  assert.ok("error" in validateGenerateInput({ ...body, view: { ...view, modelImage: "../x" } }));
+  assert.ok("error" in validateGenerateInput({ ...body, view: { ...view, previous: { data: "AQID", mime: "image/gif" } } }));
+});
