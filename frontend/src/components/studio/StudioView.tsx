@@ -317,6 +317,11 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
   };
   const spaceNumber = listing.thumbnail.match(/\/images\/spaces\/space-(\d\d)\.jpg$/)?.[1];
 
+  // 3D 뷰어가 모형 위에 입힐 AI 이미지. 사진 보정값이 있는 공간만 쓴다.
+  const viewerPhotoNumber = guideNumberOf(listing.thumbnail);
+  const viewerPhotoUrl = generatedActive && generated ? generated.imageDataUrl : generatedUrl;
+  const viewerPhoto = viewerPhotoNumber && viewerPhotoUrl ? { url: viewerPhotoUrl, number: viewerPhotoNumber } : null;
+
   // 3D를 열면 배치 편집도 같이 켠다. 3D와 평면도, 견적이 같은 Scene을 읽는다.
   function open3D() {
     if (viewer) {
@@ -446,7 +451,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       )}
       {rendering && <RenderProgress />}
       {viewer && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
-        <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} />
+        <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} photo={viewerPhoto} />
       )}
       {editing && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
         <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />

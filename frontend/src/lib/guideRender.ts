@@ -64,6 +64,24 @@ export class GuideCamera {
     return [dot(p, this.d2), dot(p, this.d1)];
   }
 
+  /**
+   * 이 사진을 찍은 카메라의 자세. 3D 뷰어 좌표(X = 도면 x, Y = 높이, Z = 도면 y, 단위 mm)로 준다.
+   * right, imageDown, forward는 카메라의 오른쪽, 사진 아래쪽, 바라보는 방향이다.
+   */
+  pose() {
+    const axis = (i: number): Vec => [this.d2[i], -this.down[i], -this.d1[i]];
+    return {
+      x: -this.left,
+      y: this.calib.h,
+      z: this.back,
+      right: axis(0),
+      imageDown: axis(1),
+      forward: axis(2),
+      vfovDeg: (2 * Math.atan(this.calib.height / 2 / this.calib.f) * 180) / Math.PI,
+      aspect: this.calib.width / this.calib.height,
+    };
+  }
+
   /** 도면 좌표 (x, y)와 바닥에서의 높이 z(mm) -> 사진 픽셀. 카메라 뒤쪽이면 null */
   project(x: number, y: number, z: number): [number, number] | null {
     const lateral = x + this.left;
