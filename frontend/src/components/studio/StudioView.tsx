@@ -21,6 +21,7 @@ import { IMAGE_PLANS } from "@/lib/imagePlans";
 import { generateRender, roomFromArea } from "@/lib/api/functions";
 import type { LayoutItem, RenderInput, RenderOutput } from "@/lib/api/functions";
 import { drawGuide, guideNumberOf } from "@/lib/guideRender";
+import { panoSetOf } from "@/lib/panoViews";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
 import ModeSwitch from "./ModeSwitch";
@@ -451,7 +452,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
       )}
       {rendering && <RenderProgress />}
       {viewer && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
-        <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} photo={viewerPhoto} />
+        <SceneViewer3D scene={sceneEditor.scene} styleKey={styleKey} mode={viewer} onModeChange={setViewer} onChange={sceneEditor.change} onClose={() => setViewer(null)} photo={viewerPhoto} pano={panoSetOf(viewerPhotoNumber, useType, styleKey, sceneEditor.scene?.room ?? null)} />
       )}
       {editing && mode === "image" && !isBoardStage && !showEmpty && sceneEditor.scene && sceneEditor.scene.useType === useType && (
         <PlanEditor scene={sceneEditor.scene} canUndo={sceneEditor.canUndo} onChange={sceneEditor.change} onUndo={sceneEditor.undo} onReset={sceneEditor.reset} />

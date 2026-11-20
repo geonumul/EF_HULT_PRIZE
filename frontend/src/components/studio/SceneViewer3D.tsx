@@ -8,8 +8,10 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { DIM, pendantBottomMm } from "@/lib/dimensions";
 import { GUIDE_CALIB } from "@/lib/guideCalib";
 import { GuideCamera } from "@/lib/guideRender";
+import type { PanoSet } from "@/lib/panoViews";
 import { moveItem } from "@/lib/scene";
 import { entryZone } from "@/lib/sceneCheck";
 import type { RenderStyleKey } from "@/types/studio";
@@ -27,6 +29,8 @@ type Props = {
   onClose: () => void;
   /** AI가 만든 렌더링 이미지와 그 공간의 사진 번호. 있으면 사진을 찍은 자리에서 이 이미지를 모형 위에 입힌다. */
   photo?: { url: string; number: string } | null;
+  /** 방 안 한 자리에서 사방을 찍은 AI 이미지 묶음. 있으면 사진 한 장보다 우선한다. */
+  pano?: PanoSet | null;
 };
 
 const EYE_HEIGHT_MM = 1500;
@@ -37,17 +41,42 @@ const PALETTES: Record<RenderStyleKey, { floor: string; wall: string; wood: stri
   industrial: { floor: "#6d6d6a", wall: "#8b8b86", wood: "#4a3d36", chair: "#2b2b2b", counter: "#2f2926", metal: "#1f1f1f" },
 };
 
-// AI 이미지를 모형 위에 입히는 투영 값. 사진을 찍은 카메라(projector)에서 본 이미지를 표면에 그대로 얹는다.
-// 모형 표면 중에 그 카메라에서 보이는 곳만 입히고(깊이 비교), 가려진 곳은 원래 색을 둔다.
-const PROJECTION = {
-  uProjMap: { value: null as THREE.Texture | null },
-  uDepthMap: { value: null as THREE.Texture | null },
-  uProjMatrix: { value: new THREE.Matrix4() },
-  uProjCamPos: { value: new THREE.Vector3() },
-  uProjOn: { value: 0 },
+// AI 이미지를 모형 위에 입히는 투영 값. 카메라(projector) 여러 대가 각자 이미지를 보고, 그 카메라에서 보이는 모형 표면에 그대로 얹는다.
+// 같은 자리를 여러 카메라가 보면 이미지 가장자리에서 서로 섞는다. 가려진 곳은 깊이를 비교해 원래 색을 둔다.
+const MAX_PROJECTORS = 4;
+const PROJECTION: Record<string, { value: unknown }> = {
+  uProjCount: { value: 0 },
+  uProjMatrix: { value: Array.from({ length: MAX_PROJECTORS }, () => new THREE.Matrix4()) },
+  uProjCamPos: { value: Array.from({ length: MAX_PROJECTORS }, () => new THREE.Vector3()) },
   uNear: { value: 200 },
   uFar: { value: 60000 },
 };
+for (let i = 0; i < MAX_PROJECTORS; i += 1) {
+  PROJECTION[`uProjMap${i}`] = { value: null };
+  PROJECTION[`uDepthMap${i}`] = { value: null };
+}
+
+const SAMPLERS = Array.from({ length: MAX_PROJECTORS }, (_, i) => `uniform sampler2D uProjMap${i}; uniform sampler2D uDepthMap${i};`).join("\n");
+const SAMPLE_ALL = Array.from(
+  { length: MAX_PROJECTORS },
+  (_, i) => `if (uProjCount > ${i}) {
+  vec4 pc = uProjMatrix[${i}] * vec4(vPW, 1.0);
+  if (pc.w > 0.0) {
+    vec3 ndc = pc.xyz / pc.w;
+    vec2 uv = ndc.xy * 0.5 + 0.5;
+    if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
+      float stored = linDepth(texture2D(uDepthMap${i}, uv).r);
+      float mine = linDepth(ndc.z * 0.5 + 0.5);
+      float facing = abs(dot(normalize(vPN), normalize(uProjCamPos[${i}] - vPW)));
+      if (mine <= stored + 90.0 && facing > 0.06) {
+        float w = smoothstep(0.0, 0.4, 1.0 - max(abs(ndc.x), abs(ndc.y)));
+        projSum += texture2D(uProjMap${i}, uv).rgb * w;
+        projWeight += w;
+      }
+    }
+  }
+}`,
+).join("\n");
 
 function withProjection(material: THREE.MeshStandardMaterial): THREE.MeshStandardMaterial {
   material.onBeforeCompile = (shader) => {
@@ -58,25 +87,18 @@ function withProjection(material: THREE.MeshStandardMaterial): THREE.MeshStandar
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "void main() {",
-        `uniform sampler2D uProjMap; uniform sampler2D uDepthMap; uniform mat4 uProjMatrix; uniform vec3 uProjCamPos;
-uniform float uProjOn; uniform float uNear; uniform float uFar; varying vec3 vPW; varying vec3 vPN;
+        `${SAMPLERS}
+uniform mat4 uProjMatrix[${MAX_PROJECTORS}]; uniform vec3 uProjCamPos[${MAX_PROJECTORS}];
+uniform int uProjCount; uniform float uNear; uniform float uFar; varying vec3 vPW; varying vec3 vPN;
 float linDepth(float d) { float z = d * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
 void main() {`,
       )
       .replace(
         "#include <opaque_fragment>",
-        `if (uProjOn > 0.5) {
-  vec4 pc = uProjMatrix * vec4(vPW, 1.0);
-  if (pc.w > 0.0) {
-    vec3 ndc = pc.xyz / pc.w;
-    vec2 uv = ndc.xy * 0.5 + 0.5;
-    if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
-      float stored = linDepth(texture2D(uDepthMap, uv).r);
-      float mine = linDepth(ndc.z * 0.5 + 0.5);
-      float facing = abs(dot(normalize(vPN), normalize(uProjCamPos - vPW)));
-      if (mine <= stored + 90.0 && facing > 0.06) outgoingLight = texture2D(uProjMap, uv).rgb;
-    }
-  }
+        `if (uProjCount > 0) {
+  vec3 projSum = vec3(0.0); float projWeight = 0.0;
+${SAMPLE_ALL}
+  if (projWeight > 0.001) outgoingLight = projSum / projWeight;
 }
 #include <opaque_fragment>`,
       );
@@ -104,31 +126,35 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
   const chair = mat(palette.chair);
 
   if (item.hanging) {
-    const drop = Math.max(400, ceilingMm - 2000);
+    // 갓 아래가 식탁 상판에서 750 위(건축 치수 사전 p.18)가 되게 매단다.
+    const bottom = Math.min(pendantBottomMm(), ceilingMm - 400);
+    const drop = ceilingMm - bottom - 220;
     const wire = box(8, drop, 8, mat(palette.metal), 0, ceilingMm - drop, 0);
     const shade = new THREE.Mesh(new THREE.ConeGeometry(190, 220, 24, 1, true), mat("#f4d98a", { emissive: "#f4c84a", emissiveIntensity: 0.6, side: THREE.DoubleSide }));
-    shade.position.set(0, ceilingMm - drop - 110, 0);
+    shade.position.set(0, bottom + 110, 0);
     group.add(wire, shade);
     return group;
   }
 
   if (item.round && item.tableDiaMm) {
     const radius = item.tableDiaMm / 2;
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 40, 36), wood);
-    top.position.y = 720 - 20;
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, DIM.table.topThicknessMm, 36), wood);
+    top.position.y = DIM.table.heightMm - DIM.table.topThicknessMm / 2;
     top.castShadow = true;
     top.receiveShadow = true;
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(40, 60, 700, 14), mat(palette.metal));
-    leg.position.y = 350;
+    const legHeight = DIM.table.heightMm - DIM.table.topThicknessMm;
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(40, 60, legHeight, 14), mat(palette.metal));
+    leg.position.y = legHeight / 2;
     const foot = new THREE.Mesh(new THREE.CylinderGeometry(220, 220, 20, 24), mat(palette.metal));
     foot.position.y = 10;
     group.add(top, leg, foot);
     for (const deg of item.chairAngles ?? []) {
       const rad = (deg * Math.PI) / 180;
       const chairGroup = new THREE.Group();
-      chairGroup.add(box(400, 40, 400, chair, 0, 410, 0));
-      chairGroup.add(box(400, 450, 40, chair, 0, 450, 180)); // 등받이는 테이블 반대쪽
-      for (const [lx, lz] of [[-170, -170], [170, -170], [-170, 170], [170, 170]]) chairGroup.add(box(30, 410, 30, chair, lx, 0, lz));
+      const { seatWidthMm: sw, seatDepthMm: sd, seatHeightMm: sh, seatThicknessMm: st, backHeightMm: bh } = DIM.chair;
+      chairGroup.add(box(sw, st, sd, chair, 0, sh - st, 0));
+      chairGroup.add(box(sw, bh - sh, 40, chair, 0, sh, sd / 2 - 20)); // 등받이는 테이블 반대쪽
+      for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) chairGroup.add(box(30, sh - st, 30, chair, (lx * (sw - 50)) / 2, 0, (lz * (sd - 50)) / 2));
       const dist = radius + 260;
       chairGroup.position.set(Math.cos(rad) * dist, 0, Math.sin(rad) * dist);
       chairGroup.rotation.y = -rad + Math.PI / 2; // 등받이(+z 쪽)가 바깥을 보게 돌린다.
@@ -140,22 +166,29 @@ function buildItem(item: SceneItem, palette: (typeof PALETTES)[RenderStyleKey], 
   const w = item.widthMm;
   const d = item.depthMm;
   if (item.category === "counter") {
-    group.add(box(w, 960, d, mat(palette.counter)));
-    group.add(box(w + 60, 40, d + 60, wood, 0, 960, 0));
+    // 바 카운터 1100, 계산대 950 (건축 치수 사전 p.19)
+    const height = item.name.includes("계산") ? DIM.counter.cashierHeightMm : DIM.counter.barHeightMm;
+    const body = height - DIM.counter.topThicknessMm;
+    group.add(box(w, body, d, mat(palette.counter)));
+    group.add(box(w + DIM.counter.topOverhangMm * 2, DIM.counter.topThicknessMm, d + DIM.counter.topOverhangMm * 2, wood, 0, body, 0));
   } else if (item.category === "shelf") {
-    group.add(box(w, 1800, 30, wood, 0, 0, -d / 2 + 15));
-    for (let level = 0; level <= 5; level += 1) group.add(box(w, 30, d, wood, 0, level * 340, 0));
-    group.add(box(30, 1800, d, wood, -w / 2 + 15, 0, 0), box(30, 1800, d, wood, w / 2 - 15, 0, 0));
+    const top = DIM.shelf.heightMm;
+    group.add(box(w, top, 30, wood, 0, 0, -d / 2 + 15));
+    for (let level = 0; level <= Math.floor(top / DIM.shelf.levelGapMm) - 1; level += 1) group.add(box(w, 30, d, wood, 0, level * DIM.shelf.levelGapMm, 0));
+    group.add(box(w, 30, d, wood, 0, top - 30, 0));
+    group.add(box(30, top, d, wood, -w / 2 + 15, 0, 0), box(30, top, d, wood, w / 2 - 15, 0, 0));
   } else if (item.category === "reformer") {
     group.add(box(w, 280, d - 200, wood, 0, 120, 0));
     group.add(box(w * 0.6, 80, d - 200, mat("#222222"), w * 0.1, 400, 0));
     group.add(box(80, 700, d, mat(palette.metal), -w / 2 + 60, 0, 0));
   } else if (item.category === "table") {
-    group.add(box(w, 40, d, wood, 0, 760, 0));
-    for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) group.add(box(50, 760, 50, wood, (lx * (w - 100)) / 2, 0, (lz * (d - 100)) / 2));
+    const legHeight = DIM.table.displayHeightMm - DIM.table.topThicknessMm;
+    group.add(box(w, DIM.table.topThicknessMm, d, wood, 0, legHeight, 0));
+    for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) group.add(box(50, legHeight, 50, wood, (lx * (w - 100)) / 2, 0, (lz * (d - 100)) / 2));
   } else if (item.name.includes("쇼케이스")) {
-    group.add(box(w, 700, d, mat(palette.counter)));
-    group.add(box(w - 40, 400, d - 40, mat("#cfe8f3", { transparent: true, opacity: 0.45 }), 0, 700, 0));
+    const caseBody = DIM.showcase.heightMm - 400;
+    group.add(box(w, caseBody, d, mat(palette.counter)));
+    group.add(box(w - 40, 400, d - 40, mat("#cfe8f3", { transparent: true, opacity: 0.45 }), 0, caseBody, 0));
   } else {
     group.add(box(w, 800, d, wood));
   }
@@ -188,16 +221,17 @@ function buildStructure(s: Scene["structures"][number], ceilingMm: number): THRE
   return group;
 }
 
-export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onChange, onClose, photo = null }: Props) {
+export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onChange, onClose, photo = null, pano = null }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [hint, setHint] = useState("");
   const [selectedName, setSelectedName] = useState("");
   const [photoOn, setPhotoOn] = useState(true);
-  const photoReady = photo !== null && GUIDE_CALIB[photo.number] !== undefined;
+  const edited = scene.edited === true;
+  const photoReady = pano !== null || (photo !== null && GUIDE_CALIB[photo.number] !== undefined);
 
   // 최신 값을 이벤트 처리기에서 읽는다.
-  const latest = useRef({ scene, onChange, photo, photoOn });
-  latest.current = { scene, onChange, photo, photoOn };
+  const latest = useRef({ scene, onChange, photo, pano, photoOn });
+  latest.current = { scene, onChange, photo, pano, photoOn };
   const api = useRef<{ rebuild: () => void; setMode: (mode: ViewMode) => void; exportPanorama: () => void } | null>(null);
 
   // 한 번만 만든다: 렌더러, 카메라, 이벤트
@@ -239,63 +273,103 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
     const eye = new THREE.Vector3();
 
     // ---- AI 이미지 입히기 ----
-    let photoTexture: THREE.Texture | null = null;
-    let photoUrl = "";
-    let projector: THREE.PerspectiveCamera | null = null;
-    let projectorPose: ReturnType<GuideCamera["pose"]> | null = null;
-    let depthTarget: THREE.WebGLRenderTarget | null = null;
+    // 두 가지가 있다. pano: 방 안 한 자리에서 사방을 찍은 이미지 묶음. photo: 사진을 찍은 카메라 자리에서 이미지 한 장.
+    type Projector = { camera: THREE.PerspectiveCamera; url: string; texture: THREE.Texture | null; depth: THREE.WebGLRenderTarget };
+    let projectors: Projector[] = [];
+    let projectorKey = "";
+    let startPose: { position: THREE.Vector3; yaw: number; pitch: number; fov: number } | null = null;
+    let capturing = false; // 시점 사진을 찍는 동안에는 AI 이미지를 입히지 않는다.
 
-    function photoActive(): boolean {
-      const { photo: current, photoOn: on } = latest.current;
-      return currentMode === "pano" && on && current !== null && GUIDE_CALIB[current.number] !== undefined;
+    function projectionKind(): "pano" | "photo" | null {
+      if (capturing || currentMode !== "pano" || !latest.current.photoOn) return null;
+      const { pano: set, photo: current } = latest.current;
+      if (set) return "pano";
+      return current !== null && GUIDE_CALIB[current.number] !== undefined ? "photo" : null;
     }
 
-    /** 사진 카메라에서 모형을 한 번 그려 깊이를 저장한다. 어디가 가려졌는지 알려면 필요하다. */
+    function disposeProjectors() {
+      for (const item of projectors) {
+        item.depth.dispose();
+        item.texture?.dispose();
+      }
+      projectors = [];
+      projectorKey = "";
+      PROJECTION.uProjCount.value = 0;
+    }
+
+    /** 각 카메라에서 모형을 한 번씩 그려 깊이를 저장한다. 어디가 가려졌는지 알려면 필요하다. */
     function renderDepth() {
-      if (!projector || !depthTarget) return;
-      PROJECTION.uProjOn.value = 0;
-      renderer.setRenderTarget(depthTarget);
-      renderer.clear();
-      renderer.render(threeScene, projector);
+      if (projectors.length === 0) return;
+      PROJECTION.uProjCount.value = 0;
+      for (const item of projectors) {
+        renderer.setRenderTarget(item.depth);
+        renderer.clear();
+        renderer.render(threeScene, item.camera);
+      }
       renderer.setRenderTarget(null);
-      PROJECTION.uProjOn.value = photoTexture ? 1 : 0;
+      projectors.forEach((item, index) => {
+        PROJECTION[`uProjMap${index}`].value = item.texture;
+        PROJECTION[`uDepthMap${index}`].value = item.depth.depthTexture;
+        (PROJECTION.uProjMatrix.value as THREE.Matrix4[])[index].multiplyMatrices(item.camera.projectionMatrix, item.camera.matrixWorldInverse);
+        (PROJECTION.uProjCamPos.value as THREE.Vector3[])[index].copy(item.camera.position);
+      });
+      // 이미지가 아직 안 읽힌 카메라가 있으면 켜지 않는다.
+      PROJECTION.uProjCount.value = projectors.some((item) => item.texture === null) ? 0 : projectors.length;
     }
 
-    function setupProjector() {
-      const current = latest.current.photo;
-      if (!photoActive() || !current) {
-        PROJECTION.uProjOn.value = 0;
-        projector = null;
-        projectorPose = null;
+    function addProjector(camera: THREE.PerspectiveCamera, url: string, width: number, height: number) {
+      camera.updateMatrixWorld(true);
+      const depth = new THREE.WebGLRenderTarget(width, height);
+      depth.depthTexture = new THREE.DepthTexture(width, height);
+      const item: Projector = { camera, url, texture: null, depth };
+      projectors.push(item);
+      new THREE.TextureLoader().load(url, (texture) => {
+        if (!projectors.includes(item)) return;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        item.texture = texture;
+        renderDepth();
+      });
+    }
+
+    function setupProjectors() {
+      const kind = projectionKind();
+      const { pano: set, photo: current } = latest.current;
+      const key = kind === "pano" && set ? `pano:${set.views.map((v) => v.url).join("|")}` : kind === "photo" && current ? `photo:${current.url}:${current.number}` : "";
+      if (key !== "" && key === projectorKey) {
+        renderDepth();
         return;
       }
-      const calib = GUIDE_CALIB[current.number];
-      const pose = new GuideCamera(calib).pose();
-      projectorPose = pose;
-      projector = new THREE.PerspectiveCamera(pose.vfovDeg, pose.aspect, PROJECTION.uNear.value, PROJECTION.uFar.value);
-      projector.position.set(pose.x, pose.y, pose.z);
-      const right = new THREE.Vector3(...pose.right);
-      const up = new THREE.Vector3(...pose.imageDown).negate();
-      const back = new THREE.Vector3(...pose.forward).negate();
-      projector.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, back));
-      projector.updateMatrixWorld(true);
-      PROJECTION.uProjMatrix.value.multiplyMatrices(projector.projectionMatrix, projector.matrixWorldInverse);
-      PROJECTION.uProjCamPos.value.copy(projector.position);
-      depthTarget?.dispose();
-      depthTarget = new THREE.WebGLRenderTarget(calib.width, calib.height);
-      depthTarget.depthTexture = new THREE.DepthTexture(calib.width, calib.height);
-      PROJECTION.uDepthMap.value = depthTarget.depthTexture;
-      if (photoUrl !== current.url) {
-        photoUrl = current.url;
-        photoTexture = null;
-        PROJECTION.uProjOn.value = 0;
-        new THREE.TextureLoader().load(current.url, (texture) => {
-          if (photoUrl !== current.url) return;
-          texture.colorSpace = THREE.SRGBColorSpace;
-          photoTexture = texture;
-          PROJECTION.uProjMap.value = texture;
-          renderDepth();
-        });
+      disposeProjectors();
+      startPose = null;
+      if (!kind || !key) return;
+      projectorKey = key;
+      if (kind === "pano" && set) {
+        const [x, y, z] = set.position;
+        const vfov = (2 * Math.atan(Math.tan((set.hfovDeg * Math.PI) / 360) / set.aspect) * 180) / Math.PI;
+        for (const view of set.views.slice(0, MAX_PROJECTORS)) {
+          const camera = new THREE.PerspectiveCamera(vfov, set.aspect, PROJECTION.uNear.value as number, PROJECTION.uFar.value as number);
+          const rad = (view.yaw * Math.PI) / 180;
+          camera.position.set(x, y, z);
+          camera.lookAt(x + Math.sin(rad), y, z - Math.cos(rad));
+          addProjector(camera, view.url, 1024, Math.round(1024 / set.aspect));
+        }
+        startPose = { position: new THREE.Vector3(x, y, z), yaw: 0, pitch: 0, fov: 75 };
+      } else if (kind === "photo" && current) {
+        const calib = GUIDE_CALIB[current.number];
+        const pose = new GuideCamera(calib).pose();
+        const camera = new THREE.PerspectiveCamera(pose.vfovDeg, pose.aspect, PROJECTION.uNear.value as number, PROJECTION.uFar.value as number);
+        camera.position.set(pose.x, pose.y, pose.z);
+        const right = new THREE.Vector3(...pose.right);
+        const up = new THREE.Vector3(...pose.imageDown).negate();
+        const back = new THREE.Vector3(...pose.forward).negate();
+        camera.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, back));
+        addProjector(camera, current.url, calib.width, calib.height);
+        startPose = {
+          position: new THREE.Vector3(pose.x, pose.y, pose.z),
+          yaw: Math.atan2(pose.forward[0], -pose.forward[2]),
+          pitch: Math.asin(pose.forward[1]),
+          fov: pose.vfovDeg,
+        };
       }
     }
 
@@ -345,7 +419,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
       back.receiveShadow = left.receiveShadow = right.receiveShadow = true;
       content.add(back, left, right);
       if (currentMode === "pano") {
-        const withFront = !photoActive(); // 사진 카메라는 방 밖에 있을 수 있어서, 이미지를 입힐 때는 앞쪽 벽을 둔다.
+        const withFront = projectionKind() !== "photo"; // 사진 카메라는 방 밖에 있을 수 있어서, 이미지를 입힐 때는 앞쪽 벽을 둔다.
         const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.widthMm, room.depthMm), mat("#f4f1ec", { side: THREE.DoubleSide }));
         ceiling.rotation.x = Math.PI / 2;
         ceiling.position.set(room.widthMm / 2, room.ceilingMm, room.depthMm / 2);
@@ -388,7 +462,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
       setSelected(null);
       const { room } = latest.current.scene;
       if (next === "orbit") {
-        setupProjector();
+        setupProjectors();
         controls.enabled = true;
         camera.fov = 50;
         camera.position.set(room.widthMm * 0.5, Math.max(room.widthMm, room.depthMm) * 0.9, room.depthMm + Math.max(room.widthMm, room.depthMm) * 0.8);
@@ -397,15 +471,18 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
         setHint("끌면 돌려 보고, 가구를 끌면 옮겨요.");
       } else {
         controls.enabled = false;
-        setupProjector();
-        if (projectorPose) {
-          // 사진을 찍은 자리에서 시작한다. 이 자리에서는 AI 이미지가 사진 그대로 보인다.
-          const { x, y, z, forward, vfovDeg } = projectorPose;
-          camera.fov = vfovDeg;
-          eye.set(x, y, z);
-          yaw = Math.atan2(forward[0], -forward[2]);
-          pitch = Math.asin(forward[1]);
-          setHint("사진을 찍은 자리예요. 끌면 돌려 보고, 이미지가 없는 쪽은 모형으로 보여요. 방향키로 걸으면 이미지가 어긋나요.");
+        setupProjectors();
+        if (startPose) {
+          // 이미지를 만든 자리에서 시작한다. 이 자리에서는 AI 이미지가 그대로 보인다.
+          camera.fov = startPose.fov;
+          eye.copy(startPose.position);
+          yaw = startPose.yaw;
+          pitch = startPose.pitch;
+          setHint(
+            projectionKind() === "pano"
+              ? "AI 이미지가 사방에 입혀져 있어요. 끌면 돌려 보고, 걸으면 모형이 보이고 이미지가 어긋나요."
+              : "사진을 찍은 자리예요. 끌면 돌려 보고, 이미지가 없는 쪽은 모형으로 보여요. 방향키로 걸으면 이미지가 어긋나요.",
+          );
         } else {
           camera.fov = 75;
           eye.set(room.widthMm / 2, EYE_HEIGHT_MM, room.depthMm - 900);
@@ -484,6 +561,55 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
         currentMode = "orbit";
         rebuild();
       }
+    }
+
+    /**
+     * 방 안 한 자리에서 여러 방향으로 모형을 찍어 PNG data URL로 돌려준다. AI에게 방향마다 사진 같은 이미지를 만들게 하는 구조 그림이다.
+     * position은 모형 좌표(mm). yaws는 도(0 = 안쪽 벽 방향, 시계 방향).
+     */
+    function captureViews(position: [number, number, number], yaws: number[], hfovDeg: number, width: number, height: number): string[] {
+      capturing = true;
+      const before = currentMode;
+      currentMode = "pano";
+      setupProjectors();
+      rebuild();
+      const vfov = (2 * Math.atan(Math.tan((hfovDeg * Math.PI) / 360) * (height / width)) * 180) / Math.PI;
+      const shot = new THREE.PerspectiveCamera(vfov, width / height, 100, 80000);
+      const target = new THREE.WebGLRenderTarget(width, height);
+      const out: string[] = [];
+      for (const deg of yaws) {
+        const rad = (deg * Math.PI) / 180;
+        shot.position.set(...position);
+        shot.lookAt(position[0] + Math.sin(rad), position[1], position[2] - Math.cos(rad));
+        renderer.setRenderTarget(target);
+        renderer.render(threeScene, shot);
+        const pixels = new Uint8Array(width * height * 4);
+        renderer.readRenderTargetPixels(target, 0, 0, width, height, pixels);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        if (!context) continue;
+        const image = context.createImageData(width, height);
+        const toSrgb = (c: number) => Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055));
+        for (let row = 0; row < height; row += 1) {
+          const from = (height - 1 - row) * width * 4;
+          for (let col = 0; col < width * 4; col += 4) {
+            const to = row * width * 4 + col;
+            image.data[to] = toSrgb(pixels[from + col] / 255);
+            image.data[to + 1] = toSrgb(pixels[from + col + 1] / 255);
+            image.data[to + 2] = toSrgb(pixels[from + col + 2] / 255);
+            image.data[to + 3] = 255;
+          }
+        }
+        context.putImageData(image, 0, 0);
+        out.push(canvas.toDataURL("image/png"));
+      }
+      renderer.setRenderTarget(null);
+      target.dispose();
+      capturing = false;
+      applyMode(before);
+      return out;
     }
 
     function updatePanoCamera() {
@@ -631,6 +757,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
     };
 
     api.current = { rebuild, setMode: applyMode, exportPanorama };
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __viewer3d?: unknown }).__viewer3d = { captureViews, room: () => latest.current.scene.room };
     resize();
     applyMode(mode);
     loop();
@@ -655,8 +782,8 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
           else material?.dispose();
         });
       }
-      depthTarget?.dispose();
-      PROJECTION.uProjOn.value = 0;
+      disposeProjectors();
+      if (process.env.NODE_ENV !== "production") delete (window as unknown as { __viewer3d?: unknown }).__viewer3d;
       renderer.dispose();
       host.removeChild(renderer.domElement);
       api.current = null;
@@ -665,13 +792,18 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 가구를 옮기면 이미지 속 가구는 옛 자리에 남는다. 그래서 고치는 순간 AI 이미지를 끄고 모형만 보여 준다.
+  useEffect(() => {
+    if (edited) setPhotoOn(false);
+  }, [edited]);
+
   useEffect(() => {
     api.current?.rebuild();
   }, [scene, styleKey]);
 
   useEffect(() => {
     api.current?.setMode(mode);
-  }, [mode, photo?.url, photoOn]);
+  }, [mode, photo?.url, pano, photoOn]);
 
   return (
     <div className={styles.viewer} onClick={(event) => event.stopPropagation()}>
@@ -702,7 +834,7 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
         {hint}
       </p>
       <p className={styles.note}>
-        {photoReady && photoOn && mode === "pano" ? "AI 렌더링 이미지를 사진 찍은 자리에서 모형 위에 입혔어요. 자리를 옮기면 어긋나요." : "크기와 위치를 맞춘 모형이에요. 사진 같은 이미지는 AI 렌더링이 만들어요."}
+        {photoReady && edited && !photoOn ? "배치를 고쳐서 AI 이미지를 껐어요. 이미지 속 가구는 처음 자리 그대로라서 새 배치에는 맞지 않아요." : photoReady && photoOn && mode === "pano" ? (pano ? "AI 이미지를 한 자리에서 사방으로 찍어 모형 위에 입혔어요. 자리를 옮기면 어긋나요." : "AI 렌더링 이미지를 사진 찍은 자리에서 모형 위에 입혔어요. 자리를 옮기면 어긋나요.") : "크기와 위치를 맞춘 모형이에요. 사진 같은 이미지는 AI 렌더링이 만들어요."}
       </p>
     </div>
   );

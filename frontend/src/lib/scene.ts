@@ -128,31 +128,70 @@ export function clearScene(spaceId: string, useType: UseType): void {
 const touch = (scene: Scene, items: SceneItem[]): Scene => ({ ...scene, items, updatedAt: Date.now(), edited: true });
 const SNAP_MM = 50;
 
+type Spot = { x: number; y: number };
+
+/** 이 자리에 놓으면 다른 가구, 기둥, 계단과 겹치는지. 매달린 조명은 바닥을 차지하지 않는다. */
+function blockedAt(scene: Scene, item: SceneItem, spot: Spot, size = { widthMm: item.widthMm, depthMm: item.depthMm }): boolean {
+  if (item.hanging) return false;
+  const box = { x: spot.x, y: spot.y, ...size };
+  if (scene.items.some((other) => other.id !== item.id && !other.hanging && overlaps(box, other))) return true;
+  return scene.structures.some((s) => (s.kind === "column" || s.kind === "stairs") && overlaps(box, s));
+}
+
+function clampToRoom(scene: Scene, item: SceneItem, x: number, y: number): Spot {
+  const nx = Math.min(Math.max(0, x), Math.max(0, scene.room.widthMm - item.widthMm));
+  const ny = Math.min(Math.max(0, y), Math.max(0, scene.room.depthMm - item.depthMm));
+  return { x: Math.round(nx / SNAP_MM) * SNAP_MM, y: Math.round(ny / SNAP_MM) * SNAP_MM };
+}
+
+/**
+ * 가구를 목표 자리로 옮긴다. 다른 가구와 기둥, 계단과 겹치는 자리에는 놓지 않는다.
+ * 목표가 막혀 있으면 가로만, 세로만, 지금 자리에서 목표로 가는 선 위의 가장 먼 빈자리 중 목표에 가장 가까운 곳으로 옮긴다.
+ */
+export function placeNear(scene: Scene, item: SceneItem, x: number, y: number): Spot {
+  const target = clampToRoom(scene, item, x, y);
+  if (!blockedAt(scene, item, target)) return target;
+  const candidates: Spot[] = [];
+  const slideX = clampToRoom(scene, item, target.x, item.y);
+  const slideY = clampToRoom(scene, item, item.x, target.y);
+  candidates.push(slideX, slideY);
+  // 지금 자리에서 목표까지 선 위를 이분 탐색한다.
+  let low = 0;
+  let high = 1;
+  for (let step = 0; step < 12; step += 1) {
+    const mid = (low + high) / 2;
+    const spot = clampToRoom(scene, item, item.x + (target.x - item.x) * mid, item.y + (target.y - item.y) * mid);
+    if (blockedAt(scene, item, spot)) high = mid;
+    else low = mid;
+  }
+  candidates.push(clampToRoom(scene, item, item.x + (target.x - item.x) * low, item.y + (target.y - item.y) * low));
+  const free = candidates.filter((spot) => !blockedAt(scene, item, spot));
+  if (free.length === 0) return { x: item.x, y: item.y };
+  return free.reduce((best, spot) => (Math.hypot(spot.x - target.x, spot.y - target.y) < Math.hypot(best.x - target.x, best.y - target.y) ? spot : best));
+}
+
 export function moveItem(scene: Scene, id: string, x: number, y: number): Scene {
   return touch(
     scene,
-    scene.items.map((item) => {
-      if (item.id !== id) return item;
-      const nx = Math.min(Math.max(0, x), Math.max(0, scene.room.widthMm - item.widthMm));
-      const ny = Math.min(Math.max(0, y), Math.max(0, scene.room.depthMm - item.depthMm));
-      return { ...item, x: Math.round(nx / SNAP_MM) * SNAP_MM, y: Math.round(ny / SNAP_MM) * SNAP_MM };
-    }),
+    scene.items.map((item) => (item.id === id ? { ...item, ...placeNear(scene, item, x, y) } : item)),
   );
 }
 
 /** 90도 돌린다. 둥근 테이블은 의자 방향을 돌리고, 나머지는 가로 세로를 바꾼다(가운데는 그대로). */
 export function rotateItem(scene: Scene, id: string): Scene {
-  return touch(
-    scene,
-    scene.items.map((item) => {
-      if (item.id !== id) return item;
-      if (item.round) return { ...item, chairAngles: (item.chairAngles ?? []).map((deg) => (deg + 90) % 360) };
-      if (item.hanging) return item;
-      const cx = item.x + item.widthMm / 2;
-      const cy = item.y + item.depthMm / 2;
-      return { ...item, widthMm: item.depthMm, depthMm: item.widthMm, x: Math.round(cx - item.depthMm / 2), y: Math.round(cy - item.widthMm / 2) };
-    }),
-  );
+  const target = scene.items.find((item) => item.id === id);
+  if (!target) return scene;
+  if (target.hanging) return scene;
+  if (target.round) {
+    return touch(scene, scene.items.map((item) => (item.id === id ? { ...item, chairAngles: (item.chairAngles ?? []).map((deg) => (deg + 90) % 360) } : item)));
+  }
+  const cx = target.x + target.widthMm / 2;
+  const cy = target.y + target.depthMm / 2;
+  const turned = { ...target, widthMm: target.depthMm, depthMm: target.widthMm, x: Math.round(cx - target.depthMm / 2), y: Math.round(cy - target.widthMm / 2) };
+  // 돌린 모양이 방 밖이거나 다른 것과 겹치면 돌리지 않는다.
+  const inside = turned.x >= 0 && turned.y >= 0 && turned.x + turned.widthMm <= scene.room.widthMm && turned.y + turned.depthMm <= scene.room.depthMm;
+  if (!inside || blockedAt(scene, turned, { x: turned.x, y: turned.y })) return scene;
+  return touch(scene, scene.items.map((item) => (item.id === id ? turned : item)));
 }
 
 export function removeItem(scene: Scene, id: string): Scene {
