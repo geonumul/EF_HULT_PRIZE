@@ -8,7 +8,7 @@
 
 /* 시안은 1440px 화면에서 좌우 200px을 비운다. 그래서 내용 폭이 1040px이다. */
 .inner {
-  max-width: 1040px;
+  max-width: 1200px;
   height: 100%;
   margin: 0 auto;
   padding: 0 16px;
@@ -27,7 +27,7 @@
 /* 가운데 메뉴 */
 .menus {
   display: flex;
-  gap: 48px;
+  gap: 28px;
   height: 100%;
 }
 
@@ -40,6 +40,7 @@
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--gray-500);
+  white-space: nowrap;
 }
 
 .menuActive {
@@ -64,6 +65,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: 28px;
+  white-space: nowrap;
 }
 
 .partner {
