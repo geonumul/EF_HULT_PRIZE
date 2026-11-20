@@ -757,7 +757,16 @@ export default function SceneViewer3D({ scene, styleKey, mode, onModeChange, onC
     };
 
     api.current = { rebuild, setMode: applyMode, exportPanorama };
-    if (process.env.NODE_ENV !== "production") (window as unknown as { __viewer3d?: unknown }).__viewer3d = { captureViews, room: () => latest.current.scene.room };
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __viewer3d?: unknown }).__viewer3d = { captureViews, room: () => latest.current.scene.room,
+      items: () => latest.current.scene.items.map((item) => ({ id: item.id, name: item.name, x: item.x, y: item.y, w: item.widthMm, d: item.depthMm, hanging: !!item.hanging })),
+      screenOf: (id: string) => {
+        const root = itemRoots.get(id);
+        if (!root) return null;
+        const point = new THREE.Vector3(root.position.x, 400, root.position.z).project(camera);
+        const rect = renderer.domElement.getBoundingClientRect();
+        return { x: rect.left + ((point.x + 1) / 2) * rect.width, y: rect.top + ((1 - point.y) / 2) * rect.height };
+      },
+    };
     resize();
     applyMode(mode);
     loop();

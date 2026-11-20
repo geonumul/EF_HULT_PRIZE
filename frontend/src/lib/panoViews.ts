@@ -16,7 +16,7 @@ export type PanoSet = {
 };
 
 // build_pano_sets.py 시작
-export const PANO_KEYS: string[] = [];
+export const PANO_KEYS: string[] = ["08-cafe-industrial", "08-cafe-white", "08-cafe-wood", "08-popup-industrial", "08-popup-white", "08-popup-wood"];
 // build_pano_sets.py 끝
 
 /** 방 안에서 서 있는 자리. functions/tools/capture_pano_views.cjs가 모형을 찍는 자리와 같다. */
