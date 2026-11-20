@@ -1,6 +1,9 @@
 // 사전 생성한 렌더링 목록. functions/tools/collect_renders.py가 만든다. 직접 고치지 않는다.
 // 항목은 "<사진 번호>-<업종>-<스타일>"이고, 파일은 public/images/renders/space-<번호>-<업종>-<스타일>.jpg이다.
 export const GENERATED_RENDERS: string[] = [
+  "02-pilates-industrial",
+  "02-pilates-white",
+  "02-pilates-wood",
   "02-popup-industrial",
   "02-popup-white",
   "02-popup-wood",
@@ -10,6 +13,9 @@ export const GENERATED_RENDERS: string[] = [
   "08-pilates-industrial",
   "08-pilates-white",
   "08-pilates-wood",
+  "08-popup-industrial",
+  "08-popup-white",
+  "08-popup-wood",
   "09-cafe-wood",
   "09-cafe-white",
   "09-cafe-industrial",
