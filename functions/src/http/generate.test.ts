@@ -119,3 +119,23 @@ test("사이트 이미지 읽기는 허용 경로만 받고 오류 상태를 오
   await assert.rejects(fetcher("/images/missing.jpg"), /404/);
   await assert.rejects(fetcher("/secret.json"), /허용되지 않은/);
 });
+
+test("고친 배치의 가이드 그림을 받으면 자른 사진과 가이드로 요청을 만든다", async () => {
+  const guide = { number: "08", imageBase64: "AQID", aspectRatio: "3:2", placed: [{ name: "바 카운터", x: 1700, y: 1300, widthMm: 2400, depthMm: 600 }] };
+  const checked = validateGenerateInput({ ...body, spaceNumber: "08", guide });
+  assert.ok("input" in checked);
+  const seen = { requests: [] as ImageGenerationRequest[], assets: [] as string[] };
+  await generateRender((checked as { input: Parameters<typeof generateRender>[0] }).input, makeDeps([passing], seen));
+  assert.ok(seen.assets.includes("/images/spaces/guide/08-photo.jpg"));
+  assert.equal(seen.requests[0].structureKind, "guide");
+  assert.equal(seen.requests[0].aspectRatio, "3:2");
+  assert.equal(seen.requests[0].placed.length, 1);
+});
+
+test("가이드 입력 검증: 번호, 비율, 이미지 문자열", () => {
+  const guide = { number: "08", imageBase64: "AQID", aspectRatio: "3:2", placed: [] };
+  assert.ok("input" in validateGenerateInput({ ...body, guide }));
+  assert.ok("error" in validateGenerateInput({ ...body, guide: { ...guide, number: "99" } }));
+  assert.ok("error" in validateGenerateInput({ ...body, guide: { ...guide, aspectRatio: "1:1" } }));
+  assert.ok("error" in validateGenerateInput({ ...body, guide: { ...guide, imageBase64: "../../x" } }));
+});

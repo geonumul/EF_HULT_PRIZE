@@ -19,7 +19,8 @@ import { RENDER_STYLES } from "@/mocks/studio";
 import { generatedRenderUrl } from "@/lib/generatedRenders";
 import { IMAGE_PLANS } from "@/lib/imagePlans";
 import { generateRender, roomFromArea } from "@/lib/api/functions";
-import type { LayoutItem, RenderOutput } from "@/lib/api/functions";
+import type { LayoutItem, RenderInput, RenderOutput } from "@/lib/api/functions";
+import { drawGuide, guideNumberOf } from "@/lib/guideRender";
 import StudioShell from "./StudioShell";
 import StudioSubHeader from "./StudioSubHeader";
 import ModeSwitch from "./ModeSwitch";
@@ -78,6 +79,7 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
 
   const [useType, setUseType] = useState<UseType>(initialUse);
   const [showEmpty, setShowEmpty] = useState(false);
+  const [renderedAt, setRenderedAt] = useState<number | null>(null); // 지금 AI 이미지를 만든 배치의 저장 시각
   const [styleKey, setStyleKey] = useState<RenderStyleKey>(initialStyle ?? "wood");
   const [mode, setMode] = useState<StudioMode>("image");
   const [loadingLabel, setLoadingLabel] = useState("");
@@ -287,7 +289,9 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     );
   }
   if (renderNotice) extraBadges.push({ text: renderNotice, tone: "bad" });
-  if (sceneActive && sceneEditor.scene?.edited && !isMySpace) extraBadges.push({ text: "배치를 고쳤어요. 이미지는 처음 배치 그대로예요", tone: "bad" });
+  const imageMatchesScene = generatedActive && renderedAt !== null && renderedAt === sceneEditor.scene?.updatedAt;
+  if (imageMatchesScene) extraBadges.push({ text: "지금 배치로 만든 이미지예요", tone: "ok" });
+  else if (sceneActive && sceneEditor.scene?.edited && !isMySpace) extraBadges.push({ text: "배치를 고쳤어요. 'AI로 새로 렌더링'을 누르면 이 배치로 이미지를 다시 만들어요", tone: "bad" });
   if (editing && sceneEditor.status === "failed") extraBadges.push({ text: "배치를 불러오지 못했어요. 잠시 뒤에 다시 시도해 주세요.", tone: "bad" });
 
   // 배치도와 렌더링 요청에 쓰는 입력. 견적에 들어 있는 상품을 그대로 넘긴다.
@@ -330,13 +334,31 @@ export default function StudioView({ listing, initialUse, initialStyle }: Props)
     const token = ++renderToken.current;
     setRendering(true);
     setRenderNotice("");
-    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey });
+    // 평면도가 열려 있고 사진 보정값이 있으면, 지금 배치를 사진과 같은 원근으로 그려서 그대로 그리게 한다.
+    const scene = sceneActive ? sceneEditor.scene : null;
+    const guideNumber = scene ? guideNumberOf(listing.thumbnail) : null;
+    let guide: RenderInput["guide"];
+    if (scene && guideNumber) {
+      try {
+        const drawing = await drawGuide(scene, guideNumber);
+        guide = {
+          number: guideNumber,
+          imageBase64: drawing.dataUrl.replace(/^data:image\/png;base64,/, ""),
+          aspectRatio: drawing.aspectRatio,
+          placed: scene.items.map((item) => ({ name: item.name, x: item.x, y: item.y, widthMm: item.widthMm, depthMm: item.depthMm })),
+        };
+      } catch {
+        guide = undefined; // 가이드를 못 그리면 처음 방식으로 만든다.
+      }
+    }
+    const result = await generateRender({ ...layoutInput, code, spaceNumber, style: styleKey, ...(guide ? { guide } : {}) });
     if (!mounted.current) return;
     setRendering(false);
     if (token !== renderToken.current) return; // 그 사이 스타일이나 업종이 바뀌었다.
     if (result.ok) {
       saveCode(code);
       setGenerated(result.data);
+      setRenderedAt(guide && scene ? scene.updatedAt : null);
       setShowEmpty(false);
       resetSelection();
     } else if (result.status === 401) {

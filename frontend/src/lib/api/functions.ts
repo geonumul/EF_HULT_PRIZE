@@ -84,6 +84,13 @@ export type RenderInput = LayoutInput & {
   spaceNumber: string;
   style: "wood" | "white" | "industrial";
   attempts?: 1 | 2;
+  /** 고친 배치를 사진과 같은 원근으로 그린 가이드 그림(lib/guideRender.ts). 주면 이 배치대로 그린다. */
+  guide?: {
+    number: string;
+    imageBase64: string;
+    aspectRatio: string;
+    placed: { name: string; x: number; y: number; widthMm: number; depthMm: number }[];
+  };
 };
 
 export type RenderCritique = { passed: boolean; score: number; total: number; failed: { id: string; note: string }[] };

@@ -7,7 +7,22 @@ import { computePlan, validatePlanInput, type PlanInput, type PlanItem, type Pla
 
 export type StyleKey = "wood" | "white" | "industrial";
 
+/** 고친 배치를 사진과 같은 원근의 색 상자로 그린 가이드 그림. 브라우저가 그려서 보낸다(frontend/src/lib/guideRender.ts). */
+export interface GuideInput {
+  /** 공간 사진 번호. /images/spaces/guide/<번호>-photo.jpg가 가이드와 같은 범위로 자른 사진이다. */
+  number: string;
+  /** 가이드 그림 PNG(base64) */
+  imageBase64: string;
+  aspectRatio: string;
+  /** 가이드에 그린 가구. 프롬프트의 가구 목록에 쓴다. */
+  placed: Array<{ name: string; x: number; y: number; widthMm: number; depthMm: number }>;
+}
+
+export const MAX_GUIDE_BYTES = 3_000_000;
+const ASPECTS = new Set(["3:2", "4:3", "16:9"]);
+
 export interface GenerateInput extends PlanInput {
+  guide?: GuideInput;
   code: string;
   spaceNumber: string;
   style: StyleKey;
@@ -63,7 +78,19 @@ export function validateGenerateInput(body: unknown): { input: GenerateInput } |
   for (const item of planned.input.items ?? []) {
     if (item.imagePath !== undefined && (typeof item.imagePath !== "string" || !isAllowedAssetPath(item.imagePath))) return { error: "imagePath가 올바르지 않습니다." };
   }
-  return { input: { ...planned.input, code: data.code, spaceNumber: data.spaceNumber, style: data.style, attempts } };
+  const guide = (body as { guide?: unknown }).guide;
+  let checkedGuide: GuideInput | undefined;
+  if (guide !== undefined) {
+    const g = guide as Partial<GuideInput>;
+    if (typeof g.number !== "string" || !/^(0[1-9]|1[0-2])$/.test(g.number)) return { error: "guide.number가 올바르지 않습니다." };
+    if (typeof g.imageBase64 !== "string" || !/^[A-Za-z0-9+/=]+$/.test(g.imageBase64) || g.imageBase64.length > MAX_GUIDE_BYTES * 1.4) return { error: "guide.imageBase64가 올바르지 않습니다." };
+    if (typeof g.aspectRatio !== "string" || !ASPECTS.has(g.aspectRatio)) return { error: "guide.aspectRatio가 올바르지 않습니다." };
+    if (!Array.isArray(g.placed) || g.placed.length > 60) return { error: "guide.placed가 올바르지 않습니다." };
+    const placed = g.placed.map((item) => ({ name: String(item?.name ?? "").slice(0, 40), x: Number(item?.x), y: Number(item?.y), widthMm: Number(item?.widthMm), depthMm: Number(item?.depthMm) }));
+    if (placed.some((item) => ![item.x, item.y, item.widthMm, item.depthMm].every(Number.isFinite) || !item.name)) return { error: "guide.placed의 값이 올바르지 않습니다." };
+    checkedGuide = { number: g.number, imageBase64: g.imageBase64, aspectRatio: g.aspectRatio, placed };
+  }
+  return { input: { ...planned.input, ...(checkedGuide ? { guide: checkedGuide } : {}), code: data.code, spaceNumber: data.spaceNumber, style: data.style, attempts } };
 }
 
 /** 참고 이미지로 쓸 상품: 종류마다 하나, 최대 4개 */
@@ -81,10 +108,16 @@ function pickReferences(items: PlanItem[]): PlanItem[] {
 
 export async function generateRender(input: GenerateInput, deps: GenerateDeps): Promise<GenerateResponse> {
   const plan = computePlan(input);
-  const [photo, edges] = await Promise.all([
-    deps.fetchAsset(`/images/spaces/space-${input.spaceNumber}.jpg`),
-    deps.fetchAsset(`/images/spaces/edges/space-${input.spaceNumber}.png`),
-  ]);
+  const guide = input.guide;
+  const [photo, edges] = guide
+    ? [
+        await deps.fetchAsset(`/images/spaces/guide/${guide.number}-photo.jpg`),
+        { bytes: new Uint8Array(Buffer.from(guide.imageBase64, "base64")), contentType: "image/png" },
+      ]
+    : await Promise.all([
+        deps.fetchAsset(`/images/spaces/space-${input.spaceNumber}.jpg`),
+        deps.fetchAsset(`/images/spaces/edges/space-${input.spaceNumber}.png`),
+      ]);
 
   const referenceImages: NonNullable<ImageGenerationRequest["referenceImages"]> = [];
   for (const item of pickReferences(input.items ?? [])) {
@@ -99,11 +132,12 @@ export async function generateRender(input: GenerateInput, deps: GenerateDeps): 
     prompt: STYLE_PROMPTS[input.style],
     useType: input.useType,
     room: input.room,
-    placed: plan.placed.filter((item) => !item.hanging || item.category === "lamp"),
+    placed: guide ? (guide.placed as unknown as ImageGenerationRequest["placed"]) : plan.placed.filter((item) => !item.hanging || item.category === "lamp"),
     referenceImageUrls: [],
     spacePhoto: photo,
     structureImage: edges,
-    structureKind: "edges",
+    structureKind: guide ? "guide" : "edges",
+    ...(guide ? { aspectRatio: guide.aspectRatio } : {}),
     referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
   };
 
